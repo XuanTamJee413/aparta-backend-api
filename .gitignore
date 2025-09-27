@@ -1,0 +1,40 @@
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.exe
+*.dll
+*.pdb
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+*.swp
+*.tmp
+
+# Visual Studio files
+.vs/
+*.dbmdl
+*.opendb
+*.VC.db
+*.vscode/
+
+# NuGet
+*.nupkg
+packages/
+*.snupkg
+
+# Others
+*.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.Development.json
+appsettings.*.local.json
+.env

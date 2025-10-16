@@ -1,11 +1,12 @@
 using ApartaAPI.Data;
+using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting.Server;
+using ApartaAPI.Services;
+using ApartaAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace ApartaAPI
 {
@@ -16,17 +17,23 @@ namespace ApartaAPI
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
+
             builder.Services.AddDbContext<ApartaDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // AutoMapper
+            builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+            // Repositories & Services
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IProjectService, ProjectService>();
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -34,9 +41,7 @@ namespace ApartaAPI
             }
 
             app.UseAuthorization();
-
             app.MapControllers();
-
             app.Run();
         }
     }

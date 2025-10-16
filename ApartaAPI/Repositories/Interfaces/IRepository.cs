@@ -1,4 +1,7 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace ApartaAPI.Repositories.Interfaces
 {
@@ -10,9 +13,12 @@ namespace ApartaAPI.Repositories.Interfaces
         Task<T> UpdateAsync(T entity);
         Task<bool> DeleteAsync(int id);
 
-        //Search & Filter
+        // Search & Filter
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
-        Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+        Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+
+        Task RemoveAsync(T entity);
+
         Task<bool> SaveChangesAsync();
     }
 }

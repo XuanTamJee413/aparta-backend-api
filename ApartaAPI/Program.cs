@@ -28,7 +28,11 @@ namespace ApartaAPI
             // Repositories & Services
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IProjectService, ProjectService>();
+
             builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
+            builder.Services.AddScoped<IVisitorService, VisitorService>();
+            builder.Services.AddScoped<IVisitLogService, VisitLogService>();
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

@@ -1,4 +1,4 @@
-using ApartaAPI.Data;
+﻿using ApartaAPI.Data;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -15,6 +15,21 @@ namespace ApartaAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+
+            var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: myAllowSpecificOrigins,
+                                  policy =>
+                                  {
+                                      policy.WithOrigins("http://localhost:4200")
+                                            .AllowAnyHeader()
+                                            .AllowAnyMethod();
+                                  });
+            });
+
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -43,6 +58,8 @@ namespace ApartaAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseCors(myAllowSpecificOrigins);
 
             app.UseAuthorization();
             app.MapControllers();

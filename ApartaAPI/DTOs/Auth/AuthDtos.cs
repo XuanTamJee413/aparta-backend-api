@@ -1,4 +1,4 @@
-namespace ApartaAPI.DTOs.Auth
+﻿namespace ApartaAPI.DTOs.Auth
 {
     // Login request
     public sealed record LoginRequest(
@@ -42,5 +42,12 @@ namespace ApartaAPI.DTOs.Auth
         string? StaffCode,
         string Status,
         DateTime? LastLoginAt
+    );
+
+    public sealed record ProfileUpdateDto(
+        string? Name,
+        string? Email,
+        string? Phone,
+        string? AvatarUrl
     );
 }

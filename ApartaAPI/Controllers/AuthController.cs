@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.Services;
 using System.Security.Claims;
+using ApartaAPI.Services.Interfaces;
 
 namespace ApartaAPI.Controllers
 {

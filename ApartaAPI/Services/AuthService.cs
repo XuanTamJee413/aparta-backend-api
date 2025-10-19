@@ -1,31 +1,30 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using Microsoft.Extensions.Configuration;
+using ApartaAPI.Services.Interfaces;
+using AutoMapper;
+using ApartaAPI.DTOs.Auth;
 
 namespace ApartaAPI.Services
 {
-    public interface IAuthService
-    {
-        Task<string?> LoginAsync(string phone, string password);
-        Task<User?> GetUserByPhoneAsync(string phone);
-        Task<IEnumerable<object>> GetRolesAsync();
-    }
 
     public class AuthService : IAuthService
     {
+        private readonly IMapper _mapper;
         private readonly IRepository<User> _userRepository;
         private readonly IRepository<Role> _roleRepository;
         private readonly IConfiguration _configuration;
 
-        public AuthService(IRepository<User> userRepository, IRepository<Role> roleRepository, IConfiguration configuration)
+        public AuthService(IRepository<User> userRepository, IRepository<Role> roleRepository, IConfiguration configuration, IMapper mapper)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _configuration = configuration;
+            _mapper = mapper;
         }
 
         public async Task<string?> LoginAsync(string phone, string password)
@@ -90,6 +89,31 @@ namespace ApartaAPI.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<User?> UpdateProfileAsync(string userId, ProfileUpdateDto dto)
+        {
+            var user = await _userRepository.FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
+
+            if (user == null)
+            {
+                return null; 
+            }
+
+            _mapper.Map(dto, user);
+
+            user.PasswordHash = user.PasswordHash;
+            user.RoleId = user.RoleId;
+            user.Status = user.Status;
+            user.Phone = user.Phone;   
+            user.Email = user.Email;
+            user.LastLoginAt = DateTime.UtcNow; // <--- THÊM DÒNG NÀY TRONG SERVICE
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var success = await _userRepository.SaveChangesAsync();
+
+            return success ? user : null;
         }
     }
 }

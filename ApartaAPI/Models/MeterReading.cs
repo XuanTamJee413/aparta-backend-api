@@ -5,7 +5,7 @@ namespace ApartaAPI.Models;
 
 public partial class MeterReading
 {
-    public string Id { get; set; } = null!;
+    public string MeterReadingId { get; set; } = null!;
 
     public string? ApartmentId { get; set; }
 

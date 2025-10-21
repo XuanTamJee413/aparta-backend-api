@@ -5,7 +5,7 @@ namespace ApartaAPI.Models;
 
 public partial class VisitLog
 {
-    public string Id { get; set; } = null!;
+    public string VisitLogId { get; set; } = null!;
 
     public string? ApartmentId { get; set; }
 

@@ -21,5 +21,5 @@ public partial class Project
 
     public virtual ICollection<Building> Buildings { get; set; } = new List<Building>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
 }

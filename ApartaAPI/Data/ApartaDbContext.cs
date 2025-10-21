@@ -38,8 +38,6 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<News> News { get; set; }
 
-    public virtual DbSet<Order> Orders { get; set; }
-
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<PermissionGroup> PermissionGroups { get; set; }
@@ -55,6 +53,8 @@ public partial class ApartaDbContext : DbContext
     public virtual DbSet<Service> Services { get; set; }
 
     public virtual DbSet<ServiceBooking> ServiceBookings { get; set; }
+
+    public virtual DbSet<Subscription> Subscriptions { get; set; }
 
     public virtual DbSet<Models.Task> Tasks { get; set; }
 
@@ -74,11 +74,15 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<Visitor> Visitors { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("server=ApartaDB.mssql.somee.com;database=ApartaDB;uid=adminAparta;pwd=12345678;TrustServerCertificate=true");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Apartment>(entity =>
         {
-            entity.HasKey(e => e.ApartmentId).HasName("PK__APARTMEN__DC51C2EC99CDFC6F");
+            entity.HasKey(e => e.ApartmentId).HasName("PK__APARTMEN__DC51C2EC7A876F54");
 
             entity.ToTable("APARTMENT");
 
@@ -112,7 +116,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<ApartmentMember>(entity =>
         {
-            entity.HasKey(e => e.ApartmentMemberId).HasName("PK__APARTMEN__07BC3F23639E4B63");
+            entity.HasKey(e => e.ApartmentMemberId).HasName("PK__APARTMEN__07BC3F2309CF7DEB");
 
             entity.ToTable("APARTMENT_MEMBER");
 
@@ -160,7 +164,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Asset>(entity =>
         {
-            entity.HasKey(e => e.AssetId).HasName("PK__ASSET__D28B561D803BFA3D");
+            entity.HasKey(e => e.AssetId).HasName("PK__ASSET__D28B561D8F31FE3F");
 
             entity.ToTable("ASSET");
 
@@ -173,9 +177,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.Info)
-                .HasColumnType("text")
-                .HasColumnName("info");
+            entity.Property(e => e.Info).HasColumnName("info");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
@@ -188,7 +190,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Building>(entity =>
         {
-            entity.HasKey(e => e.BuildingId).HasName("PK__BUILDING__9C9FBF7FD667F7E6");
+            entity.HasKey(e => e.BuildingId).HasName("PK__BUILDING__9C9FBF7F68561232");
 
             entity.ToTable("BUILDING");
 
@@ -220,7 +222,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Contract>(entity =>
         {
-            entity.HasKey(e => e.ContactId).HasName("PK__CONTRACT__024E7A864269BB85");
+            entity.HasKey(e => e.ContactId).HasName("PK__CONTRACT__024E7A869CF34C2D");
 
             entity.ToTable("CONTRACT");
 
@@ -247,7 +249,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Expense>(entity =>
         {
-            entity.HasKey(e => e.ExpenseId).HasName("PK__EXPENSE__404B6A6B004972DD");
+            entity.HasKey(e => e.ExpenseId).HasName("PK__EXPENSE__404B6A6B58F028BC");
 
             entity.ToTable("EXPENSE");
 
@@ -274,13 +276,13 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<FeePeriod>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__FEE_PERI__3213E83FF41E609A");
+            entity.HasKey(e => e.FeePeriodId).HasName("PK__FEE_PERI__41E3C089E3558758");
 
             entity.ToTable("FEE_PERIOD");
 
-            entity.Property(e => e.Id)
+            entity.Property(e => e.FeePeriodId)
                 .HasMaxLength(50)
-                .HasColumnName("id");
+                .HasColumnName("fee_period_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
@@ -288,9 +290,7 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
             entity.Property(e => e.EndDate).HasColumnName("end_date");
-            entity.Property(e => e.Items)
-                .HasColumnType("text")
-                .HasColumnName("items");
+            entity.Property(e => e.Items).HasColumnName("items");
             entity.Property(e => e.StartDate).HasColumnName("start_date");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
@@ -303,7 +303,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Log>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("PK__LOG__9E2397E001B268A0");
+            entity.HasKey(e => e.LogId).HasName("PK__LOG__9E2397E0D64A6AC8");
 
             entity.ToTable("LOG");
 
@@ -313,9 +313,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.Action)
                 .HasMaxLength(255)
                 .HasColumnName("action");
-            entity.Property(e => e.Details)
-                .HasColumnType("text")
-                .HasColumnName("details");
+            entity.Property(e => e.Details).HasColumnName("details");
             entity.Property(e => e.Timestamp)
                 .HasColumnType("datetime")
                 .HasColumnName("timestamp");
@@ -330,7 +328,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Meter>(entity =>
         {
-            entity.HasKey(e => e.MeterId).HasName("PK__METER__6647C3150B565480");
+            entity.HasKey(e => e.MeterId).HasName("PK__METER__6647C31584E779E0");
 
             entity.ToTable("METER");
 
@@ -353,13 +351,13 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<MeterReading>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__METER_RE__3213E83FC3492F33");
+            entity.HasKey(e => e.MeterReadingId).HasName("PK__METER_RE__BDCAA50E8F04280C");
 
             entity.ToTable("METER_READING");
 
-            entity.Property(e => e.Id)
+            entity.Property(e => e.MeterReadingId)
                 .HasMaxLength(50)
-                .HasColumnName("id");
+                .HasColumnName("meter_reading_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
@@ -387,16 +385,14 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<News>(entity =>
         {
-            entity.HasKey(e => e.NewsId).HasName("PK__NEWS__4C27CCD8EFA9F3F9");
+            entity.HasKey(e => e.NewsId).HasName("PK__NEWS__4C27CCD88E59C907");
 
             entity.ToTable("NEWS");
 
             entity.Property(e => e.NewsId)
                 .HasMaxLength(50)
                 .HasColumnName("news_id");
-            entity.Property(e => e.Content)
-                .HasColumnType("text")
-                .HasColumnName("content");
+            entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
@@ -418,46 +414,9 @@ public partial class ApartaDbContext : DbContext
                 .HasConstraintName("FK_News_ManagementStaff");
         });
 
-        modelBuilder.Entity<Order>(entity =>
-        {
-            entity.HasKey(e => e.OrderId).HasName("PK__ORDER__46596229EF4948A2");
-
-            entity.ToTable("ORDER");
-
-            entity.Property(e => e.OrderId)
-                .HasMaxLength(50)
-                .HasColumnName("order_id");
-            entity.Property(e => e.CreatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Discount).HasColumnName("discount");
-            entity.Property(e => e.ExpiredAt)
-                .HasColumnType("datetime")
-                .HasColumnName("expired_at");
-            entity.Property(e => e.NumMonths).HasColumnName("num_months");
-            entity.Property(e => e.OrderCode)
-                .HasMaxLength(50)
-                .HasColumnName("order_code");
-            entity.Property(e => e.PaymentInfo)
-                .HasColumnType("text")
-                .HasColumnName("payment_info");
-            entity.Property(e => e.ProjectId)
-                .HasMaxLength(50)
-                .HasColumnName("project_id");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasColumnName("status");
-            entity.Property(e => e.Tax).HasColumnName("tax");
-            entity.Property(e => e.TotalAmount).HasColumnName("total_amount");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.ProjectId)
-                .HasConstraintName("FK_Order_Project");
-        });
-
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__PAYMENT__ED1FC9EAC32FC847");
+            entity.HasKey(e => e.PaymentId).HasName("PK__PAYMENT__ED1FC9EADBD56F8B");
 
             entity.ToTable("PAYMENT");
 
@@ -468,9 +427,6 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.OrderId)
-                .HasMaxLength(50)
-                .HasColumnName("order_id");
             entity.Property(e => e.PaymentDate).HasColumnName("payment_date");
             entity.Property(e => e.ReceiptId)
                 .HasMaxLength(50)
@@ -478,6 +434,9 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
+            entity.Property(e => e.SubscriptionId)
+                .HasMaxLength(50)
+                .HasColumnName("subscription_id");
             entity.Property(e => e.Type)
                 .HasMaxLength(50)
                 .HasColumnName("type");
@@ -485,18 +444,18 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.OrderId)
-                .HasConstraintName("FK_Payment_Order");
-
             entity.HasOne(d => d.Receipt).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.ReceiptId)
                 .HasConstraintName("FK_Payment_Receipt");
+
+            entity.HasOne(d => d.Subscription).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.SubscriptionId)
+                .HasConstraintName("FK_Payment_Subscription");
         });
 
         modelBuilder.Entity<PermissionGroup>(entity =>
         {
-            entity.HasKey(e => e.PermissionGroupId).HasName("PK__PERMISSI__EE3284C6A4580D8D");
+            entity.HasKey(e => e.PermissionGroupId).HasName("PK__PERMISSI__EE3284C6E04C8576");
 
             entity.ToTable("PERMISSION_GROUP");
 
@@ -509,9 +468,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
-            entity.Property(e => e.Permissions)
-                .HasColumnType("text")
-                .HasColumnName("permissions");
+            entity.Property(e => e.Permissions).HasColumnName("permissions");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
@@ -519,7 +476,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Project>(entity =>
         {
-            entity.HasKey(e => e.ProjectId).HasName("PK__PROJECT__BC799E1FFB04D601");
+            entity.HasKey(e => e.ProjectId).HasName("PK__PROJECT__BC799E1FA5D649B0");
 
             entity.ToTable("PROJECT");
 
@@ -544,16 +501,14 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Propose>(entity =>
         {
-            entity.HasKey(e => e.ProposeId).HasName("PK__PROPOSE__D223B0C94D45F31E");
+            entity.HasKey(e => e.ProposeId).HasName("PK__PROPOSE__D223B0C983052F84");
 
             entity.ToTable("PROPOSE");
 
             entity.Property(e => e.ProposeId)
                 .HasMaxLength(50)
                 .HasColumnName("propose_id");
-            entity.Property(e => e.Content)
-                .HasColumnType("text")
-                .HasColumnName("content");
+            entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
@@ -574,7 +529,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Receipt>(entity =>
         {
-            entity.HasKey(e => e.ReceiptId).HasName("PK__RECEIPT__91F52C1F72C3ACFE");
+            entity.HasKey(e => e.ReceiptId).HasName("PK__RECEIPT__91F52C1F11853127");
 
             entity.ToTable("RECEIPT");
 
@@ -609,7 +564,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__ROLE__760965CC0B207B02");
+            entity.HasKey(e => e.RoleId).HasName("PK__ROLE__760965CC37799715");
 
             entity.ToTable("ROLE");
 
@@ -623,7 +578,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__SERVICE__3E0DB8AFACA94A05");
+            entity.HasKey(e => e.ServiceId).HasName("PK__SERVICE__3E0DB8AF96E27B27");
 
             entity.ToTable("SERVICE");
 
@@ -644,7 +599,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<ServiceBooking>(entity =>
         {
-            entity.HasKey(e => e.ServiceBookingId).HasName("PK__SERVICE___E1542436A6E214D0");
+            entity.HasKey(e => e.ServiceBookingId).HasName("PK__SERVICE___E1542436D892B85D");
 
             entity.ToTable("SERVICE_BOOKING");
 
@@ -680,9 +635,44 @@ public partial class ApartaDbContext : DbContext
                 .HasConstraintName("FK_ServiceBooking_Service");
         });
 
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(e => e.SubscriptionId).HasName("PK__SUBSCRIP__863A7EC1E7114217");
+
+            entity.ToTable("SUBSCRIPTION");
+
+            entity.Property(e => e.SubscriptionId)
+                .HasMaxLength(50)
+                .HasColumnName("subscription_id");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Discount).HasColumnName("discount");
+            entity.Property(e => e.ExpiredAt)
+                .HasColumnType("datetime")
+                .HasColumnName("expired_at");
+            entity.Property(e => e.NumMonths).HasColumnName("num_months");
+            entity.Property(e => e.PaymentInfo).HasColumnName("payment_info");
+            entity.Property(e => e.ProjectId)
+                .HasMaxLength(50)
+                .HasColumnName("project_id");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasColumnName("status");
+            entity.Property(e => e.SubscriptionCode)
+                .HasMaxLength(50)
+                .HasColumnName("subscription_code");
+            entity.Property(e => e.Tax).HasColumnName("tax");
+            entity.Property(e => e.TotalAmount).HasColumnName("total_amount");
+
+            entity.HasOne(d => d.Project).WithMany(p => p.Subscriptions)
+                .HasForeignKey(d => d.ProjectId)
+                .HasConstraintName("FK_Subscription_Project");
+        });
+
         modelBuilder.Entity<Models.Task>(entity =>
         {
-            entity.HasKey(e => e.TaskId).HasName("PK__TASK__0492148D3B35836C");
+            entity.HasKey(e => e.TaskId).HasName("PK__TASK__0492148D14856E6D");
 
             entity.ToTable("TASK");
 
@@ -695,9 +685,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.CreatedBy)
                 .HasMaxLength(50)
                 .HasColumnName("created_by");
-            entity.Property(e => e.Description)
-                .HasColumnType("text")
-                .HasColumnName("description");
+            entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EndDate)
                 .HasColumnType("datetime")
                 .HasColumnName("end_date");
@@ -728,7 +716,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<TaskAssignment>(entity =>
         {
-            entity.HasKey(e => e.TaskAssignmentId).HasName("PK__TASK_ASS__D3B560371758DDF4");
+            entity.HasKey(e => e.TaskAssignmentId).HasName("PK__TASK_ASS__D3B560376D9E3479");
 
             entity.ToTable("TASK_ASSIGNMENT");
 
@@ -769,13 +757,13 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<UnitPrice>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UNIT_PRI__3213E83FC055C513");
+            entity.HasKey(e => e.UnitPriceId).HasName("PK__UNIT_PRI__D800B944732EF3C8");
 
             entity.ToTable("UNIT_PRICE");
 
-            entity.Property(e => e.Id)
+            entity.Property(e => e.UnitPriceId)
                 .HasMaxLength(50)
-                .HasColumnName("id");
+                .HasColumnName("unit_price_id");
             entity.Property(e => e.CalculationMethod)
                 .HasMaxLength(50)
                 .HasColumnName("calculation_method");
@@ -802,15 +790,15 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__USER__B9BE370F7C807B2B");
+            entity.HasKey(e => e.UserId).HasName("PK__USER__B9BE370F8053C672");
 
             entity.ToTable("USER");
 
-            entity.HasIndex(e => e.StaffCode, "UQ__USER__097F3286581A2118").IsUnique();
+            entity.HasIndex(e => e.StaffCode, "UQ__USER__097F32867BC4617C").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__USER__AB6E61648F3DD5A9").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__USER__AB6E6164757F0960").IsUnique();
 
-            entity.HasIndex(e => e.Phone, "UQ__USER__B43B145F5C559557").IsUnique();
+            entity.HasIndex(e => e.Phone, "UQ__USER__B43B145F9AD9D3B9").IsUnique();
 
             entity.Property(e => e.UserId)
                 .HasMaxLength(50)
@@ -870,7 +858,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Utility>(entity =>
         {
-            entity.HasKey(e => e.UtilityId).HasName("PK__UTILITY__3F785C7052742E07");
+            entity.HasKey(e => e.UtilityId).HasName("PK__UTILITY__3F785C7086B5F59D");
 
             entity.ToTable("UTILITY");
 
@@ -893,13 +881,13 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<UtilityBooking>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UTILITY___3213E83F8974191B");
+            entity.HasKey(e => e.UtilityBookingId).HasName("PK__UTILITY___30D7D3115554B371");
 
             entity.ToTable("UTILITY_BOOKING");
 
-            entity.Property(e => e.Id)
+            entity.Property(e => e.UtilityBookingId)
                 .HasMaxLength(50)
-                .HasColumnName("id");
+                .HasColumnName("utility_booking_id");
             entity.Property(e => e.BookingDate).HasColumnName("booking_date");
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
@@ -928,7 +916,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.VehicleId).HasName("PK__VEHICLE__F2947BC1F773EBA1");
+            entity.HasKey(e => e.VehicleId).HasName("PK__VEHICLE__F2947BC1EE8D5278");
 
             entity.ToTable("VEHICLE");
 
@@ -941,9 +929,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.Info)
-                .HasColumnType("text")
-                .HasColumnName("info");
+            entity.Property(e => e.Info).HasColumnName("info");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
@@ -958,13 +944,13 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<VisitLog>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__VISIT_LO__3213E83F13B2D045");
+            entity.HasKey(e => e.VisitLogId).HasName("PK__VISIT_LO__A7A3DCAC0469AC89");
 
             entity.ToTable("VISIT_LOG");
 
-            entity.Property(e => e.Id)
+            entity.Property(e => e.VisitLogId)
                 .HasMaxLength(50)
-                .HasColumnName("id");
+                .HasColumnName("visit_log_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
@@ -995,7 +981,7 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<Visitor>(entity =>
         {
-            entity.HasKey(e => e.VisitorId).HasName("PK__VISITOR__87ED1B516CD3C345");
+            entity.HasKey(e => e.VisitorId).HasName("PK__VISITOR__87ED1B514F8879CB");
 
             entity.ToTable("VISITOR");
 

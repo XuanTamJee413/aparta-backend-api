@@ -3,8 +3,10 @@ using System.Collections.Generic;
 
 namespace ApartaAPI.Models;
 
-public partial class PermissionGroup
+public partial class Permission
 {
+    public string PermissionId { get; set; } = null!;
+
     public string PermissionGroupId { get; set; } = null!;
 
     public string Name { get; set; } = null!;
@@ -13,5 +15,7 @@ public partial class PermissionGroup
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();
+    public virtual PermissionGroup PermissionGroup { get; set; } = null!;
+
+    public virtual ICollection<Role> Roles { get; set; } = new List<Role>();
 }

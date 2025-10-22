@@ -7,27 +7,33 @@ public partial class Subscription
 {
     public string SubscriptionId { get; set; } = null!;
 
-    public string? Status { get; set; }
+    public string ProjectId { get; set; } = null!;
 
-    public string? PaymentInfo { get; set; }
+    public string SubscriptionCode { get; set; } = null!;
 
-    public string? ProjectId { get; set; }
+    public string Status { get; set; } = null!;
 
-    public DateTime? CreatedAt { get; set; }
+    public string? PaymentMethod { get; set; }
 
-    public double? TotalAmount { get; set; }
+    public DateTime? PaymentDate { get; set; }
 
-    public string? SubscriptionCode { get; set; }
+    public decimal? AmountPaid { get; set; }
 
-    public DateTime? ExpiredAt { get; set; }
+    public string? PaymentNote { get; set; }
 
-    public int? NumMonths { get; set; }
+    public decimal Amount { get; set; }
+
+    public int NumMonths { get; set; }
 
     public double? Tax { get; set; }
 
     public double? Discount { get; set; }
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public DateTime ExpiredAt { get; set; }
 
-    public virtual Project? Project { get; set; }
+    public DateTime? CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public virtual Project Project { get; set; } = null!;
 }

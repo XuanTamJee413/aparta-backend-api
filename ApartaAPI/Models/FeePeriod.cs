@@ -7,19 +7,17 @@ public partial class FeePeriod
 {
     public string FeePeriodId { get; set; } = null!;
 
-    public string? ApartmentId { get; set; }
+    public string ProjectId { get; set; } = null!;
 
     public string? Items { get; set; }
 
-    public DateOnly? StartDate { get; set; }
+    public DateOnly StartDate { get; set; }
 
-    public DateOnly? EndDate { get; set; }
+    public DateOnly EndDate { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Apartment? Apartment { get; set; }
-
-    public virtual ICollection<UnitPrice> UnitPrices { get; set; } = new List<UnitPrice>();
+    public virtual Project Project { get; set; } = null!;
 }

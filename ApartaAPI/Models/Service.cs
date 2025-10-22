@@ -7,9 +7,11 @@ public partial class Service
 {
     public string ServiceId { get; set; } = null!;
 
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public double? Price { get; set; }
+    public decimal Price { get; set; }
+
+    public string Status { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
 

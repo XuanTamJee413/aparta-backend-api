@@ -5,11 +5,11 @@ namespace ApartaAPI.Models;
 
 public partial class Contract
 {
-    public string ContactId { get; set; } = null!;
+    public string ContractId { get; set; } = null!;
+
+    public string ApartmentId { get; set; } = null!;
 
     public string? Image { get; set; }
-
-    public string? ApartmentId { get; set; }
 
     public DateOnly? StartDate { get; set; }
 
@@ -19,5 +19,5 @@ public partial class Contract
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Apartment? Apartment { get; set; }
+    public virtual Apartment Apartment { get; set; } = null!;
 }

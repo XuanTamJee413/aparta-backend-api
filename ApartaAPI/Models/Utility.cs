@@ -7,9 +7,13 @@ public partial class Utility
 {
     public string UtilityId { get; set; } = null!;
 
-    public string? Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
+
+    public string? Location { get; set; }
+
+    public double? PeriodTime { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

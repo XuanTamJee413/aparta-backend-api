@@ -1,5 +1,4 @@
-﻿
-using ApartaAPI.Models;
+﻿using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.Services; // Ensure correct namespace for DTOs
@@ -31,7 +30,7 @@ namespace ApartaAPI.Services
 		{
 			ServiceId = dto.ServiceId ?? Guid.NewGuid().ToString(), 
 			Name = dto.Name,
-			Price = dto.Price,
+			Price = dto.Price ?? 0m,
 			CreatedAt = DateTime.UtcNow,
 			UpdatedAt = DateTime.UtcNow
 		};
@@ -70,7 +69,7 @@ namespace ApartaAPI.Services
 			}
 
 			existingService.Name = serviceDto.Name;
-			existingService.Price = serviceDto.Price;
+			existingService.Price = serviceDto.Price ?? 0m;
 			existingService.UpdatedAt = DateTime.UtcNow; 
 
 			var updatedService = await _serviceRepository.UpdateAsync(existingService);

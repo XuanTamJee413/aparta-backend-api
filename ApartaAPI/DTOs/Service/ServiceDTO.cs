@@ -3,7 +3,7 @@
 	public sealed record ServiceDto(
 		string ServiceId,
 		string? Name,
-		double? Price,
+		decimal? Price,
 		DateTime? CreatedAt,
 		DateTime? UpdatedAt
 	);
@@ -11,11 +11,11 @@
 	public sealed record ServiceCreateDto(
 		string? ServiceId,
 		string? Name,
-		double? Price
+		decimal? Price
 	);
 
 	public sealed record ServiceUpdateDto(
 		string? Name,
-		double? Price
+		decimal? Price
 	);
 }

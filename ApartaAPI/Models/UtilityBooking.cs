@@ -5,7 +5,7 @@ namespace ApartaAPI.Models;
 
 public partial class UtilityBooking
 {
-    public string Id { get; set; } = null!;
+    public string UtilityBookingId { get; set; } = null!;
 
     public string? UtilityId { get; set; }
 

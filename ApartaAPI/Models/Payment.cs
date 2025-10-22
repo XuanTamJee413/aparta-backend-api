@@ -13,7 +13,7 @@ public partial class Payment
 
     public string? ReceiptId { get; set; }
 
-    public string? OrderId { get; set; }
+    public string? SubscriptionId { get; set; }
 
     public DateOnly? PaymentDate { get; set; }
 
@@ -23,7 +23,7 @@ public partial class Payment
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Order? Order { get; set; }
-
     public virtual Receipt? Receipt { get; set; }
+
+    public virtual Subscription? Subscription { get; set; }
 }

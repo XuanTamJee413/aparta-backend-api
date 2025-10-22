@@ -5,7 +5,7 @@ namespace ApartaAPI.Models;
 
 public partial class FeePeriod
 {
-    public string Id { get; set; } = null!;
+    public string FeePeriodId { get; set; } = null!;
 
     public string? ApartmentId { get; set; }
 

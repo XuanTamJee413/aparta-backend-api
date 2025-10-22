@@ -47,7 +47,7 @@ namespace ApartaAPI
             builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
             builder.Services.AddScoped<IVisitorService, VisitorService>();
             builder.Services.AddScoped<IVisitLogService, VisitLogService>();
-
+            builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

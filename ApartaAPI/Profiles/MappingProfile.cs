@@ -1,4 +1,5 @@
 using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
@@ -33,6 +34,12 @@ namespace ApartaAPI.Profiles
             CreateMap<VisitLogCreateDto, VisitLog>();
             CreateMap<VisitLogUpdateDto, VisitLog>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Asset, AssetDto>();
+            CreateMap<AssetCreateDto, Asset>();
+            CreateMap<AssetUpdateDto, Asset>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
         }
     }
 }

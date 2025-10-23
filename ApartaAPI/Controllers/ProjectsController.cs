@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ApartaAPI.DTOs.Projects;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Require authentication for all endpoints
+    [Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService _service;
@@ -22,50 +20,68 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Projects
         [HttpGet]
-        [Authorize(Policy = "StaffOrAdmin")] // Only staff and admin can view all projects
-        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects()
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProjectDto>>>> GetProjects(
+            [FromQuery] ProjectQueryParameters query)
         {
-            var projects = await _service.GetAllAsync();
-            return Ok(projects);
+            var response = await _service.GetAllAsync(query);
+            // Luôn trả về 200 OK. FE sẽ đọc cờ "Succeeded"
+            return Ok(response);
         }
 
         // GET: api/Projects/{id}
         [HttpGet("{id}")]
-        [Authorize(Policy = "ResidentOrAbove")] // All authenticated users can view specific project
-        public async Task<ActionResult<ProjectDto>> GetProject(string id)
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<ActionResult<ApiResponse<ProjectDto>>> GetProject(string id)
         {
-            var project = await _service.GetByIdAsync(id);
-            if (project == null) return NotFound();
-            return Ok(project);
+            var response = await _service.GetByIdAsync(id);
+
+            if (!response.Succeeded)
+            {
+                return NotFound(response); // 404
+            }
+
+            return Ok(response); // 200
         }
 
         // POST: api/Projects
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")] // Only admin can create projects
-        public async Task<ActionResult<ProjectDto>> PostProject([FromBody] ProjectCreateDto request)
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<ActionResult<ApiResponse<ProjectDto>>> PostProject([FromBody] ProjectCreateDto request)
         {
-            var created = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetProject), new { id = created.ProjectId }, created);
+            var response = await _service.CreateAsync(request);
+
+            if (!response.Succeeded)
+            {
+                return BadRequest(response); // 400
+            }
+
+            // 201 Created
+            return CreatedAtAction(
+                nameof(GetProject),
+                new { id = response.Data!.ProjectId },
+                response
+            );
         }
 
         // PUT: api/Projects/{id}
         [HttpPut("{id}")]
-        [Authorize(Policy = "AdminOnly")] // Only admin can update projects
-        public async Task<IActionResult> PutProject(string id, [FromBody] ProjectUpdateDto request)
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<ActionResult<ApiResponse>> PutProject(string id, [FromBody] ProjectUpdateDto request)
         {
-            var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
-            return NoContent();
-        }
+            var response = await _service.UpdateAsync(id, request);
 
-        // DELETE: api/Projects/{id}
-        [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminOnly")] // Only admin can delete projects
-        public async Task<IActionResult> DeleteProject(string id)
-        {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return NoContent();
+            if (!response.Succeeded)
+            {
+                if (response.Message == "SM01")
+                {
+                    return NotFound(response); // 404
+                }
+
+                return BadRequest(response); // 400
+            }
+
+            return Ok(response); // 200 (thay vì 204 NoContent, để trả về SM03)
         }
     }
 }

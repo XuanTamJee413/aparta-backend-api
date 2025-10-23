@@ -14,8 +14,10 @@ namespace ApartaAPI.Profiles
             CreateMap<ProjectCreateDto, Project>();
 
             CreateMap<ProjectUpdateDto, Project>()
+                .ForMember(dest => dest.ProjectCode, opt => opt.Ignore())
+                .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            
+
             CreateMap<ProfileUpdateDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.RoleId, opt => opt.Ignore())

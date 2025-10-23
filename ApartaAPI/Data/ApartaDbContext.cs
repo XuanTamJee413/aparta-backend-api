@@ -761,6 +761,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
 
             entity.HasOne(d => d.Admin).WithMany(p => p.Projects)
                 .HasForeignKey(d => d.AdminId)

@@ -1,0 +1,52 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ApartaAPI.DTOs.ApartmentMembers
+{
+    public class ApartmentMemberDto
+    {
+        public string ApartmentMemberId { get; set; }
+        public string? ApartmentId { get; set; }
+        public string? Name { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? IdNumber { get; set; }
+        public string? Gender { get; set; }
+        public DateOnly? DateOfBirth { get; set; }
+        public bool? IsOwned { get; set; }
+        public string? FamilyRole { get; set; }
+        public DateTime? CreatedAt { get; set; }
+    }
+
+    public class ApartmentMemberCreateDto
+    {
+        [Required]
+        public string ApartmentId { get; set; }
+
+        [Required]
+        public string Name { get; set; }
+
+        public string? PhoneNumber { get; set; }
+        public string? IdNumber { get; set; }
+        public string? Gender { get; set; }
+        public DateOnly? DateOfBirth { get; set; }
+        public bool? IsOwned { get; set; }
+        public string? FamilyRole { get; set; }
+        public string? FaceImageUrl { get; set; }
+        public string? Info { get; set; }
+        public string? Nationality { get; set; }
+    }
+
+    public class ApartmentMemberUpdateDto
+    {
+
+        public string? Name { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? IdNumber { get; set; }
+        public string? Gender { get; set; }
+        public DateOnly? DateOfBirth { get; set; }
+        public bool? IsOwned { get; set; }
+        public string? FamilyRole { get; set; }
+        public string? FaceImageUrl { get; set; }
+        public string? Info { get; set; }
+        public string? Nationality { get; set; }
+    }
+}

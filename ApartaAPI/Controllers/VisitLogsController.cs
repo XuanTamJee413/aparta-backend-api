@@ -60,5 +60,13 @@ namespace ApartaAPI.Controllers
             if (!deleted) return NotFound();
             return NoContent();
         }
+
+        // GET: api/VisitLogs/apartment/{apartmentId}
+        [HttpGet("apartment/{apartmentId}")]
+        public async Task<ActionResult<IEnumerable<VisitLogHistoryDto>>> GetVisitLogsForApartment(string apartmentId)
+        {
+            var logs = await _service.GetByApartmentIdAsync(apartmentId);
+            return Ok(logs);
+        }
     }
 }

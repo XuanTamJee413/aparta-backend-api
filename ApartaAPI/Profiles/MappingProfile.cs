@@ -36,7 +36,10 @@ namespace ApartaAPI.Profiles
             CreateMap<VisitLogCreateDto, VisitLog>();
             CreateMap<VisitLogUpdateDto, VisitLog>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-            
+
+            CreateMap<VisitLog, VisitLogHistoryDto>()
+                .ForMember(dest => dest.VisitorName, opt => opt.MapFrom(src => src.Visitor.FullName));
+
             CreateMap<ProfileUpdateDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.RoleId, opt => opt.Ignore())

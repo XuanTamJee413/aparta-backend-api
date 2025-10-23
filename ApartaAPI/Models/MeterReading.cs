@@ -5,23 +5,23 @@ namespace ApartaAPI.Models;
 
 public partial class MeterReading
 {
-    public string Id { get; set; } = null!;
+    public string MeterReadingId { get; set; } = null!;
 
-    public string? ApartmentId { get; set; }
+    public string ApartmentId { get; set; } = null!;
 
-    public string? MeterId { get; set; }
+    public string MeterId { get; set; } = null!;
 
-    public int? PreviousReading { get; set; }
+    public int PreviousReading { get; set; }
 
-    public int? CurrentReading { get; set; }
+    public int CurrentReading { get; set; }
 
-    public DateOnly? ReadingDate { get; set; }
+    public DateOnly ReadingDate { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Apartment? Apartment { get; set; }
+    public virtual Apartment Apartment { get; set; } = null!;
 
-    public virtual Meter? Meter { get; set; }
+    public virtual Meter Meter { get; set; } = null!;
 }

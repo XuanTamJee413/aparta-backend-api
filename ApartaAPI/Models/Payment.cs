@@ -7,23 +7,21 @@ public partial class Payment
 {
     public string PaymentId { get; set; } = null!;
 
-    public double? Amount { get; set; }
+    public string InvoiceId { get; set; } = null!;
 
-    public string? Type { get; set; }
+    public decimal Amount { get; set; }
 
-    public string? ReceiptId { get; set; }
+    public string PaymentMethod { get; set; } = null!;
 
-    public string? OrderId { get; set; }
+    public DateOnly PaymentDate { get; set; }
 
-    public DateOnly? PaymentDate { get; set; }
+    public string Status { get; set; } = null!;
 
-    public string? Status { get; set; }
+    public string? PaymentCode { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Order? Order { get; set; }
-
-    public virtual Receipt? Receipt { get; set; }
+    public virtual Invoice Invoice { get; set; } = null!;
 }

@@ -7,7 +7,7 @@ public partial class Visitor
 {
     public string VisitorId { get; set; } = null!;
 
-    public string? FullName { get; set; }
+    public string FullName { get; set; } = null!;
 
     public string? Phone { get; set; }
 

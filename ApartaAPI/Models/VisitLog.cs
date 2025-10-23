@@ -5,21 +5,21 @@ namespace ApartaAPI.Models;
 
 public partial class VisitLog
 {
-    public string Id { get; set; } = null!;
+    public string VisitLogId { get; set; } = null!;
 
-    public string? ApartmentId { get; set; }
+    public string ApartmentId { get; set; } = null!;
 
-    public string? VisitorId { get; set; }
+    public string VisitorId { get; set; } = null!;
 
-    public DateTime? CheckinTime { get; set; }
+    public DateTime CheckinTime { get; set; }
 
     public DateTime? CheckoutTime { get; set; }
 
     public string? Purpose { get; set; }
 
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
 
-    public virtual Apartment? Apartment { get; set; }
+    public virtual Apartment Apartment { get; set; } = null!;
 
-    public virtual Visitor? Visitor { get; set; }
+    public virtual Visitor Visitor { get; set; } = null!;
 }

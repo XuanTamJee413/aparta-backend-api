@@ -7,11 +7,11 @@ public partial class News
 {
     public string NewsId { get; set; } = null!;
 
-    public string? Title { get; set; }
+    public string AuthorUserId { get; set; } = null!;
 
-    public string? Content { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string? ManagementStaffId { get; set; }
+    public string Content { get; set; } = null!;
 
     public DateTime? PublishedDate { get; set; }
 
@@ -19,5 +19,5 @@ public partial class News
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual User? ManagementStaff { get; set; }
+    public virtual User AuthorUser { get; set; } = null!;
 }

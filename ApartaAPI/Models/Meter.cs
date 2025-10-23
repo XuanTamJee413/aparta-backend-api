@@ -7,9 +7,9 @@ public partial class Meter
 {
     public string MeterId { get; set; } = null!;
 
-    public string? Type { get; set; }
+    public string Type { get; set; } = null!;
 
-    public string? Status { get; set; }
+    public string Status { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
 

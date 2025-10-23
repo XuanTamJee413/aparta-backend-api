@@ -7,15 +7,15 @@ public partial class Building
 {
     public string BuildingId { get; set; } = null!;
 
-    public string? BuildingCode { get; set; }
+    public string ProjectId { get; set; } = null!;
 
-    public string? Name { get; set; }
+    public string BuildingCode { get; set; } = null!;
+
+    public string Name { get; set; } = null!;
 
     public int? NumResidents { get; set; }
 
     public int? NumApartments { get; set; }
-
-    public string? ProjectId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -27,5 +27,7 @@ public partial class Building
 
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 
-    public virtual Project? Project { get; set; }
+    public virtual ICollection<PriceQuotation> PriceQuotations { get; set; } = new List<PriceQuotation>();
+
+    public virtual Project Project { get; set; } = null!;
 }

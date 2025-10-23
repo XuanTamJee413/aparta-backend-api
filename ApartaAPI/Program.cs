@@ -6,6 +6,10 @@ using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using System;
 
 namespace ApartaAPI
@@ -43,12 +47,65 @@ namespace ApartaAPI
             // Repositories & Services
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
 
             builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
             builder.Services.AddScoped<IVisitorService, VisitorService>();
             builder.Services.AddScoped<IVisitLogService, VisitLogService>();
             builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddEndpointsApiExplorer();
+
+            // JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
+            var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
+            var audience = jwtSettings["Audience"] ?? "ApartaAPI";
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
+            // Authorization Policies
+            builder.Services.AddAuthorization(options =>
+            {
+                // Admin policy - only admin role
+                options.AddPolicy("AdminOnly", policy =>
+                    policy.RequireRole("admin"));
+
+                // Staff policy - admin and staff roles
+                options.AddPolicy("StaffOrAdmin", policy =>
+                    policy.RequireRole("admin", "staff"));
+
+                // Resident policy - admin, staff, and resident roles
+                options.AddPolicy("ResidentOrAbove", policy =>
+                    policy.RequireRole("admin", "staff", "resident"));
+
+                // Specific role policies
+                options.AddPolicy("AdminPolicy", policy =>
+                    policy.RequireRole("admin"));
+
+                options.AddPolicy("StaffPolicy", policy =>
+                    policy.RequireRole("staff"));
+
+                options.AddPolicy("ResidentPolicy", policy =>
+                    policy.RequireRole("resident"));
+            });
+
+			builder.Services.AddEndpointsApiExplorer();
+
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
@@ -59,7 +116,11 @@ namespace ApartaAPI
                 app.UseSwaggerUI();
             }
 
+
             app.UseCors(myAllowSpecificOrigins);
+
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
             app.MapControllers();

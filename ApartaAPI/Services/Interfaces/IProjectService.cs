@@ -1,3 +1,4 @@
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.Models;
 using System.Collections.Generic;
@@ -7,10 +8,9 @@ namespace ApartaAPI.Services.Interfaces
 {
     public interface IProjectService
     {
-        Task<IEnumerable<ProjectDto>> GetAllAsync();
-        Task<ProjectDto?> GetByIdAsync(string id);
-        Task<ProjectDto> CreateAsync(ProjectCreateDto dto);
-        Task<bool> UpdateAsync(string id, ProjectUpdateDto dto);
-        Task<bool> DeleteAsync(string id);
+        Task<ApiResponse<IEnumerable<ProjectDto>>> GetAllAsync(ProjectQueryParameters query);
+        Task<ApiResponse<ProjectDto>> GetByIdAsync(string id);
+        Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto);
+        Task<ApiResponse> UpdateAsync(string id, ProjectUpdateDto dto);
     }
 }

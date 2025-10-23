@@ -4,6 +4,10 @@ using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
+﻿using AutoMapper;
+using ApartaAPI.Models;
+using ApartaAPI.DTOs.Projects;
+using ApartaAPI.DTOs.Auth;
 
 namespace ApartaAPI.Profiles
 {
@@ -15,7 +19,6 @@ namespace ApartaAPI.Profiles
 
             CreateMap<ProjectCreateDto, Project>();
 
-            // Only map non-null values on update
             CreateMap<ProjectUpdateDto, Project>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
@@ -33,6 +36,17 @@ namespace ApartaAPI.Profiles
             CreateMap<VisitLogCreateDto, VisitLog>();
             CreateMap<VisitLogUpdateDto, VisitLog>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            
+            CreateMap<ProfileUpdateDto, User>()
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+                .ForMember(dest => dest.RoleId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.Phone, opt => opt.Ignore())
+                .ForMember(dest => dest.Email, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<User, UserInfoResponse>()
+                .ForMember(dest => dest.Role, opt => opt.Ignore());
         }
     }
 }

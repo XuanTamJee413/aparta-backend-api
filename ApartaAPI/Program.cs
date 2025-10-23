@@ -29,13 +29,15 @@ namespace ApartaAPI
             // AutoMapper
             builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-            // Repositories & Services
+            // Repositories & Service
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IProjectService, ProjectService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+			builder.Services.AddScoped<IServiceService, ServiceService>();
+			builder.Services.AddScoped<IUtilityService, UtilityService>();
 
-            // JWT Authentication
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+			// JWT Authentication
+			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
             var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
             var audience = jwtSettings["Audience"] ?? "ApartaAPI";

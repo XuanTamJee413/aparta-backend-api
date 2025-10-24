@@ -2,11 +2,9 @@ using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
+using ApartaAPI.DTOs.News;
 using ApartaAPI.Models;
 using AutoMapper;
-﻿using AutoMapper;
-using ApartaAPI.Models;
-using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.Auth;
 
 namespace ApartaAPI.Profiles
@@ -64,6 +62,13 @@ namespace ApartaAPI.Profiles
                     opt => opt.MapFrom(src => src.Email)) 
                 .ForAllMembers(opt => opt.Condition((src, dest,
                     srcMember) => srcMember != null));
+
+            // News mappings
+            CreateMap<News, NewsDto>()
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.AuthorUser.Name));
+            CreateMap<CreateNewsDto, News>();
+            CreateMap<UpdateNewsDto, News>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

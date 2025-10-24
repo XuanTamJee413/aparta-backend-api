@@ -1,7 +1,7 @@
 ﻿using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
-using ApartaAPI.DTOs.Services; // Ensure correct namespace for DTOs
+using ApartaAPI.DTOs.Services;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
@@ -18,19 +18,23 @@ namespace ApartaAPI.Services
 			_serviceRepository = serviceRepository;
 		}
 
+		// ĐÃ SỬA: Cập nhật MapToDto để bao gồm Status
 		private ServiceDto MapToDto(Service service) => new ServiceDto(
 			service.ServiceId,
 			service.Name,
 			service.Price,
+			service.Status, // Bao gồm Status
 			service.CreatedAt,
 			service.UpdatedAt
 		);
 
+		// ĐÃ SỬA: Cập nhật MapToModel để bao gồm Status
 		private Service MapToModel(ServiceCreateDto dto) => new Service
 		{
-			ServiceId = dto.ServiceId ?? Guid.NewGuid().ToString(), 
-			Name = dto.Name,
+			ServiceId = dto.ServiceId ?? Guid.NewGuid().ToString(),
+			Name = dto.Name ?? string.Empty, // Xử lý null
 			Price = dto.Price ?? 0m,
+			Status = dto.Status ?? "Available", // Gán giá trị mặc định nếu Status là null
 			CreatedAt = DateTime.UtcNow,
 			UpdatedAt = DateTime.UtcNow
 		};
@@ -59,18 +63,27 @@ namespace ApartaAPI.Services
 			return MapToDto(addedService);
 		}
 
+		// ĐÃ SỬA: Cập nhật UpdateServiceAsync để xử lý Status
 		public async Task<ServiceDto?> UpdateServiceAsync(string id, ServiceUpdateDto serviceDto)
 		{
 			var existingService = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == id);
 
 			if (existingService == null)
 			{
-				return null; 
+				return null;
 			}
 
-			existingService.Name = serviceDto.Name;
-			existingService.Price = serviceDto.Price ?? 0m;
-			existingService.UpdatedAt = DateTime.UtcNow; 
+			// Cập nhật các trường
+			existingService.Name = serviceDto.Name ?? existingService.Name;
+			existingService.Price = serviceDto.Price ?? existingService.Price;
+
+			// Cập nhật Status
+			if (serviceDto.Status != null)
+			{
+				existingService.Status = serviceDto.Status;
+			}
+
+			existingService.UpdatedAt = DateTime.UtcNow;
 
 			var updatedService = await _serviceRepository.UpdateAsync(existingService);
 			await _serviceRepository.SaveChangesAsync();

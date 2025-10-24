@@ -18,12 +18,13 @@ namespace ApartaAPI.Controllers
             _managerService = managerService;
         }
 
-        // GET: api/Manager - cái này lấy tất cả manager
+        // GET: api/Manager - Lấy danh sách managers với search
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<ManagerDto>>), 200)]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ManagerDto>>>> GetAllManagers()
+        public async Task<ActionResult<ApiResponse<IEnumerable<ManagerDto>>>> GetAllManagers([FromQuery] string? searchTerm)
         {
-            var response = await _managerService.GetAllManagersAsync();
+            var query = new ManagerSearch(searchTerm);
+            var response = await _managerService.GetAllManagersAsync(query);
             return Ok(response);
         }
 

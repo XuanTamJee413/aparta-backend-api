@@ -3,6 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.DTOs.ApartmentMembers
 {
+    public sealed record ManagerSearch(
+        string? SearchTerm  //feild nhập dể search 
+    );
+
     public class ManagerDto
     {
         public string? UserId { get; set; }

@@ -19,12 +19,19 @@ namespace ApartaAPI.Services
             _roleRepository = roleRepository;
         }
 
-        public async Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync()
+        public async Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync(ManagerSearch query)
         {
+            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim().ToLowerInvariant();
 
             var managers = await _userRepository.FindAsync(u =>
                 u.RoleId == MANAGEMENT_ROLE_ID &&
-                !u.IsDeleted);
+                !u.IsDeleted &&
+                (searchTerm == null ||
+                    (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
+                    (u.StaffCode != null && u.StaffCode.ToLower().Contains(searchTerm)))
+            );
 
             if (!managers.Any())
             {
@@ -34,22 +41,29 @@ namespace ApartaAPI.Services
                 );
             }
 
-            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == MANAGEMENT_ROLE_ID);
+            var sortedManagers = managers.OrderByDescending(m => m.CreatedAt);
 
-            var managerDtos = managers.Select(m => new ManagerDto
+            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == MANAGEMENT_ROLE_ID);
+            var roleName = role?.RoleName ?? "management";
+
+            var managerDtos = sortedManagers.Select(m => new ManagerDto
             {
                 UserId = m.UserId,
                 StaffCode = m.StaffCode,
                 Name = m.Name,
                 Email = m.Email,
-
                 Phone = m.Phone,
                 AvatarUrl = m.AvatarUrl,
+                Role = roleName,
                 Status = m.Status,
+                LastLoginAt = m.LastLoginAt,
+                PermissionGroup = null
             }).ToList();
 
             return ApiResponse<IEnumerable<ManagerDto>>.Success(managerDtos);
         }
+
+
 
         public async Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto)
         {

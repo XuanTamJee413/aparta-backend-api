@@ -52,7 +52,7 @@ namespace ApartaAPI.Services
                     VisitorId = entity.VisitorId,
                     ApartmentId = dto.ApartmentId,
                     Purpose = dto.Purpose,
-                    CheckinTime = dto.CheckinTime,
+                    CheckinTime = dto.CheckinTime ?? DateTime.Now,
                     Status = "Pending"
                 };
 

@@ -11,6 +11,15 @@ namespace ApartaAPI.DTOs.VisitLogs
         string? Purpose,
         string? Status
     );
+    public class VisitLogHistoryDto
+    {
+        public string VisitLogId { get; set; } = null!;
+        public string? VisitorName { get; set; }
+        public string? Purpose { get; set; }
+        public DateTime? CheckinTime { get; set; }
+        public DateTime? CheckoutTime { get; set; }
+        public string? Status { get; set; }
+    }
 
     public sealed record VisitLogCreateDto(
         string? ApartmentId,

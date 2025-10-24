@@ -9,8 +9,6 @@ namespace ApartaAPI.Services.Interfaces
         Task<VisitLogDto> CreateAsync(VisitLogCreateDto dto);
         Task<bool> UpdateAsync(string id, VisitLogUpdateDto dto);
         Task<bool> DeleteAsync(string id);
-
-        // Task<IEnumerable<VisitLogDto>> GetLogsByVisitorIdAsync(string visitorId);
-        // Task<IEnumerable<VisitLogDto>> GetLogsByApartmentIdAsync(string apartmentId);
+        Task<IEnumerable<VisitLogHistoryDto>> GetByApartmentIdAsync(string apartmentId);
     }
 }

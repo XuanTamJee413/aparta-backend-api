@@ -35,27 +35,28 @@ namespace ApartaAPI.Services
             return _mapper.Map<VisitorDto?>(entity);
         }
 
+        // tamnx: create a visitor with status pending waiting for staff accepts, both create vissitor and visitlog pending
         public async Task<VisitorDto> CreateAsync(VisitorCreateDto dto)
         {
             var entity = _mapper.Map<Visitor>(dto);
             if (string.IsNullOrWhiteSpace(entity.VisitorId))
                 entity.VisitorId = Guid.NewGuid().ToString("N");
 
-            await _repository.AddAsync(entity);
+            await _repository.AddAsync(entity); // add to visitor
 
             if (!string.IsNullOrWhiteSpace(dto.ApartmentId))
             {
                 var visitLog = new VisitLog
                 {
-                    Id = Guid.NewGuid().ToString("N"),
-                    VisitorId = entity.VisitorId, 
+                    VisitLogId = Guid.NewGuid().ToString("N"),
+                    VisitorId = entity.VisitorId,
                     ApartmentId = dto.ApartmentId,
                     Purpose = dto.Purpose,
-                    CheckinTime = DateTime.UtcNow,
+                    CheckinTime = dto.CheckinTime,
                     Status = "Pending"
                 };
 
-                await _visitLogRepository.AddAsync(visitLog);
+                await _visitLogRepository.AddAsync(visitLog); // add to visit log
             }
 
             await _repository.SaveChangesAsync();

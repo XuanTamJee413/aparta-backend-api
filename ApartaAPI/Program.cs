@@ -50,11 +50,13 @@ namespace ApartaAPI
             builder.Services.AddScoped<IAuthService, AuthService>();
 
 
+
             builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
             builder.Services.AddScoped<IVisitorService, VisitorService>();
             builder.Services.AddScoped<IVisitLogService, VisitLogService>();
             builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddEndpointsApiExplorer();
+
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -104,7 +106,9 @@ namespace ApartaAPI
                     policy.RequireRole("resident"));
             });
 
+
 			builder.Services.AddEndpointsApiExplorer();
+
 
             builder.Services.AddSwaggerGen();
 
@@ -117,10 +121,12 @@ namespace ApartaAPI
             }
 
 
+
             app.UseCors(myAllowSpecificOrigins);
 
 
             app.UseAuthentication();
+
 
             app.UseAuthorization();
             app.MapControllers();

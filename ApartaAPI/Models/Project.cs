@@ -21,6 +21,8 @@ public partial class Project
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool IsActive { get; set; }
+
     public virtual User? Admin { get; set; }
 
     public virtual ICollection<Building> Buildings { get; set; } = new List<Building>();

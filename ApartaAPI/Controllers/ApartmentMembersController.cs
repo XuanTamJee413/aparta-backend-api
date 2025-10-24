@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.Services.Interfaces;
+using ApartaAPI.DTOs.Common;
 
 namespace ApartaAPI.Controllers
 {
@@ -16,10 +17,11 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ApartmentMemberDto>>> GetApartmentMembers()
+        public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentMemberDto>>>> GetApartmentMembers(
+            [FromQuery] ApartmentMemberQueryParameters query)
         {
-            var members = await _service.GetAllAsync();
-            return Ok(members);
+            var apiResponse = await _service.GetAllAsync(query);
+            return Ok(apiResponse); 
         }
 
         [HttpGet("{id}")]

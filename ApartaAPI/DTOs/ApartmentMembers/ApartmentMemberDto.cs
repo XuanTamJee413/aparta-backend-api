@@ -2,6 +2,13 @@
 
 namespace ApartaAPI.DTOs.ApartmentMembers
 {
+    public sealed record ApartmentMemberQueryParameters(
+        bool? IsOwned,
+        string? SearchTerm,
+        string? SortBy,
+        string? SortOrder
+    );
+
     public class ApartmentMemberDto
     {
         public string ApartmentMemberId { get; set; }

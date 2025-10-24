@@ -3,6 +3,8 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Common;
+using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
 {
@@ -17,10 +19,58 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<ApartmentMemberDto>> GetAllAsync()
+        public async Task<ApiResponse<IEnumerable<ApartmentMemberDto>>> GetAllAsync(ApartmentMemberQueryParameters query)
         {
-            var entities = await _repository.GetAllAsync();
-            return _mapper.Map<IEnumerable<ApartmentMemberDto>>(entities);
+            
+
+            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim().ToLowerInvariant();
+
+
+            Expression<Func<ApartmentMember, bool>> predicate = m =>
+                (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value) &&
+
+                (searchTerm == null ||
+                    (m.Name != null && m.Name.ToLower().Contains(searchTerm)) ||
+                    (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm)) ||
+                    (m.IdNumber != null && m.IdNumber.ToLower().Contains(searchTerm)));
+                   
+
+
+
+
+            var entities = await _repository.FindAsync(predicate);
+
+            
+
+            var validEntities = entities.Where(m => m != null).ToList();
+
+            IOrderedEnumerable<ApartmentMember> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "name":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(m => m.Name ?? string.Empty)
+                        : validEntities.OrderBy(m => m.Name ?? string.Empty);
+                    break;
+
+                default:
+                    sortedEntities = validEntities.OrderBy(m => m.Name ?? string.Empty);
+                    break;
+            }
+
+            
+            var dtos = _mapper.Map<IEnumerable<ApartmentMemberDto>>(sortedEntities);
+
+            if (!dtos.Any())
+            {
+                return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(new List<ApartmentMemberDto>(), "SM01");
+            }
+
+            return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(dtos);
         }
 
         public async Task<ApartmentMemberDto?> GetByIdAsync(string id)

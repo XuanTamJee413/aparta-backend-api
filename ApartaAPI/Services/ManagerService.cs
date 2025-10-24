@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.ApartmentMembers;
+﻿using ApartaAPI.Data;
+using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
@@ -11,12 +12,17 @@ namespace ApartaAPI.Services
     {
         private readonly IRepository<User> _userRepository;
         private readonly IRepository<Role> _roleRepository;
+        private readonly ApartaDbContext _context;
         private const string MANAGEMENT_ROLE_ID = "37A0E887-3CD5-4DF1-9380-25DB794199A2";
 
-        public ManagerService(IRepository<User> userRepository, IRepository<Role> roleRepository)
+        public ManagerService(
+            IRepository<User> userRepository, 
+            IRepository<Role> roleRepository,
+            ApartaDbContext context)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _context = context;
         }
 
         public async Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync(ManagerSearch query)
@@ -204,6 +210,48 @@ namespace ApartaAPI.Services
             };
 
             return ApiResponse<ManagerDto>.Success(resultDto, ApiResponse.SM03_UPDATE_SUCCESS);
+        }
+
+        public async Task<ApiResponse> DeleteManagerAsync(string userId)
+        {
+            var manager = await _userRepository.FirstOrDefaultAsync(u => 
+                u.UserId == userId && 
+                u.RoleId == MANAGEMENT_ROLE_ID && 
+                !u.IsDeleted);
+
+            if (manager == null)
+            {
+                return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
+
+            if (manager.Status == "inactive")
+            {
+                return ApiResponse.Fail("Manager đã ở trạng thái inactive.");
+            }
+
+
+            //kieerm tra xem cos vc j trong assign không
+            var hasActiveAssignments = await _context.TaskAssignments
+                .Include(ta => ta.Task)
+                .AnyAsync(ta => 
+                    (ta.AssigneeUserId == userId || ta.AssignerUserId == userId) &&
+                    ta.Task.Status != "completed" && 
+                    ta.Task.Status != "cancelled");
+
+            if (hasActiveAssignments)
+            {
+                return ApiResponse.Fail(ApiResponse.SM21_DELETION_FAILED);
+            }
+
+            // xoá mềm 
+            manager.Status = "inactive";
+            manager.UpdatedAt = DateTime.UtcNow;
+
+            await _userRepository.UpdateAsync(manager);
+            await _userRepository.SaveChangesAsync();
+
+
+            return ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Manager");
         }
     }
 }

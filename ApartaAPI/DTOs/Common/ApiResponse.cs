@@ -10,7 +10,7 @@
         public const string SM02_REQUIRED = "This field is required.";
         public const string SM03_UPDATE_SUCCESS = "Information updated successfully.";
         public const string SM04_CREATE_SUCCESS = "New {objectName} added successfully.";
-        public const string SM05_DELETION_SUCCESS = "[Object Name] deleted successfully.";
+        public const string SM05_DELETION_SUCCESS = "{objectName} deleted successfully.";
         public const string SM06_TASK_ASSIGN_SUCCESS = "Task assigned successfully.";
         public const string SM07_LOGIN_FAIL = "Incorrect username or password. Please check again.";
         public const string SM08_EXCEEDED_LENGTH = "Exceeded maximum length of {max_length} characters.";
@@ -62,6 +62,23 @@
         }
 
         public static ApiResponse Success(string message = "") => new() { Succeeded = true, Message = message };
+
+        public static ApiResponse SuccessWithCode(string systemMessageCode, string? objectName = null)
+        {
+            string message = GetMessageFromCode(systemMessageCode);
+
+            if (systemMessageCode == SM04_CREATE_SUCCESS && !string.IsNullOrEmpty(objectName))
+            {
+                message = message.Replace("{objectName}", objectName);
+            }
+
+            if (systemMessageCode == SM05_DELETION_SUCCESS && !string.IsNullOrEmpty(objectName))
+            {
+                message = message.Replace("{objectName}", objectName);
+            }
+
+            return new() { Succeeded = true, Message = message };
+        }
 
         public static ApiResponse Fail(string code, string? fieldName = null)
         {

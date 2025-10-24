@@ -188,6 +188,28 @@ namespace ApartaAPI.Services
             if (!string.IsNullOrWhiteSpace(dto.Password)) 
                 manager.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
+            // Update Status (active, inactive)
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                // Check nếu manager có active assignments thì không cho chuyển sang inactive
+                if (dto.Status == "inactive" && manager.Status != "inactive")
+                {
+                    var hasActiveAssignments = await _context.TaskAssignments
+                        .Include(ta => ta.Task)
+                        .AnyAsync(ta => 
+                            (ta.AssigneeUserId == userId || ta.AssignerUserId == userId) &&
+                            ta.Task.Status != "completed" && 
+                            ta.Task.Status != "cancelled");
+
+                    if (hasActiveAssignments)
+                    {
+                        return ApiResponse<ManagerDto>.Fail(ApiResponse.SM21_DELETION_FAILED);
+                    }
+                }
+
+                manager.Status = dto.Status;
+            }
+
             manager.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(manager);
@@ -210,48 +232,6 @@ namespace ApartaAPI.Services
             };
 
             return ApiResponse<ManagerDto>.Success(resultDto, ApiResponse.SM03_UPDATE_SUCCESS);
-        }
-
-        public async Task<ApiResponse> DeleteManagerAsync(string userId)
-        {
-            var manager = await _userRepository.FirstOrDefaultAsync(u => 
-                u.UserId == userId && 
-                u.RoleId == MANAGEMENT_ROLE_ID && 
-                !u.IsDeleted);
-
-            if (manager == null)
-            {
-                return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
-            }
-
-            if (manager.Status == "inactive")
-            {
-                return ApiResponse.Fail("Manager đã ở trạng thái inactive.");
-            }
-
-
-            //kieerm tra xem cos vc j trong assign không
-            var hasActiveAssignments = await _context.TaskAssignments
-                .Include(ta => ta.Task)
-                .AnyAsync(ta => 
-                    (ta.AssigneeUserId == userId || ta.AssignerUserId == userId) &&
-                    ta.Task.Status != "completed" && 
-                    ta.Task.Status != "cancelled");
-
-            if (hasActiveAssignments)
-            {
-                return ApiResponse.Fail(ApiResponse.SM21_DELETION_FAILED);
-            }
-
-            // xoá mềm 
-            manager.Status = "inactive";
-            manager.UpdatedAt = DateTime.UtcNow;
-
-            await _userRepository.UpdateAsync(manager);
-            await _userRepository.SaveChangesAsync();
-
-
-            return ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Manager");
         }
     }
 }

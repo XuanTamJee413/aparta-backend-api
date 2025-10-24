@@ -77,23 +77,5 @@ namespace ApartaAPI.Controllers
 
             return Ok(response);
         }
-
-        // DELETE: api/Manager/{id} - Xóa manager (chuyển Active → Inactive)
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse>> DeleteManager(string id)
-        {
-            var response = await _managerService.DeleteManagerAsync(id);
-            
-            if (!response.Succeeded)
-            {
-                if (response.Message.Contains("No matching results"))
-                {
-                    return NotFound(response);
-                }
-                return BadRequest(response);
-            }
-
-            return Ok(response);
-        }
     }
 }

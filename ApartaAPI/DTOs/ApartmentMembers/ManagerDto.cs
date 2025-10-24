@@ -72,5 +72,7 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? StaffCode { get; init; }
 
         public string? AvatarUrl { get; init; }
+
+        public string? Status { get; init; } // active, inactive
     }
 }

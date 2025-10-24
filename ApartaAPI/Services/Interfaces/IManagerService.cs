@@ -8,6 +8,5 @@ namespace ApartaAPI.Services.Interfaces
         Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync(ManagerSearch search);
         Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto);
         Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto);
-        Task<ApiResponse> DeleteManagerAsync(string userId);
     }
 }

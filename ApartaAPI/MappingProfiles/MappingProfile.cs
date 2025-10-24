@@ -52,6 +52,18 @@ namespace ApartaAPI.Profiles
 
             CreateMap<User, UserInfoResponse>()
                 .ForMember(dest => dest.Role, opt => opt.Ignore());
+
+            CreateMap<User, ManagerDto>()
+                .ForMember(dest => dest.Role,
+                    opt => opt.MapFrom(src => src.Role.RoleName))
+                .ForMember(dest => dest.PermissionGroup,
+                    opt => opt.Ignore()) 
+                .ForMember(dest => dest.AvatarUrl,
+                    opt => opt.MapFrom(src => src.AvatarUrl))
+                .ForMember(dest => dest.Email,
+                    opt => opt.MapFrom(src => src.Email)) 
+                .ForAllMembers(opt => opt.Condition((src, dest,
+                    srcMember) => srcMember != null));
         }
     }
 }

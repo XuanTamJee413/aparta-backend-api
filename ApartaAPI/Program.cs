@@ -48,6 +48,7 @@ namespace ApartaAPI
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IProjectService, ProjectService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -100,6 +101,7 @@ namespace ApartaAPI
             builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
             builder.Services.AddScoped<IVisitorService, VisitorService>();
             builder.Services.AddScoped<IVisitLogService, VisitLogService>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

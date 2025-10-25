@@ -8,6 +8,7 @@ using AutoMapper;
 using ApartaAPI.Models;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.Auth;
+using ApartaAPI.DTOs.Assets;
 
 namespace ApartaAPI.Profiles
 {
@@ -52,6 +53,11 @@ namespace ApartaAPI.Profiles
 
             CreateMap<User, UserInfoResponse>()
                 .ForMember(dest => dest.Role, opt => opt.Ignore());
+
+            CreateMap<Asset, AssetDto>();
+            CreateMap<AssetCreateDto, Asset>();
+            CreateMap<AssetUpdateDto, Asset>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

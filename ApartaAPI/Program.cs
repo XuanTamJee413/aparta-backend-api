@@ -48,6 +48,7 @@ namespace ApartaAPI
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IProjectService, ProjectService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IBuildingService, BuildingService>();
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -112,6 +113,7 @@ namespace ApartaAPI
                 app.UseSwaggerUI();
             }
 
+            app.UseRouting();
             app.UseCors(myAllowSpecificOrigins);
 
             app.UseAuthentication();

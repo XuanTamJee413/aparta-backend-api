@@ -3,6 +3,8 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
+using System;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ApartaAPI.Services
 {
@@ -52,7 +54,7 @@ namespace ApartaAPI.Services
                     VisitorId = entity.VisitorId,
                     ApartmentId = dto.ApartmentId,
                     Purpose = dto.Purpose,
-                    CheckinTime = dto.CheckinTime,
+                    CheckinTime = dto.CheckinTime ?? DateTime.Now,
                     Status = "Pending"
                 };
 

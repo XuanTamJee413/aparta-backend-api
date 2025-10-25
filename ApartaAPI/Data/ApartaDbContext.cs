@@ -117,6 +117,8 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
 
+            entity.ToTable(tb => tb.UseSqlOutputClause(false));
+
             entity.HasOne(d => d.Building).WithMany(p => p.Apartments)
                 .HasForeignKey(d => d.BuildingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -172,6 +174,8 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+
+            entity.ToTable(tb => tb.UseSqlOutputClause(false));
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.ApartmentMembers)
                 .HasForeignKey(d => d.ApartmentId)
@@ -244,6 +248,9 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+
+            entity.ToTable(tb => tb.UseSqlOutputClause(false));
 
             entity.HasOne(d => d.Project).WithMany(p => p.Buildings)
                 .HasForeignKey(d => d.ProjectId)

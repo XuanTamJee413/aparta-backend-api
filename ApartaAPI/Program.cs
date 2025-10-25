@@ -99,8 +99,13 @@ namespace ApartaAPI
 				options.AddPolicy("AdminPolicy", policy =>
 					policy.RequireRole("admin"));
 
+
 				options.AddPolicy("StaffPolicy", policy =>
 					policy.RequireRole("staff"));
+
+      
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+
 
 				options.AddPolicy("ResidentPolicy", policy =>
 					policy.RequireRole("resident"));

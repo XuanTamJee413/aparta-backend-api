@@ -36,6 +36,19 @@ namespace ApartaAPI.Profiles
               .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<VisitLog, VisitLogDto>();
+            CreateMap<VisitLog, VisitLogStaffViewDto>() 
+                .ForMember(
+                    dest => dest.ApartmentCode,
+                    opt => opt.MapFrom(src => src.Apartment.Code)
+                )
+                .ForMember(
+                    dest => dest.VisitorFullName,
+                    opt => opt.MapFrom(src => src.Visitor.FullName) 
+                )
+                .ForMember(
+                    dest => dest.VisitorIdNumber,
+                    opt => opt.MapFrom(src => src.Visitor.IdNumber)
+                );
             CreateMap<VisitLogCreateDto, VisitLog>();
             CreateMap<VisitLogUpdateDto, VisitLog>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));

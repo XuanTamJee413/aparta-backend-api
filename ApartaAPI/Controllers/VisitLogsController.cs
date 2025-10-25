@@ -1,9 +1,10 @@
-﻿using System;
+﻿using ApartaAPI.DTOs.VisitLogs;
+using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using ApartaAPI.DTOs.VisitLogs;
-using ApartaAPI.Services.Interfaces;
 
 namespace ApartaAPI.Controllers
 {
@@ -17,12 +18,21 @@ namespace ApartaAPI.Controllers
         {
             _service = service;
         }
-
+        // phuong thuc nay lay du lieu tho^ ko join bang nao ca
         // GET: api/VisitLogs
         [HttpGet]
         public async Task<ActionResult<IEnumerable<VisitLogDto>>> GetVisitLogs()
         {
             var logs = await _service.GetAllAsync();
+            return Ok(logs);
+        }
+
+        // phuong thuc da join visitor de lay visitor id, visitor name, join apartment de lay apartment code
+        // GET: api/VisitLogs/staff/all
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<VisitLogStaffViewDto>>> GetVisitLogsForStaff()
+        {
+            var logs = await _service.GetStaffViewLogsAsync();
             return Ok(logs);
         }
 
@@ -40,7 +50,7 @@ namespace ApartaAPI.Controllers
         public async Task<ActionResult<VisitLogDto>> PostVisitLog([FromBody] VisitLogCreateDto request)
         {
             var created = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetVisitLog), new { id = created.Id }, created);
+            return CreatedAtAction(nameof(GetVisitLog), new { id = created.VisitLogId }, created);
         }
 
         // PUT: api/VisitLogs/{id}
@@ -67,6 +77,33 @@ namespace ApartaAPI.Controllers
         {
             var logs = await _service.GetByApartmentIdAsync(apartmentId);
             return Ok(logs);
+        }
+
+        // PUT: api/VisitLogs/{id}/checkin
+        [HttpPut("{id}/checkin")]
+        public async Task<IActionResult> CheckInVisit(string id)
+        {
+            var resultDto = await _service.CheckInAsync(id);
+
+            if (resultDto == null)
+            {
+                return NotFound("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'.");
+            }
+
+            return Ok(resultDto);
+        }
+
+        [HttpPut("{id}/checkout")]
+        public async Task<IActionResult> CheckOutVisit(string id)
+        {
+            var resultDto = await _service.CheckOutAsync(id);
+
+            if (resultDto == null)
+            {
+                return NotFound("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in.");
+            }
+
+            return Ok(resultDto);
         }
     }
 }

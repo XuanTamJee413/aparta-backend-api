@@ -109,9 +109,6 @@ namespace ApartaAPI.Services
             var now = DateTime.UtcNow;
             var entity = _mapper.Map<Project>(dto);
 
-            if (string.IsNullOrWhiteSpace(entity.ProjectId))
-                entity.ProjectId = Guid.NewGuid().ToString("N");
-
             entity.CreatedAt ??= now;
             entity.UpdatedAt = now;
             entity.IsActive = true;
@@ -138,6 +135,16 @@ namespace ApartaAPI.Services
             if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
             {
                 return ApiResponse.Fail("SM02"); //
+            }
+
+            // Exception 3E: Duplicate Project Code
+            if (dto.ProjectCode != null && dto.ProjectCode != entity.ProjectCode)
+            {
+                var exists = await _repository.FirstOrDefaultAsync(p => p.ProjectCode == dto.ProjectCode);
+                if (exists != null)
+                {
+                    return ApiResponse.Fail("SM16"); //
+                }
             }
 
             _mapper.Map(dto, entity);

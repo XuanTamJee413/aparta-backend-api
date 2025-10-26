@@ -10,23 +10,28 @@ namespace ApartaAPI.Services
 {
     public class VisitLogService : IVisitLogService
     {
-        private readonly IRepository<VisitLog> _repository;
+        private readonly IVisitLogRepository _repository;
         private readonly IMapper _mapper;
         ApartaDbContext _context;
 
-        public VisitLogService(IRepository<VisitLog> repository, IMapper mapper, ApartaDbContext context)
+        public VisitLogService(IVisitLogRepository repository, IMapper mapper, ApartaDbContext context)
         {
             _repository = repository;
             _mapper = mapper;
             _context = context;
         }
-
+        // get all tho^
         public async Task<IEnumerable<VisitLogDto>> GetAllAsync()
         {
             var entities = await _repository.GetAllAsync();
             return _mapper.Map<IEnumerable<VisitLogDto>>(entities);
         }
-
+        // get all nhung da joij bang visitor va apartment
+        public async Task<IEnumerable<VisitLogStaffViewDto>> GetStaffViewLogsAsync()
+        {
+            var entities = await _repository.GetStaffViewLogsAsync();
+            return _mapper.Map<IEnumerable<VisitLogStaffViewDto>>(entities);
+        }
         public async Task<VisitLogDto?> GetByIdAsync(string id)
         {
             var entity = await _repository.FirstOrDefaultAsync(v => v.VisitLogId == id);
@@ -76,6 +81,40 @@ namespace ApartaAPI.Services
                 .ToListAsync();
 
             return _mapper.Map<IEnumerable<VisitLogHistoryDto>>(logs);
+        }
+
+        public async Task<VisitLogDto?> CheckInAsync(string id)
+        {
+            var visitLog = await _repository.FirstOrDefaultAsync(v => v.VisitLogId == id);
+            if (visitLog == null || visitLog.Status != "Pending")
+            {
+                return null;
+            }
+
+            visitLog.Status = "Checked-in";
+            visitLog.CheckinTime = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(visitLog);
+            await _repository.SaveChangesAsync();
+
+            return _mapper.Map<VisitLogDto>(visitLog);
+        }
+
+        public async Task<VisitLogDto?> CheckOutAsync(string id)
+        {
+            var visitLog = await _repository.FirstOrDefaultAsync(v => v.VisitLogId == id);
+            if (visitLog == null || visitLog.Status != "Checked-in")
+            {
+                return null;
+            }
+
+            visitLog.Status = "Checked-out";
+            visitLog.CheckoutTime = DateTime.UtcNow;
+
+            await _repository.UpdateAsync(visitLog);
+            await _repository.SaveChangesAsync();
+
+            return _mapper.Map<VisitLogDto>(visitLog);
         }
     }
 }

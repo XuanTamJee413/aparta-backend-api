@@ -21,6 +21,10 @@ namespace ApartaAPI.DTOs.ApartmentMembers
 
         public bool IsOwner { get; set; }
 
+        public string? FaceImageUrl { get; set; }
+        public string? Info { get; set; }
+        public string? Nationality { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public string? FamilyRole { get; set; }
         public DateTime? CreatedAt { get; set; }
 

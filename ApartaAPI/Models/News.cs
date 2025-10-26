@@ -18,6 +18,7 @@ public partial class News
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+    public string? Status { get; set; }
 
     public virtual User AuthorUser { get; set; } = null!;
 }

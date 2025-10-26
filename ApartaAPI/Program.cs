@@ -121,8 +121,7 @@ namespace ApartaAPI
 					policy.RequireRole("resident"));
 			});
 
-            app.UseRouting();
-            app.UseCors(myAllowSpecificOrigins);
+            
 
 
 
@@ -139,9 +138,9 @@ namespace ApartaAPI
 				app.UseSwaggerUI();
 			}
 
+            app.UseRouting();
 
-
-			app.UseCors(myAllowSpecificOrigins);
+            app.UseCors(myAllowSpecificOrigins);
 
 
 			app.UseAuthentication();

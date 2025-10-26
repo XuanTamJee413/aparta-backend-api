@@ -55,6 +55,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddEndpointsApiExplorer();
 
 
@@ -104,7 +105,6 @@ namespace ApartaAPI
 					policy.RequireRole("staff"));
 
       
-            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 
 
 				options.AddPolicy("ResidentPolicy", policy =>

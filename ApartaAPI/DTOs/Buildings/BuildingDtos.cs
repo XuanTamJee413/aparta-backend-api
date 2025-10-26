@@ -9,14 +9,6 @@
         int Take = 10       // For pagination: number of records to take (page size)
     );
 
-    /// <summary>
-    /// Represents paginated results along with total count.
-    /// </summary>
-    public sealed record PaginatedResult<T>(
-        IEnumerable<T> Items,
-        int TotalCount
-    );
-
     // Read model
     public sealed record BuildingDto(
         string BuildingId,

@@ -113,8 +113,6 @@ namespace ApartaAPI
 					policy.RequireRole("staff"));
 
       
-           
-
 
 
 				options.AddPolicy("ResidentPolicy", policy =>

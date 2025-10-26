@@ -32,7 +32,7 @@ namespace ApartaAPI.Services
 		// ĐÃ SỬA: Cập nhật MapToModel để bao gồm Location và PeriodTime
 		private Utility MapToModel(UtilityCreateDto dto) => new Utility
 		{
-			UtilityId = dto.UtilityId ?? Guid.NewGuid().ToString(),
+			UtilityId = Guid.NewGuid().ToString(),
 			Name = dto.Name ?? string.Empty, // Xử lý null
 			Status = dto.Status ?? "Available", // Gán giá trị mặc định nếu cần
 			Location = dto.Location,

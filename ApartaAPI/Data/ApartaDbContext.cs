@@ -591,7 +591,9 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-
+            entity.Property(e => e.Status)
+                .HasMaxLength(255)
+                .HasColumnName("status");
             entity.HasOne(d => d.AuthorUser).WithMany(p => p.News)
                 .HasForeignKey(d => d.AuthorUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

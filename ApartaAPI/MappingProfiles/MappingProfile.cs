@@ -11,6 +11,7 @@ using ApartaAPI.Models;
 
 
 using ApartaAPI.DTOs.Assets;
+using ApartaAPI.DTOs.News;
 
 
 namespace ApartaAPI.Profiles
@@ -50,14 +51,14 @@ namespace ApartaAPI.Profiles
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<VisitLog, VisitLogDto>();
-            CreateMap<VisitLog, VisitLogStaffViewDto>() 
+            CreateMap<VisitLog, VisitLogStaffViewDto>()
                 .ForMember(
                     dest => dest.ApartmentCode,
                     opt => opt.MapFrom(src => src.Apartment.Code)
                 )
                 .ForMember(
                     dest => dest.VisitorFullName,
-                    opt => opt.MapFrom(src => src.Visitor.FullName) 
+                    opt => opt.MapFrom(src => src.Visitor.FullName)
                 )
                 .ForMember(
                     dest => dest.VisitorIdNumber,
@@ -80,6 +81,26 @@ namespace ApartaAPI.Profiles
 
             CreateMap<User, UserInfoResponse>()
                 .ForMember(dest => dest.Role, opt => opt.Ignore());
+
+            CreateMap<User, ManagerDto>()
+                .ForMember(dest => dest.Role,
+                    opt => opt.MapFrom(src => src.Role.RoleName))
+                .ForMember(dest => dest.PermissionGroup,
+                    opt => opt.Ignore())
+                .ForMember(dest => dest.AvatarUrl,
+                    opt => opt.MapFrom(src => src.AvatarUrl))
+                .ForMember(dest => dest.Email,
+                    opt => opt.MapFrom(src => src.Email))
+                .ForAllMembers(opt => opt.Condition((src, dest,
+                    srcMember) => srcMember != null));
+
+            // News mappings
+            CreateMap<News, NewsDto>()
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.AuthorUser.Name));
+            CreateMap<CreateNewsDto, News>();
+            CreateMap<UpdateNewsDto, News>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
 
             CreateMap<Asset, AssetDto>();
             CreateMap<AssetCreateDto, Asset>();

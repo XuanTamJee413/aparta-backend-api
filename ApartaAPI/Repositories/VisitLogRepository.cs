@@ -13,8 +13,9 @@ namespace ApartaAPI.Repositories
         public async Task<IEnumerable<VisitLog>> GetStaffViewLogsAsync()
         {
             return await _dbSet
-                .Include(vl => vl.Apartment)
-                .Include(vl => vl.Visitor)
+                .Include(a => a.Apartment)
+                .Include(v => v.Visitor)
+                .Where(v => v.Status != "Deleted")
                 .OrderByDescending(vl => vl.CheckinTime)
                 .ToListAsync();
         }

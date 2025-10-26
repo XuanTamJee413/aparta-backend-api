@@ -7,9 +7,6 @@ using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
 
-using ApartaAPI.Models;
-
-
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.News;
 
@@ -45,12 +42,6 @@ namespace ApartaAPI.Profiles
             CreateMap<ApartmentMemberUpdateDto, ApartmentMember>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<Visitor, VisitorDto>();
-            CreateMap<VisitorCreateDto, Visitor>();
-            CreateMap<VisitorUpdateDto, Visitor>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-
-            CreateMap<VisitLog, VisitLogDto>();
             CreateMap<VisitLog, VisitLogStaffViewDto>()
                 .ForMember(
                     dest => dest.ApartmentCode,
@@ -64,12 +55,12 @@ namespace ApartaAPI.Profiles
                     dest => dest.VisitorIdNumber,
                     opt => opt.MapFrom(src => src.Visitor.IdNumber)
                 );
-            CreateMap<VisitLogCreateDto, VisitLog>();
-            CreateMap<VisitLogUpdateDto, VisitLog>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-
-            CreateMap<VisitLog, VisitLogHistoryDto>()
-                .ForMember(dest => dest.VisitorName, opt => opt.MapFrom(src => src.Visitor.FullName));
+            CreateMap<VisitorCreateDto, Visitor>();
+            CreateMap<VisitorCreateDto, VisitLog>()
+                .ForMember(dest => dest.VisitorId, opt => opt.Ignore()) 
+                .ForMember(dest => dest.CheckinTime, opt => opt.Ignore()) 
+                .ForMember(dest => dest.Status, opt => opt.Ignore());
+            CreateMap<Visitor, VisitorDto>();
 
             CreateMap<ProfileUpdateDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())

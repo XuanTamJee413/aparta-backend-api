@@ -1,7 +1,9 @@
 ﻿using ApartaAPI.DTOs.Visitors;
+using ApartaAPI.Models;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -14,49 +16,25 @@ namespace ApartaAPI.Controllers
         {
             _service = service;
         }
-
-        // GET: api/Visitors
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<VisitorDto>>> GetVisitors()
+        [HttpPost("fast-checkin")]
+        public async Task<ActionResult<VisitorDto>> CreateVisit([FromBody] VisitorCreateDto dto)
         {
-            var visitors = await _service.GetAllAsync();
-            return Ok(visitors);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var createdVisitor = await _service.CreateVisitAsync(dto);
+                return Ok(createdVisitor);
+            }
+            catch (ValidationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi máy chủ nội bộ: {ex.Message}");
+            }
         }
 
-        // GET: api/Visitors/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<VisitorDto>> GetVisitor(string id)
-        {
-            var visitor = await _service.GetByIdAsync(id);
-            if (visitor == null) return NotFound();
-            return Ok(visitor);
-        }
-
-        // POST: api/Visitors
-        [HttpPost]
-        public async Task<ActionResult<VisitorDto>> PostVisitor([FromBody] VisitorCreateDto request)
-        {
-            var created = await _service.CreateAsync(request);
-            // Thay đổi Id
-            return CreatedAtAction(nameof(GetVisitor), new { id = created.VisitorId }, created);
-        }
-
-        // PUT: api/Visitors/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVisitor(string id, [FromBody] VisitorUpdateDto request)
-        {
-            var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
-            return NoContent();
-        }
-
-        // DELETE: api/Visitors/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVisitor(string id)
-        {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return NoContent();
-        }
     }
 }

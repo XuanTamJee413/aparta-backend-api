@@ -10,7 +10,6 @@
 	);
 
 	public sealed record ServiceCreateDto(
-		string? ServiceId,
 		string? Name,
 		decimal? Price,
 		string? Status

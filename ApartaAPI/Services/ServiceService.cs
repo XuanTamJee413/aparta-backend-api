@@ -31,7 +31,7 @@ namespace ApartaAPI.Services
 		// ĐÃ SỬA: Cập nhật MapToModel để bao gồm Status
 		private Service MapToModel(ServiceCreateDto dto) => new Service
 		{
-			ServiceId = dto.ServiceId ?? Guid.NewGuid().ToString(),
+			ServiceId = Guid.NewGuid().ToString(),
 			Name = dto.Name ?? string.Empty, // Xử lý null
 			Price = dto.Price ?? 0m,
 			Status = dto.Status ?? "Available", // Gán giá trị mặc định nếu Status là null

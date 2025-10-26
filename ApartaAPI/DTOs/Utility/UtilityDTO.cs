@@ -11,7 +11,6 @@
 	);
 
 	public sealed record UtilityCreateDto(
-		string? UtilityId,
 		string? Name,
 		string? Status,
 		string? Location,

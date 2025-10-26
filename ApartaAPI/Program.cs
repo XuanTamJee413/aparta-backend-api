@@ -1,16 +1,17 @@
-﻿using ApartaAPI.Data;
+﻿using ApartaAPI.BackgroundJobs;
+using ApartaAPI.Data;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using System;
+using System.Text;
 
 namespace ApartaAPI
 {
@@ -57,6 +58,8 @@ namespace ApartaAPI
            
          
             builder.Services.AddScoped<IBuildingService, BuildingService>();
+            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+            builder.Services.AddHostedService<SubscriptionExpiryService>();
 
 
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();

@@ -1,7 +1,8 @@
-using ApartaAPI.DTOs.ApartmentMembers;
+﻿using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
 using ApartaAPI.DTOs.Projects;
+using ApartaAPI.DTOs.Subscriptions;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
@@ -36,6 +37,26 @@ namespace ApartaAPI.Profiles
                 .ForMember(dest => dest.BuildingId, opt => opt.Ignore())
                 .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Subscription, SubscriptionDto>();
+
+            CreateMap<SubscriptionCreateOrUpdateDto, Subscription>()
+                .ForMember(dest => dest.SubscriptionId, opt => opt.Ignore()) // Không map ID khi tạo/sửa
+                .ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.ProjectId)) // Map ProjectId khi tạo
+                .ForMember(dest => dest.Status, opt => opt.Ignore()) // Status sẽ được set trong Service
+                .ForMember(dest => dest.ExpiredAt, opt => opt.Ignore()) // ExpiredAt sẽ được tính trong Service
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Sẽ được set trong Service
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore()) // Sẽ được set trong Service
+                                                                        // Map các trường còn lại từ DTO
+                .ForMember(dest => dest.SubscriptionCode, opt => opt.MapFrom(src => src.SubscriptionCode))
+                .ForMember(dest => dest.NumMonths, opt => opt.MapFrom(src => src.NumMonths))
+                .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+                .ForMember(dest => dest.AmountPaid, opt => opt.MapFrom(src => src.AmountPaid))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
+                .ForMember(dest => dest.PaymentDate, opt => opt.MapFrom(src => src.PaymentDate))
+                .ForMember(dest => dest.PaymentNote, opt => opt.MapFrom(src => src.PaymentNote))
+                .ForMember(dest => dest.Tax, opt => opt.Ignore()) // Giả sử không dùng Tax, Discount từ DTO này
+                .ForMember(dest => dest.Discount, opt => opt.Ignore());
 
             CreateMap<ApartmentMember, ApartmentMemberDto>();
             CreateMap<ApartmentMemberCreateDto, ApartmentMember>();

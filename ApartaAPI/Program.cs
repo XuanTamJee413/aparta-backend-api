@@ -44,6 +44,7 @@ namespace ApartaAPI
 			// AutoMapper
 			builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
+
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 			builder.Services.AddScoped<IProjectService, ProjectService>();
@@ -51,11 +52,19 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IUtilityService, UtilityService>();
 
+            // Repositories & Services
+           
+           
+         
+            builder.Services.AddScoped<IBuildingService, BuildingService>();
+
+
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
-			builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+            builder.Services.AddEndpointsApiExplorer();
 
 
 			// JWT Authentication
@@ -104,12 +113,17 @@ namespace ApartaAPI
 					policy.RequireRole("staff"));
 
       
-            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+           
+
 
 
 				options.AddPolicy("ResidentPolicy", policy =>
 					policy.RequireRole("resident"));
 			});
+
+            app.UseRouting();
+            app.UseCors(myAllowSpecificOrigins);
+
 
 
 			builder.Services.AddEndpointsApiExplorer();

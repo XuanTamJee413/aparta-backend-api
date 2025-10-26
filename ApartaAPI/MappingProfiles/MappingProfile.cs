@@ -1,14 +1,17 @@
 using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Auth;
+using ApartaAPI.DTOs.Buildings;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-﻿using AutoMapper;
+
 using ApartaAPI.Models;
-using ApartaAPI.DTOs.Projects;
-using ApartaAPI.DTOs.Auth;
+
+
 using ApartaAPI.DTOs.Assets;
+
 
 namespace ApartaAPI.Profiles
 {
@@ -25,6 +28,17 @@ namespace ApartaAPI.Profiles
                 .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
+            CreateMap<Building, BuildingDto>();
+
+            CreateMap<BuildingCreateDto, Building>()
+                .ForMember(dest => dest.BuildingId, opt => opt.Ignore());
+
+            CreateMap<BuildingUpdateDto, Building>()
+                .ForMember(dest => dest.BuildingCode, opt => opt.Ignore())
+                .ForMember(dest => dest.BuildingId, opt => opt.Ignore())
+                .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
             CreateMap<ApartmentMember, ApartmentMemberDto>();
             CreateMap<ApartmentMemberCreateDto, ApartmentMember>();
             CreateMap<ApartmentMemberUpdateDto, ApartmentMember>()
@@ -33,7 +47,7 @@ namespace ApartaAPI.Profiles
             CreateMap<Visitor, VisitorDto>();
             CreateMap<VisitorCreateDto, Visitor>();
             CreateMap<VisitorUpdateDto, Visitor>()
-              .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<VisitLog, VisitLogDto>();
             CreateMap<VisitLog, VisitLogStaffViewDto>() 

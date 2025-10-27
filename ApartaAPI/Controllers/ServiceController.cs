@@ -1,9 +1,10 @@
-﻿using ApartaAPI.DTOs.Services;
+﻿using ApartaAPI.DTOs.Common; // Thêm
+using ApartaAPI.DTOs.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http; 
+using Microsoft.AspNetCore.Http;
 
 namespace ApartaAPI.Controllers
 {
@@ -19,13 +20,21 @@ namespace ApartaAPI.Controllers
 		}
 
 		// GET: api/Service
+		// SỬA: Cập nhật endpoint để nhận tham số Query
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<ServiceDto>), StatusCodes.Status200OK)]
-		public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
+		[ProducesResponseType(typeof(PagedList<ServiceDto>), StatusCodes.Status200OK)]
+		public async Task<ActionResult<PagedList<ServiceDto>>> GetServices(
+			[FromQuery] ServiceQueryParameters parameters)
 		{
-			var services = await _serviceService.GetAllServicesAsync();
+			var services = await _serviceService.GetServicesAsync(parameters);
+
+			// Bạn có thể thêm thông tin phân trang vào Response Header nếu muốn
+			// Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(services.PaginationMetadata));
+
 			return Ok(services);
 		}
+
+		// ... các endpoint GET(id), POST, PUT, DELETE giữ nguyên ...
 
 		// GET: api/Service/{id}
 		[HttpGet("{id}")]

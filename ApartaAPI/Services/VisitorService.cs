@@ -29,7 +29,7 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-        // checked in = staff gui len, pending hoac 0 co j thi la resident gui len
+        // checked in hoac 0 co j = staff gui len, pending thi la resident gui len, vi hai role tao khac nhau moi status nen dung luon 1 phuong thuc
         public async Task<VisitorDto> CreateVisitAsync(VisitorCreateDto dto)
         {
             var apartmentExists = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == dto.ApartmentId || a.Code == dto.ApartmentId);

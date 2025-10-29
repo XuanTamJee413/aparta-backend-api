@@ -57,16 +57,27 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
-			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
-			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
-			builder.Services.AddScoped<IManagerService, ManagerService>();
-			builder.Services.AddScoped<INewsService, NewsService>();
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+            builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
+            builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
+            builder.Services.AddEndpointsApiExplorer();
 
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+            // Repositories & Services
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
 
-			// JWT Authentication
-			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+
+            // JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 			var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
 			var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
 			var audience = jwtSettings["Audience"] ?? "ApartaAPI";

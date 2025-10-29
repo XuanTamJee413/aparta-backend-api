@@ -1,15 +1,15 @@
 ﻿using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.News;
+using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.Subscriptions;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-
-using ApartaAPI.DTOs.Assets;
-using ApartaAPI.DTOs.News;
 
 
 namespace ApartaAPI.Profiles
@@ -78,10 +78,16 @@ namespace ApartaAPI.Profiles
                 );
             CreateMap<VisitorCreateDto, Visitor>();
             CreateMap<VisitorCreateDto, VisitLog>()
-                .ForMember(dest => dest.VisitorId, opt => opt.Ignore()) 
-                .ForMember(dest => dest.CheckinTime, opt => opt.Ignore()) 
+                .ForMember(dest => dest.VisitorId, opt => opt.Ignore())
+                .ForMember(dest => dest.CheckinTime, opt => opt.Ignore())
                 .ForMember(dest => dest.Status, opt => opt.Ignore());
             CreateMap<Visitor, VisitorDto>();
+
+            CreateMap<PriceQuotation, PriceQuotationDto>()
+                .ForMember(dest => dest.BuildingCode,
+                    opt => opt.MapFrom(src => src.Building != null ? src.Building.BuildingCode : null)
+                );
+            CreateMap<PriceQuotationCreateDto, PriceQuotation>();
 
             CreateMap<ProfileUpdateDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())

@@ -65,6 +65,8 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
             builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+            builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
             builder.Services.AddEndpointsApiExplorer();
 
             // Repositories & Services

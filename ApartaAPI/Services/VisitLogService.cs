@@ -30,7 +30,7 @@ namespace ApartaAPI.Services
             var visitLog = await _repository.FirstOrDefaultAsync(v => v.VisitLogId == id);
             if (visitLog == null || visitLog.Status != "Pending")
             {
-                return false; // Thất bại
+                return false; 
             }
 
             visitLog.Status = "Checked-in";
@@ -45,7 +45,7 @@ namespace ApartaAPI.Services
             var visitLog = await _repository.FirstOrDefaultAsync(v => v.VisitLogId == id);
             if (visitLog == null || visitLog.Status != "Checked-in")
             {
-                return false; // Thất bại
+                return false; 
             }
 
             visitLog.Status = "Checked-out";

@@ -61,8 +61,10 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IManagerService, ManagerService>();
 			builder.Services.AddScoped<INewsService, NewsService>();
+            builder.Services.AddScoped<IVehicleService, VehicleService>();
+            builder.Services.AddScoped<IApartmentService, ApartmentService>();
 
-			builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
 			// JWT Authentication

@@ -10,6 +10,8 @@ using AutoMapper;
 
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.News;
+using ApartaAPI.DTOs.Vehicles;
+using ApartaAPI.DTOs.Apartments;
 
 
 namespace ApartaAPI.Profiles
@@ -117,6 +119,16 @@ namespace ApartaAPI.Profiles
             CreateMap<Asset, AssetDto>();
             CreateMap<AssetCreateDto, Asset>();
             CreateMap<AssetUpdateDto, Asset>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Vehicle, VehicleDto>();
+            CreateMap<VehicleCreateDto, Vehicle>();
+            CreateMap<VehicleUpdateDto, Vehicle>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<Apartment, ApartmentDto>();
+            CreateMap<ApartmentCreateDto, Apartment>();
+            CreateMap<ApartmentUpdateDto, Apartment>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
     }

@@ -1,16 +1,17 @@
-﻿using ApartaAPI.Data;
+﻿using ApartaAPI.BackgroundJobs;
+using ApartaAPI.Data;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using System;
+using System.Text;
 
 namespace ApartaAPI
 {
@@ -20,20 +21,18 @@ namespace ApartaAPI
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-
 			var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 			builder.Services.AddCors(options =>
 			{
 				options.AddPolicy(name: myAllowSpecificOrigins,
-								  policy =>
-								  {
-									  policy.WithOrigins("http://localhost:4200")
-											.AllowAnyHeader()
-											.AllowAnyMethod();
-								  });
+					policy =>
+					{
+						policy.WithOrigins("http://localhost:4200")
+							  .AllowAnyHeader()
+							  .AllowAnyMethod();
+					});
 			});
-
 
 			// Add services to the container.
 			builder.Services.AddControllers();
@@ -44,20 +43,15 @@ namespace ApartaAPI
 			// AutoMapper
 			builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 			builder.Services.AddScoped<IProjectService, ProjectService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IUtilityService, UtilityService>();
-
-            // Repositories & Services
-           
-           
-         
-            builder.Services.AddScoped<IBuildingService, BuildingService>();
-
+			builder.Services.AddScoped<IBuildingService, BuildingService>();
+			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+			builder.Services.AddHostedService<SubscriptionExpiryService>();
 
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
@@ -69,11 +63,13 @@ namespace ApartaAPI
             builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
             builder.Services.AddEndpointsApiExplorer();
 
-            // Repositories & Services
-            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            builder.Services.AddScoped<IProjectService, ProjectService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IManagerService, ManagerService>();
+			builder.Services.AddScoped<IManagerService, ManagerService>();
+			builder.Services.AddScoped<INewsService, NewsService>();
+            builder.Services.AddScoped<IVehicleService, VehicleService>();
+            builder.Services.AddScoped<IApartmentService, ApartmentService>();
+
+            builder.Services.AddEndpointsApiExplorer();
+			builder.Services.AddSwaggerGen();
 
 			// JWT Authentication
 			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -116,27 +112,12 @@ namespace ApartaAPI
 				options.AddPolicy("AdminPolicy", policy =>
 					policy.RequireRole("admin"));
 
-
 				options.AddPolicy("StaffPolicy", policy =>
 					policy.RequireRole("staff"));
-
-      
-
 
 				options.AddPolicy("ResidentPolicy", policy =>
 					policy.RequireRole("resident"));
 			});
-
-            builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
-            builder.Services.AddScoped<IVisitorService, VisitorService>();
-            builder.Services.AddScoped<IVisitLogService, VisitLogService>();
-            builder.Services.AddScoped<IManagerService, ManagerService>();
-            builder.Services.AddScoped<INewsService, NewsService>();
-
-			builder.Services.AddEndpointsApiExplorer();
-
-
-			builder.Services.AddSwaggerGen();
 
 			var app = builder.Build();
 
@@ -146,15 +127,14 @@ namespace ApartaAPI
 				app.UseSwaggerUI();
 			}
 
-            app.UseRouting();
+			app.UseRouting();
 
-            app.UseCors(myAllowSpecificOrigins);
-
+			app.UseCors(myAllowSpecificOrigins);
 
 			app.UseAuthentication();
 
-
 			app.UseAuthorization();
+
 			app.MapControllers();
 			app.Run();
 		}

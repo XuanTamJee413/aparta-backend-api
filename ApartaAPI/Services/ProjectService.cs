@@ -15,11 +15,18 @@ namespace ApartaAPI.Services
     public class ProjectService : IProjectService
     {
         private readonly IRepository<Project> _repository;
+        private readonly IRepository<Subscription> _subscriptionRepository;
         private readonly IMapper _mapper;
 
-        public ProjectService(IRepository<Project> repository, IMapper mapper)
+        // --- CẬP NHẬT CONSTRUCTOR ---
+        public ProjectService(
+            IRepository<Project> repository,
+            IRepository<Subscription> subscriptionRepository, // Thêm
+            IRepository<Building> buildingRepository, // Thêm cho mục 2
+            IMapper mapper)
         {
             _repository = repository;
+            _subscriptionRepository = subscriptionRepository; // Thêm
             _mapper = mapper;
         }
 
@@ -125,33 +132,50 @@ namespace ApartaAPI.Services
         public async Task<ApiResponse> UpdateAsync(string id, ProjectUpdateDto dto)
         {
             var entity = await _repository.FirstOrDefaultAsync(p => p.ProjectId == id);
-
             if (entity == null)
             {
-                return ApiResponse.Fail("SM01"); //
+                return ApiResponse.Fail("SM01"); // Not Found
             }
 
-            // Exception 2E: Required field missing
+            // --- KIỂM TRA VALIDATION CƠ BẢN ---
             if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
             {
-                return ApiResponse.Fail("SM02"); //
+                return ApiResponse.Fail("SM02"); // Name không được rỗng nếu có cập nhật
             }
+            // BR-19: ProjectCode không được sửa, bỏ qua check duplicate nếu code không đổi hoặc null
 
-            // Exception 3E: Duplicate Project Code
-            if (dto.ProjectCode != null && dto.ProjectCode != entity.ProjectCode)
+            // --- LOGIC HỦY SUBSCRIPTION KHI PROJECT DEACTIVATE (BR-20) ---
+            bool projectDeactivated = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
+
+            if (projectDeactivated)
             {
-                var exists = await _repository.FirstOrDefaultAsync(p => p.ProjectCode == dto.ProjectCode);
-                if (exists != null)
+                var now = DateTime.UtcNow;
+
+                // 1. Hủy Subscription Active
+                var activeSubscription = await _subscriptionRepository.FirstOrDefaultAsync(
+                    s => s.ProjectId == id && s.Status == "Active" && s.ExpiredAt > now
+                );
+
+                if (activeSubscription != null)
                 {
-                    return ApiResponse.Fail("SM16"); //
+                    activeSubscription.Status = "Cancelled";
+                    activeSubscription.ExpiredAt = now;
+                    activeSubscription.UpdatedAt = now;
+                    await _subscriptionRepository.UpdateAsync(activeSubscription);
                 }
             }
-
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(entity);
-            await _repository.SaveChangesAsync();
+
+            bool success = await _repository.SaveChangesAsync();
+
+            if (!success)
+            {
+                // Có thể thêm log lỗi ở đây
+                return ApiResponse.Fail("SM15"); // Lỗi lưu CSDL chung
+            }
 
             // Normal Flow: Trả về SM03 (Update success)
             return ApiResponse.Success("SM03");

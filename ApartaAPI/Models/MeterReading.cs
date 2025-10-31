@@ -17,11 +17,19 @@ public partial class MeterReading
 
     public DateOnly ReadingDate { get; set; }
 
+    public string? BillingPeriod { get; set; }
+
+    public string? RecordedBy { get; set; }
+
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool IsInvoiced { get; set; }
+
     public virtual Apartment Apartment { get; set; } = null!;
 
     public virtual Meter Meter { get; set; } = null!;
+
+    public virtual User? RecordedByUser { get; set; }
 }

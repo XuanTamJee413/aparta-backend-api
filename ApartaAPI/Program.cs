@@ -63,6 +63,10 @@ namespace ApartaAPI
             builder.Services.AddScoped<INewsService, NewsService>();
             builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
             builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
+            builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+            builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+            builder.Services.AddSingleton<PayOSService>();
             builder.Services.AddEndpointsApiExplorer();
 
             // Repositories & Services

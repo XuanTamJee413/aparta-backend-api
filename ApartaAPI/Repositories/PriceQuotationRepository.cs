@@ -36,5 +36,11 @@ namespace ApartaAPI.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
+        public IQueryable<PriceQuotation> GetQuotationsQueryable()
+        {
+            return _dbSet
+                .Include(pq => pq.Building)
+                .AsQueryable();
+        }
     }
 }

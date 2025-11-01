@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.PriceQuotations;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -110,6 +111,112 @@ namespace ApartaAPI.Controllers
             }
 
             return Ok(priceQuotation);
+        }
+
+        [HttpGet("list")]
+        [ProducesResponseType(typeof(ApiResponse<PagedList<PriceQuotationDto>>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<PagedList<PriceQuotationDto>>>> GetPriceQuotationsPaginated(
+            [FromQuery] PriceQuotationQueryParameters queryParams)
+        {
+            var pagedData = await _priceQuotationService.GetPriceQuotationsPaginatedAsync(queryParams);
+
+            if (pagedData.TotalCount == 0)
+            {
+                return Ok(ApiResponse<PagedList<PriceQuotationDto>>.Success(pagedData, ApiResponse.SM01_NO_RESULTS));
+            }
+            return Ok(ApiResponse<PagedList<PriceQuotationDto>>.Success(pagedData));
+        }
+
+        [HttpGet("details/{id}")]
+        [ProducesResponseType(typeof(ApiResponse<PriceQuotationDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<PriceQuotationDto>>> GetPriceQuotationDetailsById(string id)
+        {
+            var priceQuotation = await _priceQuotationService.GetPriceQuotationByIdAsync(id);
+            if (priceQuotation == null)
+            {
+                return NotFound(ApiResponse<PriceQuotationDto>.Fail(ApiResponse.SM01_NO_RESULTS));
+            }
+            return Ok(ApiResponse<PriceQuotationDto>.Success(priceQuotation));
+        }
+
+        [HttpPost("create")]
+        [ProducesResponseType(typeof(ApiResponse<PriceQuotationDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<PriceQuotationDto>>> CreatePriceQuotationV2(
+            [FromBody] PriceQuotationCreateDto createDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse.Fail("Dữ liệu đầu vào không hợp lệ."));
+            }
+
+            try
+            {
+                var createdPriceQuotation = await _priceQuotationService.CreatePriceQuotationAsync(createDto);
+                if (createdPriceQuotation == null)
+                {
+                    return NotFound(ApiResponse.Fail($"Building with ID '{createDto.BuildingId}' not found."));
+                }
+
+                return CreatedAtAction(
+                    nameof(GetPriceQuotationById),
+                    new { id = createdPriceQuotation.PriceQuotationId },
+                    ApiResponse<PriceQuotationDto>.SuccessWithCode(createdPriceQuotation, ApiResponse.SM04_CREATE_SUCCESS, "Price Quotation")
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.Fail(ex.Message));
+            }
+        }
+
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse>> UpdatePriceQuotation(string id, [FromBody] PriceQuotationCreateDto updateDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse.Fail("Dữ liệu đầu vào không hợp lệ."));
+            }
+
+            try
+            {
+                var success = await _priceQuotationService.UpdateAsync(id, updateDto);
+                if (!success)
+                {
+                    return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+                }
+                return Ok(ApiResponse.SuccessWithCode(ApiResponse.SM03_UPDATE_SUCCESS));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.Fail(ex.Message));
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse>> DeletePriceQuotation(string id)
+        {
+            var success = await _priceQuotationService.DeleteAsync(id);
+            if (!success)
+            {
+                return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+            }
+            return Ok(ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Price Quotation"));
         }
     }
 }

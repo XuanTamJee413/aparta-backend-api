@@ -1,8 +1,11 @@
-﻿using ApartaAPI.DTOs.PriceQuotations;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApartaAPI.Services
 {
@@ -78,6 +81,77 @@ namespace ApartaAPI.Services
             }
 
             return _mapper.Map<PriceQuotationDto>(priceQuotation);
+        }
+
+        public async Task<bool> UpdateAsync(string id, PriceQuotationCreateDto updateDto)
+        {
+            var entity = await _priceQuotationRepo.FirstOrDefaultAsync(pq => pq.PriceQuotationId == id);
+            if (entity == null)
+                return false;
+
+            if (entity.FeeType != updateDto.FeeType)
+            {
+                var existed = await _priceQuotationRepo.FirstOrDefaultAsync(pq =>
+                    pq.BuildingId == entity.BuildingId &&
+                    pq.FeeType == updateDto.FeeType &&
+                    pq.PriceQuotationId != id);
+
+                if (existed != null)
+                {
+                    throw new InvalidOperationException($"Fee type '{updateDto.FeeType}' đã tồn tại trong tòa nhà này.");
+                }
+            }
+
+            _mapper.Map(updateDto, entity);
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _priceQuotationRepo.UpdateAsync(entity);
+            return await _priceQuotationRepo.SaveChangesAsync();
+        }
+        public async Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams)
+        {
+            var query = _priceQuotationRepo.GetQuotationsQueryable();
+
+            if (!string.IsNullOrEmpty(queryParams.BuildingId))
+            {
+                query = query.Where(q => q.BuildingId == queryParams.BuildingId);
+            }
+            if (!string.IsNullOrEmpty(queryParams.SearchTerm))
+            {
+                string searchTermLower = queryParams.SearchTerm.ToLower();
+
+                query = query.Where(q => q.FeeType.ToLower().Contains(searchTermLower));
+            }
+
+            if (queryParams.SortColumn?.ToLower() == "feetype")
+            {
+                query = queryParams.SortDirection?.ToLower() == "asc"
+                    ? query.OrderBy(q => q.FeeType)
+                    : query.OrderByDescending(q => q.FeeType);
+            }
+            else
+            {
+                query = query.OrderByDescending(q => q.CreatedAt);
+            }
+
+            var dtoQuery = query.ProjectTo<PriceQuotationDto>(_mapper.ConfigurationProvider);
+
+            var totalCount = await dtoQuery.CountAsync();
+            var items = await dtoQuery
+                .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
+                .ToListAsync();
+
+            return new PagedList<PriceQuotationDto>(items, totalCount, queryParams.PageNumber, queryParams.PageSize);
+        }
+        public async Task<bool> DeleteAsync(string id)
+        {
+            var entity = await _priceQuotationRepo.FirstOrDefaultAsync(pq => pq.PriceQuotationId == id);
+            if (entity == null)
+                return false;
+
+            await _priceQuotationRepo.RemoveAsync(entity);
+            return await _priceQuotationRepo.SaveChangesAsync();
         }
     }
 }

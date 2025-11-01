@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.PriceQuotations;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.PriceQuotations;
 
 namespace ApartaAPI.Services.Interfaces
 {
@@ -12,5 +13,9 @@ namespace ApartaAPI.Services.Interfaces
         Task<IEnumerable<PriceQuotationDto>?> GetPriceQuotationsByBuildingIdAsync(string buildingId);
 
         Task<PriceQuotationDto?> GetPriceQuotationByIdAsync(string priceQuotationId);
+
+        Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams);
+        Task<bool> UpdateAsync(string id, PriceQuotationCreateDto updateDto);
+        Task<bool> DeleteAsync(string id);
     }
 }

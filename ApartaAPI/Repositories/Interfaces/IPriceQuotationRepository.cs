@@ -9,5 +9,7 @@ namespace ApartaAPI.Repositories.Interfaces
         Task<IEnumerable<PriceQuotation>> GetByBuildingIdWithBuildingAsync(string buildingId);
 
         Task<PriceQuotation?> GetByIdWithBuildingAsync(string priceQuotationId);
+
+        IQueryable<PriceQuotation> GetQuotationsQueryable();
     }
 }

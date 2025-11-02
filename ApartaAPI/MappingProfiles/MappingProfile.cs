@@ -1,7 +1,9 @@
+﻿using ApartaAPI.DTOs;
 using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
@@ -134,14 +136,27 @@ namespace ApartaAPI.Profiles
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<Vehicle, VehicleDto>();
-            CreateMap<VehicleCreateDto, Vehicle>();
-            CreateMap<VehicleUpdateDto, Vehicle>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<VehicleCreateDto, Vehicle>();
+            CreateMap<VehicleUpdateDto, Vehicle>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<Apartment, ApartmentDto>();
-            CreateMap<ApartmentCreateDto, Apartment>();
-            CreateMap<ApartmentUpdateDto, Apartment>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<Apartment, ApartmentDto>();
+            CreateMap<ApartmentCreateDto, Apartment>();
+            CreateMap<ApartmentUpdateDto, Apartment>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<MeterReading, MeterReadingDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.MeterType, opt => opt.MapFrom(src => src.Meter.Type))
+                .ForMember(dest => dest.Consumption, opt => opt.Ignore()) 
+                .ForMember(dest => dest.EstimatedCost, opt => opt.Ignore())
+                .ForMember(dest => dest.RecordedByName, opt => opt.MapFrom(src => src.RecordedByUser != null ? src.RecordedByUser.Name : null))
+                .ForMember(dest => dest.RecordedAt, opt => opt.MapFrom(src => src.UpdatedAt));
+
+            // Invoice mappings
+            CreateMap<Invoice, InvoiceDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
         }
     }
 }

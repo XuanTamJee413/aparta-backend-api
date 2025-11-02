@@ -60,20 +60,30 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IAssetService, AssetService>();
             builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
             builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
             builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
             builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
+            builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+            builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+            builder.Services.AddSingleton<PayOSService>();
             builder.Services.AddEndpointsApiExplorer();
 
-			builder.Services.AddScoped<IManagerService, ManagerService>();
-			builder.Services.AddScoped<INewsService, NewsService>();
-            builder.Services.AddScoped<IVehicleService, VehicleService>();
+			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
+			builder.Services.AddScoped<IVehicleService, VehicleService>();
             builder.Services.AddScoped<IApartmentService, ApartmentService>();
 
             builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen();
 
-			// JWT Authentication
-			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+
+            // JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 			var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
 			var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
 			var audience = jwtSettings["Audience"] ?? "ApartaAPI";

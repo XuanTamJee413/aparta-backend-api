@@ -17,7 +17,11 @@ public partial class ServiceBooking
 
     public decimal? PaymentAmount { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+	public string? ResidentNote { get; set; }
+
+	public string? StaffNote { get; set; }
+
+	public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 

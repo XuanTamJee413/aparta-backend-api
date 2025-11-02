@@ -989,8 +989,14 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.ResidentNote)
+				.HasMaxLength(255)
+				.HasColumnName("resident_note");
+			entity.Property(e => e.StaffNote)
+				.HasMaxLength(255)
+				.HasColumnName("staff_note");
 
-            entity.HasOne(d => d.Resident).WithMany(p => p.ServiceBookings)
+			entity.HasOne(d => d.Resident).WithMany(p => p.ServiceBookings)
                 .HasForeignKey(d => d.ResidentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ServiceBooking_Resident");

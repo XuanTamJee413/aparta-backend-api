@@ -75,7 +75,7 @@ namespace ApartaAPI.Services
                 // (UC 2.1.1 - Alt 3A)
                 if (totalCount == 0)
                 {
-                    return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(paginatedResult, "SM01");
+                    return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(paginatedResult, ApiResponse.SM01_NO_RESULTS);
                 }
 
                 return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(paginatedResult);
@@ -97,14 +97,14 @@ namespace ApartaAPI.Services
                 var entity = await _repository.FirstOrDefaultAsync(s => s.SubscriptionId == id);
                 if (entity == null)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("SM01"); // Not found
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM01_NO_RESULTS); // Not found
                 }
                 var dto = _mapper.Map<SubscriptionDto>(entity);
                 return ApiResponse<SubscriptionDto>.Success(dto);
             }
             catch (Exception)
             {
-                return ApiResponse<SubscriptionDto>.Fail("An unexpected error occurred.");
+                return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -142,14 +142,14 @@ namespace ApartaAPI.Services
                 var project = await _projectRepository.FirstOrDefaultAsync(p => p.ProjectId == dto.ProjectId);
                 if (project == null)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("Project not found.");
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM01_NO_RESULTS);
                 }
 
                 // KIỂM TRA DUPLICATE SUBCRIPTION_CODE (BR-12)
                 var exists = await _repository.FirstOrDefaultAsync(s => s.SubscriptionCode == dto.SubscriptionCode);
                 if (exists != null)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("SM16"); // Duplicate code
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "SubscriptionCode"); // Duplicate code
                 }
 
                 // --- Logic Chống Chồng Chéo (Quan trọng) ---
@@ -157,7 +157,7 @@ namespace ApartaAPI.Services
                 {
                     if (await IsSubscriptionTimeOverlapped(dto.ProjectId))
                     {
-                        return ApiResponse<SubscriptionDto>.Fail("SM17 - Project currently has an active subscription. Cannot create a new one until expiration.");
+                        return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM17_PERMISSION_DENIED);
                     }
                 }
                 // ----------------------------------------------
@@ -193,19 +193,19 @@ namespace ApartaAPI.Services
                 await _repository.SaveChangesAsync();
 
                 var resultDto = _mapper.Map<SubscriptionDto>(entity);
-                return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? "SM10" : "SM04");
+                return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? ApiResponse.SM10_PAYMENT_SUCCESS : ApiResponse.SM04_CREATE_SUCCESS);
             }
             catch (DbUpdateException dbEx)
             {
                 if (dbEx.InnerException?.Message.Contains("UNIQUE KEY constraint") ?? false)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("SM16");
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "SubscriptionCode");
                 }
-                return ApiResponse<SubscriptionDto>.Fail("SM15");
+                return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
             catch (Exception)
             {
-                return ApiResponse<SubscriptionDto>.Fail("SM15");
+                return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -219,7 +219,7 @@ namespace ApartaAPI.Services
                 var entity = await _repository.FirstOrDefaultAsync(s => s.SubscriptionId == id);
                 if (entity == null)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("SM01"); // Not found
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM01_NO_RESULTS); // Not found
                 }
 
                 // (UC 2.1.3 - Ex 2E) Chỉ cho phép sửa Draft
@@ -232,7 +232,7 @@ namespace ApartaAPI.Services
                 var project = await _projectRepository.FirstOrDefaultAsync(p => p.ProjectId == entity.ProjectId);
                 if (project == null)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("Associated Project not found.");
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM01_NO_RESULTS);
                 }
 
                 // --- Logic Chống Chồng Chéo (Quan trọng) ---
@@ -241,7 +241,7 @@ namespace ApartaAPI.Services
                     // Kiểm tra nếu có gói nào khác (ngoại trừ bản thân gói này) còn hạn
                     if (await IsSubscriptionTimeOverlapped(entity.ProjectId, id))
                     {
-                        return ApiResponse<SubscriptionDto>.Fail("SM17 - Project currently has another active subscription. Cannot approve this until expiration.");
+                        return ApiResponse<SubscriptionDto>.Fail("Project currently has another active subscription. Cannot approve this until expiration.");
                     }
                 }
                 // ----------------------------------------------
@@ -274,19 +274,19 @@ namespace ApartaAPI.Services
                 await _repository.SaveChangesAsync();
 
                 var resultDto = _mapper.Map<SubscriptionDto>(entity);
-                return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? "SM10" : "SM03");
+                return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? ApiResponse.SM10_PAYMENT_SUCCESS : ApiResponse.SM03_UPDATE_SUCCESS);
             }
             catch (DbUpdateException dbEx)
             {
                 if (dbEx.InnerException?.Message.Contains("UNIQUE KEY constraint") ?? false)
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("SM16");
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "SubscriptionCode");
                 }
-                return ApiResponse<SubscriptionDto>.Fail("SM15");
+                return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
             catch (Exception)
             {
-                return ApiResponse<SubscriptionDto>.Fail("SM15");
+                return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -300,7 +300,7 @@ namespace ApartaAPI.Services
                 var entity = await _repository.FirstOrDefaultAsync(s => s.SubscriptionId == id);
                 if (entity == null)
                 {
-                    return ApiResponse.Fail("SM01"); // Not found
+                    return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS); // Not found
                 }
 
                 // (UC 2.1.4 - Ex 2E) Chỉ cho phép xóa Draft
@@ -312,7 +312,7 @@ namespace ApartaAPI.Services
                 await _repository.RemoveAsync(entity);
                 await _repository.SaveChangesAsync(); // BR-10
 
-                return ApiResponse.Success("SM05"); // Delete success
+                return ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Subscription"); // Delete success
             }
             catch (Exception)
             {

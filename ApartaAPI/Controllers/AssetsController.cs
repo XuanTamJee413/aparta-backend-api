@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.DTOs.Assets;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "CanReadAsset")]
         public async Task<ActionResult<IEnumerable<AssetDto>>> GetAssets()
         {
             var assets = await _service.GetAllAsync();
@@ -24,6 +26,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "CanReadAsset")]
         public async Task<ActionResult<AssetDto>> GetAsset(string id)
         {
             var asset = await _service.GetByIdAsync(id);
@@ -32,6 +35,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanCreateAsset")]
         public async Task<ActionResult<AssetDto>> PostAsset([FromBody] AssetCreateDto request)
         {
             var created = await _service.CreateAsync(request);
@@ -39,6 +43,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "CanUpdateAsset")]
         public async Task<IActionResult> PutAsset(string id, [FromBody] AssetUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
@@ -47,6 +52,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "CanDeleteAsset")]
         public async Task<IActionResult> DeleteAsset(string id)
         {
             var deleted = await _service.DeleteAsync(id);

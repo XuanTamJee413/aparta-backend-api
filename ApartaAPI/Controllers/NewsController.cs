@@ -8,7 +8,6 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Policy = "StaffOrAdmin")]
     public class NewsController : ControllerBase
     {
         private readonly INewsService _newsService;
@@ -20,6 +19,7 @@ namespace ApartaAPI.Controllers
 
         // GET: api/News - News list với search và filter theo status
         [HttpGet]
+        [Authorize(Policy = "CanReadNews")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<NewsDto>>), 200)]
         public async Task<ActionResult<ApiResponse<IEnumerable<NewsDto>>>> GetAllNews(
             [FromQuery] string? searchTerm,
@@ -32,6 +32,7 @@ namespace ApartaAPI.Controllers
 
         // POST: api/News - News mới
         [HttpPost]
+        [Authorize(Policy = "CanCreateNews")]
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 400)]
         public async Task<ActionResult<ApiResponse<NewsDto>>> CreateNews([FromBody] CreateNewsDto request)
@@ -66,6 +67,7 @@ namespace ApartaAPI.Controllers
 
         // PUT: api/News/{id} - Sửa news
         [HttpPut("{id}")]
+        [Authorize(Policy = "CanUpdateNews")]
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 200)]
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 400)]
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 404)]
@@ -96,6 +98,7 @@ namespace ApartaAPI.Controllers
 
         // DELETE: api/News/{id} - Xóa news
         [HttpDelete("{id}")]
+        [Authorize(Policy = "CanDeleteNews")]
         [ProducesResponseType(typeof(ApiResponse), 200)]
         [ProducesResponseType(typeof(ApiResponse), 404)]
         public async Task<ActionResult<ApiResponse>> DeleteNews(string id)

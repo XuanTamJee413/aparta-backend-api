@@ -13,7 +13,6 @@ namespace ApartaAPI.Services
         private readonly IRepository<User> _userRepository;
         private readonly IRepository<Role> _roleRepository;
         private readonly ApartaDbContext _context;
-        private const string MANAGEMENT_ROLE_ID = "37A0E887-3CD5-4DF1-9380-25DB794199A2";
 
         public ManagerService(
             IRepository<User> userRepository, 
@@ -31,8 +30,17 @@ namespace ApartaAPI.Services
                 ? null
                 : query.SearchTerm.Trim().ToLowerInvariant();
 
+            // Lấy thông tin Role "manager"
+            var managerRole = await _roleRepository.FirstOrDefaultAsync(r => r.RoleName == "manager");
+            if (managerRole == null)
+            {
+                return ApiResponse<IEnumerable<ManagerDto>>.Fail("Hệ thống chưa định nghĩa Role 'manager'.");
+            }
+            var managerRoleId = managerRole.RoleId;
+            var roleName = managerRole.RoleName;
+
             var managers = await _userRepository.FindAsync(u =>
-                u.RoleId == MANAGEMENT_ROLE_ID &&
+                u.RoleId == managerRoleId && // Dùng ID đã lấy
                 !u.IsDeleted &&
                 (searchTerm == null ||
                     (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
@@ -49,9 +57,6 @@ namespace ApartaAPI.Services
 
             var sortedManagers = managers.OrderByDescending(m => m.CreatedAt);
 
-            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == MANAGEMENT_ROLE_ID);
-            var roleName = role?.RoleName ?? "management";
-
             var managerDtos = sortedManagers.Select(m => new ManagerDto
             {
                 UserId = m.UserId,
@@ -60,7 +65,7 @@ namespace ApartaAPI.Services
                 Email = m.Email,
                 Phone = m.Phone,
                 AvatarUrl = m.AvatarUrl,
-                Role = roleName,
+                Role = roleName, // Dùng tên Role đã lấy
                 Status = m.Status,
                 LastLoginAt = m.LastLoginAt,
                 PermissionGroup = null
@@ -68,8 +73,6 @@ namespace ApartaAPI.Services
 
             return ApiResponse<IEnumerable<ManagerDto>>.Success(managerDtos);
         }
-
-
 
         public async Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto)
         {
@@ -85,7 +88,6 @@ namespace ApartaAPI.Services
                 var existingEmail = await _userRepository.FirstOrDefaultAsync(u => u.Email == dto.Email);
                 if (existingEmail != null)
                 {
-
                     return ApiResponse<ManagerDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
                 }
             }
@@ -99,10 +101,11 @@ namespace ApartaAPI.Services
                 }
             }
 
-            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == MANAGEMENT_ROLE_ID);
+            // Lấy Role "manager" bằng tên
+            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleName == "manager");
             if (role == null)
             {
-                return ApiResponse<ManagerDto>.Fail("Role management không tồn tại trong hệ thống");
+                return ApiResponse<ManagerDto>.Fail("Role 'manager' không tồn tại trong hệ thống");
             }
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
@@ -111,8 +114,7 @@ namespace ApartaAPI.Services
             var newUser = new User
             {
                 UserId = Guid.NewGuid().ToString("N"),
-
-                RoleId = MANAGEMENT_ROLE_ID,
+                RoleId = role.RoleId, // Gán RoleId đã lấy
                 Name = dto.Name,
                 Phone = dto.Phone,
                 Email = dto.Email ?? $"{dto.Phone}@aparta.com",
@@ -131,7 +133,6 @@ namespace ApartaAPI.Services
             var resultDto = new ManagerDto
             {
                 UserId = newUser.UserId,
-
                 Name = newUser.Name,
                 Email = newUser.Email,
                 Phone = newUser.Phone,

@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
+using ApartaAPI.Extensions;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -52,8 +53,8 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 			builder.Services.AddHostedService<SubscriptionExpiryService>();
-
-			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
@@ -93,33 +94,9 @@ namespace ApartaAPI
 					};
 				});
 
-			// Authorization Policies
-			builder.Services.AddAuthorization(options =>
-			{
-				// Admin policy - only admin role
-				options.AddPolicy("AdminOnly", policy =>
-					policy.RequireRole("admin"));
+            builder.Services.AddAuthorizationPolicies();
 
-				// Staff policy - admin and staff roles
-				options.AddPolicy("StaffOrAdmin", policy =>
-					policy.RequireRole("admin", "staff"));
-
-				// Resident policy - admin, staff, and resident roles
-				options.AddPolicy("ResidentOrAbove", policy =>
-					policy.RequireRole("admin", "staff", "resident"));
-
-				// Specific role policies
-				options.AddPolicy("AdminPolicy", policy =>
-					policy.RequireRole("admin"));
-
-				options.AddPolicy("StaffPolicy", policy =>
-					policy.RequireRole("staff"));
-
-				options.AddPolicy("ResidentPolicy", policy =>
-					policy.RequireRole("resident"));
-			});
-
-			var app = builder.Build();
+            var app = builder.Build();
 
 			if (app.Environment.IsDevelopment())
 			{

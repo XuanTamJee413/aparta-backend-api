@@ -1,9 +1,10 @@
 ﻿using ApartaAPI.DTOs.Utilities;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http; 
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http; 
 
 namespace ApartaAPI.Controllers
 {
@@ -20,7 +21,8 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Utility
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<UtilityDto>), StatusCodes.Status200OK)]
+        [Authorize(Policy = "CanReadUtility")]
+        [ProducesResponseType(typeof(IEnumerable<UtilityDto>), StatusCodes.Status200OK)]
 		public async Task<ActionResult<IEnumerable<UtilityDto>>> GetUtilities()
 		{
 			var utilities = await _utilityService.GetAllUtilitiesAsync();
@@ -29,7 +31,8 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Utility/{id}
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(UtilityDto), StatusCodes.Status200OK)]
+        [Authorize(Policy = "CanReadUtility")]
+        [ProducesResponseType(typeof(UtilityDto), StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<ActionResult<UtilityDto>> GetUtility(string id)
 		{
@@ -45,7 +48,8 @@ namespace ApartaAPI.Controllers
 
 		// POST: api/Utility
 		[HttpPost]
-		[ProducesResponseType(typeof(UtilityDto), StatusCodes.Status201Created)]
+        [Authorize(Policy = "CanCreateUtility")]
+        [ProducesResponseType(typeof(UtilityDto), StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public async Task<ActionResult<UtilityDto>> PostUtility([FromBody] UtilityCreateDto utilityCreateDto)
 		{
@@ -65,7 +69,8 @@ namespace ApartaAPI.Controllers
 
 		// PUT: api/Utility/{id}
 		[HttpPut("{id}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
+        [Authorize(Policy = "CanUpdateUtility")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<IActionResult> PutUtility(string id, [FromBody] UtilityUpdateDto utilityUpdateDto)
@@ -82,7 +87,8 @@ namespace ApartaAPI.Controllers
 
 		// DELETE: api/Utility/{id}
 		[HttpDelete("{id}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
+        [Authorize(Policy = "CanDeleteUtility")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<IActionResult> DeleteUtility(string id)
 		{

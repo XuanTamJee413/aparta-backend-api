@@ -10,7 +10,7 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Policy = "AdminOnly")] // (UC 2.1.1 - Ex 1E) Chỉ Admin
+    [Authorize(Policy = "AdminOnly")] // (UC 2.1.1 - Ex 1E) Chỉ Admin
     public class SubscriptionsController : ControllerBase
     {
         private readonly ISubscriptionService _service;

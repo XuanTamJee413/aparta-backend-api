@@ -56,7 +56,6 @@ namespace ApartaAPI.Controllers
             var phone = User.FindFirst("phone")?.Value;
             var email = User.FindFirst("email")?.Value;
             var role = User.FindFirst("role")?.Value;
-
             var apartmentId = User.FindFirst("apartment_id")?.Value;
             var staffCode = User.FindFirst("staff_code")?.Value;
 
@@ -78,14 +77,6 @@ namespace ApartaAPI.Controllers
             );
 
             return Ok(response);
-        }
-
-        // GET: api/Auth/roles
-        [HttpGet("roles")]
-        public async Task<ActionResult<IEnumerable<object>>> GetRoles()
-        {
-            var roles = await _authService.GetRolesAsync();
-            return Ok(roles);
         }
     }
 }

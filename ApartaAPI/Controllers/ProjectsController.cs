@@ -8,7 +8,6 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService _service;
@@ -20,7 +19,7 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Projects
         [HttpGet]
-        //[Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanReadProject")]
         public async Task<ActionResult<ApiResponse<IEnumerable<ProjectDto>>>> GetProjects(
             [FromQuery] ProjectQueryParameters query)
         {
@@ -31,7 +30,7 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Projects/{id}
         [HttpGet("{id}")]
-        //[Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanReadProject")]
         public async Task<ActionResult<ApiResponse<ProjectDto>>> GetProject(string id)
         {
             var response = await _service.GetByIdAsync(id);
@@ -46,10 +45,17 @@ namespace ApartaAPI.Controllers
 
         // POST: api/Projects
         [HttpPost]
-        //[Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanCreateProject")]
         public async Task<ActionResult<ApiResponse<ProjectDto>>> PostProject([FromBody] ProjectCreateDto request)
         {
-            var response = await _service.CreateAsync(request);
+            var adminId = User.FindFirst("id")?.Value;
+
+            if (string.IsNullOrEmpty(adminId))
+            {
+                return Unauthorized();
+            }
+
+            var response = await _service.CreateAsync(request, adminId);
 
             if (!response.Succeeded)
             {
@@ -66,7 +72,7 @@ namespace ApartaAPI.Controllers
 
         // PUT: api/Projects/{id}
         [HttpPut("{id}")]
-        //[Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanUpdateProject")]
         public async Task<ActionResult<ApiResponse>> PutProject(string id, [FromBody] ProjectUpdateDto request)
         {
             var response = await _service.UpdateAsync(id, request);

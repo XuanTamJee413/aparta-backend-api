@@ -1,8 +1,5 @@
 ﻿namespace ApartaAPI.DTOs.Projects
 {
-    /// <summary>
-    /// Đóng gói các tham số filter, search và sort cho Project.
-    /// </summary>
     public sealed record ProjectQueryParameters(
         bool? IsActive,
         string? SearchTerm, // Dùng cho Project Name và Project Code

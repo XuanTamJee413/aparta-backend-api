@@ -4,6 +4,6 @@ namespace ApartaAPI.Repositories.Interfaces
 {
     public interface IVisitLogRepository : IRepository<VisitLog>
     {
-        Task<IEnumerable<VisitLog>> GetStaffViewLogsAsync();
+        IQueryable<VisitLog> GetStaffViewLogsQuery();
     }
 }

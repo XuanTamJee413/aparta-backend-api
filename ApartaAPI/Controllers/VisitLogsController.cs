@@ -1,5 +1,7 @@
-﻿using ApartaAPI.DTOs.VisitLogs;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApartaAPI.Controllers
@@ -18,36 +20,46 @@ namespace ApartaAPI.Controllers
         // phuong thuc da join visitor de lay visitor id, visitor name, join apartment de lay apartment code
         // GET: api/VisitLogs/all
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<VisitLogStaffViewDto>>> GetVisitLogsForStaff()
+        [Authorize(Policy = "CanReadVisitor")]
+        public async Task<ActionResult<ApiResponse<PagedList<VisitLogStaffViewDto>>>> GetVisitLogsForStaff(
+            [FromQuery] VisitorQueryParameters queryParams)
         {
-            var logs = await _service.GetStaffViewLogsAsync();
-            return Ok(logs);
+            var pagedData = await _service.GetStaffViewLogsAsync(queryParams);
+
+            if (pagedData.TotalCount == 0)
+            {
+                return Ok(ApiResponse<PagedList<VisitLogStaffViewDto>>.Success(pagedData, ApiResponse.SM01_NO_RESULTS));
+            }
+
+            return Ok(ApiResponse<PagedList<VisitLogStaffViewDto>>.Success(pagedData));
         }
 
         [HttpPut("{id}/checkin")]
-        public async Task<IActionResult> CheckInVisit(string id)
+        [Authorize(Policy = "CanCheckInVisitor")]
+        public async Task<ActionResult<ApiResponse>> CheckInVisit(string id)
         {
             var success = await _service.CheckInAsync(id);
 
             if (!success)
             {
-                return NotFound("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'.");
+                return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'."));
             }
 
-            return Ok();
+            return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
 
         [HttpPut("{id}/checkout")]
-        public async Task<IActionResult> CheckOutVisit(string id)
+        [Authorize(Policy = "CanCheckOutVisitor")]
+        public async Task<ActionResult<ApiResponse>> CheckOutVisit(string id)
         {
             var success = await _service.CheckOutAsync(id);
 
             if (!success)
             {
-                return NotFound("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in.");
+                return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in."));
             }
 
-            return Ok();
+            return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
     }
 }

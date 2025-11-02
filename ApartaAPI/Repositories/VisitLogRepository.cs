@@ -10,14 +10,13 @@ namespace ApartaAPI.Repositories
         public VisitLogRepository(ApartaDbContext context) : base(context)
         {
         }
-        public async Task<IEnumerable<VisitLog>> GetStaffViewLogsAsync()
+        public IQueryable<VisitLog> GetStaffViewLogsQuery()
         {
-            return await _dbSet
+            return _dbSet
                 .Include(a => a.Apartment)
                 .Include(v => v.Visitor)
                 .Where(v => v.Status != "Deleted")
-                .OrderByDescending(vl => vl.CheckinTime)
-                .ToListAsync();
+                .AsQueryable(); // Trả về IQueryable để service có thể xây dựng truy vấn tiếp
         }
     }
 }

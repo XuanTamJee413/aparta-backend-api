@@ -1,6 +1,7 @@
 ﻿using ApartaAPI.DTOs.Buildings;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,7 +11,6 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize] // Apply authorization policy if needed, e.g., [Authorize(Policy = "AdminOrManagerPolicy")]
     public class BuildingsController : ControllerBase
     {
         private readonly IBuildingService _service;
@@ -22,6 +22,7 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Buildings
         [HttpGet]
+        [Authorize(Policy = "CanReadBuilding")]
         public async Task<ActionResult<ApiResponse<PaginatedResult<BuildingDto>>>> GetBuildings(
             [FromQuery] BuildingQueryParameters query)
         {
@@ -31,6 +32,7 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Buildings/{id}
         [HttpGet("{id}")]
+        [Authorize(Policy = "CanReadBuilding")]
         public async Task<ActionResult<ApiResponse<BuildingDto>>> GetBuilding(string id)
         {
             var response = await _service.GetByIdAsync(id);
@@ -46,6 +48,7 @@ namespace ApartaAPI.Controllers
 
         // POST: api/Buildings
         [HttpPost]
+        [Authorize(Policy = "CanCreateBuilding")]
         public async Task<ActionResult<ApiResponse<BuildingDto>>> PostBuilding([FromBody] BuildingCreateDto request)
         {
             if (!ModelState.IsValid)
@@ -72,6 +75,7 @@ namespace ApartaAPI.Controllers
 
         // PUT: api/Buildings/{id}
         [HttpPut("{id}")]
+        [Authorize(Policy = "CanUpdateBuilding")]
         public async Task<ActionResult<ApiResponse>> PutBuilding(string id, [FromBody] BuildingUpdateDto request)
         {
             if (!ModelState.IsValid)

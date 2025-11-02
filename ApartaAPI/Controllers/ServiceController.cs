@@ -1,10 +1,11 @@
 ﻿using ApartaAPI.DTOs.Common; // Thêm
 using ApartaAPI.DTOs.Services;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http; 
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace ApartaAPI.Controllers
 {
@@ -21,7 +22,8 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Service
 		[HttpGet]
-		[ProducesResponseType(typeof(PagedList<ServiceDto>), StatusCodes.Status200OK)]
+        [Authorize(Policy = "CanReadService")]
+        [ProducesResponseType(typeof(PagedList<ServiceDto>), StatusCodes.Status200OK)]
 		public async Task<ActionResult<PagedList<ServiceDto>>> GetServices(
 			[FromQuery] ServiceQueryParameters parameters)
 		{
@@ -31,7 +33,8 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Service/{id}
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(ServiceDto), StatusCodes.Status200OK)]
+        [Authorize(Policy = "CanReadService")]
+        [ProducesResponseType(typeof(ServiceDto), StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<ActionResult<ServiceDto>> GetService(string id)
 		{
@@ -47,7 +50,8 @@ namespace ApartaAPI.Controllers
 
 		// POST: api/Service
 		[HttpPost]
-		[ProducesResponseType(typeof(ServiceDto), StatusCodes.Status201Created)]
+        [Authorize(Policy = "CanCreateService")]
+        [ProducesResponseType(typeof(ServiceDto), StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public async Task<ActionResult<ServiceDto>> PostService([FromBody] ServiceCreateDto serviceCreateDto)
 		{
@@ -67,7 +71,8 @@ namespace ApartaAPI.Controllers
 
 		// PUT: api/Service/{id}
 		[HttpPut("{id}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
+        [Authorize(Policy = "CanUpdateService")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<IActionResult> PutService(string id, [FromBody] ServiceUpdateDto serviceUpdateDto)
@@ -85,7 +90,8 @@ namespace ApartaAPI.Controllers
 
 		// DELETE: api/Service/{id}
 		[HttpDelete("{id}")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
+        [Authorize(Policy = "CanDeleteService")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<IActionResult> DeleteService(string id)
 		{

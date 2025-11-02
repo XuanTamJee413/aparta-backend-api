@@ -549,9 +549,18 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnName("meter_id");
             entity.Property(e => e.PreviousReading).HasColumnName("previous_reading");
             entity.Property(e => e.ReadingDate).HasColumnName("reading_date");
+            entity.Property(e => e.BillingPeriod)
+                .HasMaxLength(7)
+                .HasColumnName("billing_period");
+            entity.Property(e => e.RecordedBy)
+                .HasMaxLength(50)
+                .HasColumnName("recorded_by");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.IsInvoiced)
+                .HasDefaultValue(false)
+                .HasColumnName("is_invoiced");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.MeterReadings)
                 .HasForeignKey(d => d.ApartmentId)
@@ -562,6 +571,10 @@ public partial class ApartaDbContext : DbContext
                 .HasForeignKey(d => d.MeterId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MeterReading_Meter");
+
+            entity.HasOne(d => d.RecordedByUser).WithMany()
+                .HasForeignKey(d => d.RecordedBy)
+                .HasConstraintName("FK_MeterReading_User");
         });
 
         modelBuilder.Entity<News>(entity =>
@@ -887,6 +900,10 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.IsSystemDefined)
+                .HasColumnName("is_system_defined");
+            entity.Property(e => e.IsActive)
+                .HasColumnName("is_active");
 
             entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
                 .UsingEntity<Dictionary<string, object>>(

@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
+using ApartaAPI.Extensions;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -54,16 +55,29 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 			builder.Services.AddHostedService<SubscriptionExpiryService>();
-
-			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
-			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
-			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
-			builder.Services.AddScoped<IManagerService, ManagerService>();
-			builder.Services.AddScoped<INewsService, NewsService>();
-            builder.Services.AddScoped<IVehicleService, VehicleService>();
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+            builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
+            builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
+            builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
+            builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+            builder.Services.AddSingleton<PayOSService>();
+            builder.Services.AddEndpointsApiExplorer();
+
+			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IManagerService, ManagerService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
+			builder.Services.AddScoped<IVehicleService, VehicleService>();
             builder.Services.AddScoped<IApartmentService, ApartmentService>();
 
             builder.Services.AddEndpointsApiExplorer();
@@ -97,8 +111,9 @@ namespace ApartaAPI
 	});
 			});
 
-			// JWT Authentication
-			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+
+            // JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 			var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
 			var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
 			var audience = jwtSettings["Audience"] ?? "ApartaAPI";
@@ -119,33 +134,9 @@ namespace ApartaAPI
 					};
 				});
 
-			// Authorization Policies
-			builder.Services.AddAuthorization(options =>
-			{
-				// Admin policy - only admin role
-				options.AddPolicy("AdminOnly", policy =>
-					policy.RequireRole("admin"));
+            builder.Services.AddAuthorizationPolicies();
 
-				// Staff policy - admin and staff roles
-				options.AddPolicy("StaffOrAdmin", policy =>
-					policy.RequireRole("admin", "staff"));
-
-				// Resident policy - admin, staff, and resident roles
-				options.AddPolicy("ResidentOrAbove", policy =>
-					policy.RequireRole("admin", "staff", "resident"));
-
-				// Specific role policies
-				options.AddPolicy("AdminPolicy", policy =>
-					policy.RequireRole("admin"));
-
-				options.AddPolicy("StaffPolicy", policy =>
-					policy.RequireRole("staff"));
-
-				options.AddPolicy("ResidentPolicy", policy =>
-					policy.RequireRole("resident"));
-			});
-
-			var app = builder.Build();
+            var app = builder.Build();
 
 			if (app.Environment.IsDevelopment())
 			{

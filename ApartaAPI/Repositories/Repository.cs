@@ -30,15 +30,22 @@ namespace ApartaAPI.Repositories
             return await _dbSet.FindAsync(id);
         }
 
+        public async Task<T?> GetByIdAsync(string id)
+        {
+            return await _dbSet.FindAsync(id);
+        }
+
         public async Task<T> AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
             return entity;
         }
 
         public async Task<T> UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
             return await Task.FromResult(entity);
         }
 

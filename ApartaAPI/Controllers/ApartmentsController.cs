@@ -42,7 +42,7 @@ namespace ApartaAPI.Controllers
         public async Task<IActionResult> PutApartment(string id, [FromBody] ApartmentUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
+            //if (!updated) return NotFound();
             return Ok(); 
         }
 

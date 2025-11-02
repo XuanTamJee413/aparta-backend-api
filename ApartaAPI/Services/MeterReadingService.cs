@@ -275,12 +275,6 @@ public class MeterReadingService : IMeterReadingService
                 descriptionParts.Add($"{meterTypeName}: {consumption} {unit} = {cost:N0} VND");
             }
 
-            // Create invoice even if totalCost is 0 to mark readings as invoiced
-            // This prevents duplicate invoice generation
-
-            // Parse billing period to get start and end dates
-            // Invoice dates should be for the NEXT month (not current month)
-            // Example: If billingPeriod is 2025-10 (October), invoice dates should be for November (2025-11)
             var periodParts = billingPeriod.Split('-');
             if (periodParts.Length != 2) continue;
 

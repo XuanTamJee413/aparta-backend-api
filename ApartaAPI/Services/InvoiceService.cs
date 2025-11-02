@@ -5,6 +5,7 @@ using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace ApartaAPI.Services;
 
@@ -16,6 +17,7 @@ public class InvoiceService : IInvoiceService
     private readonly IRepository<User> _userRepo;
     private readonly IMapper _mapper;
     private readonly PayOSService _payOSService;
+    private readonly IConfiguration _configuration;
 
     public InvoiceService(
         ApartaDbContext context,
@@ -23,7 +25,8 @@ public class InvoiceService : IInvoiceService
         IRepository<Payment> paymentRepo,
         IRepository<User> userRepo,
         IMapper mapper,
-        PayOSService payOSService)
+        PayOSService payOSService,
+        IConfiguration configuration)
     {
         _context = context;
         _invoiceRepo = invoiceRepo;
@@ -31,6 +34,7 @@ public class InvoiceService : IInvoiceService
         _userRepo = userRepo;
         _mapper = mapper;
         _payOSService = payOSService;
+        _configuration = configuration;
     }
 
     public async Task<List<InvoiceDto>> GetUserInvoicesAsync(string userId)
@@ -131,8 +135,7 @@ public class InvoiceService : IInvoiceService
             return null;
         }
 
-        // Create payment link via PayOS
-        // Callback URLs for PayOS redirect
+        var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
         var cancelUrl = $"{baseUrl}/api/payos/payment/cancel";
         var returnUrl = $"{baseUrl}/api/payos/payment/success?invoiceId={invoiceId}";
         

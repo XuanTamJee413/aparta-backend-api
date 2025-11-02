@@ -1,13 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize] // Tắt authorize tạm thời
 public class InvoiceController : ControllerBase
 {
     private readonly IInvoiceService _service;
@@ -17,18 +18,21 @@ public class InvoiceController : ControllerBase
         _service = service;
     }
 
-    /// <summary>
-    /// Get invoices for the current user
-    /// </summary>
     [HttpGet("my-invoices")]
+    [Authorize(Policy = "CanReadInvoiceResident")]
     public async Task<ActionResult<ApiResponse<List<InvoiceDto>>>> GetMyInvoices()
     {
         try
         {
-            // Tạm thời dùng user_id cố định vì chưa có authorize
-            const string TEMP_USER_ID = "439150F2-BCD4-48F6-B345-047B143D5620";
+            var userId = User.FindFirst("id")?.Value ?? 
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<List<InvoiceDto>>.Fail("User ID not found in token. Please login again."));
+            }
 
-            var invoices = await _service.GetUserInvoicesAsync(TEMP_USER_ID);
+            var invoices = await _service.GetUserInvoicesAsync(userId);
 
             return Ok(ApiResponse<List<InvoiceDto>>.Success(
                 invoices,
@@ -41,10 +45,8 @@ public class InvoiceController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Get all invoices (for staff)
-    /// </summary>
     [HttpGet]
+    [Authorize(Policy = "CanReadInvoiceStaff")]
     public async Task<ActionResult<ApiResponse<List<InvoiceDto>>>> GetInvoices(
         [FromQuery] string? status = null,
         [FromQuery] string? apartmentCode = null)
@@ -64,19 +66,13 @@ public class InvoiceController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Create payment link for an invoice
-    /// Resident clicks "Thanh toán" button → This endpoint creates PayOS payment link
-    /// </summary>
     [HttpPost("{invoiceId}/pay")]
+    [Authorize(Policy = "CanCreateInvoicePayment")]
     public async Task<ActionResult<ApiResponse<string>>> CreatePayment(string invoiceId)
     {
         try
         {
-            // Get base URL from request for callback URLs
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            
-            // Create payment link via PayOS
             var checkoutUrl = await _service.CreatePaymentLinkAsync(invoiceId, baseUrl);
             
             if (string.IsNullOrEmpty(checkoutUrl))

@@ -20,21 +20,14 @@ namespace ApartaAPI.Controllers
 		}
 
 		// GET: api/Service
-		// SỬA: Cập nhật endpoint để nhận tham số Query
 		[HttpGet]
 		[ProducesResponseType(typeof(PagedList<ServiceDto>), StatusCodes.Status200OK)]
 		public async Task<ActionResult<PagedList<ServiceDto>>> GetServices(
 			[FromQuery] ServiceQueryParameters parameters)
 		{
 			var services = await _serviceService.GetServicesAsync(parameters);
-
-			// Bạn có thể thêm thông tin phân trang vào Response Header nếu muốn
-			// Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(services.PaginationMetadata));
-
 			return Ok(services);
 		}
-
-		// ... các endpoint GET(id), POST, PUT, DELETE giữ nguyên ...
 
 		// GET: api/Service/{id}
 		[HttpGet("{id}")]

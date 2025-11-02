@@ -181,6 +181,51 @@ namespace ApartaAPI.Extensions
                     ctx.User.HasClaim("permission", "apartmentmember.delete")
                 ));
 
+                // Policy cho MeterReading
+                options.AddPolicy("CanCreateMeterReading", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "meterreading.record.create")
+                ));
+
+                options.AddPolicy("CanReadMeterReadingProgress", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "meterreading.progress.read")
+                ));
+
+                options.AddPolicy("CanReadMeterReadingRecord", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "meterreading.record.read")
+                ));
+
+                options.AddPolicy("CanReadMeterReadingHistory", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("resident") ||
+                    ctx.User.HasClaim("permission", "meterreading.history.read")
+                ));
+
+                options.AddPolicy("CanReadMeterReadingSheet", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "meterreading.sheet.read")
+                ));
+
+                // Policy cho Invoice
+                options.AddPolicy("CanCreateInvoicePayment", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("resident") ||
+                    ctx.User.HasClaim("permission", "invoice.pay.create")
+                ));
+
+                options.AddPolicy("CanReadInvoiceStaff", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "invoice.staff.read")
+                ));
+
+                options.AddPolicy("CanReadInvoiceResident", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("resident") ||
+                    ctx.User.HasClaim("permission", "invoice.resident.read")
+                ));
+
             });
 
             return services;

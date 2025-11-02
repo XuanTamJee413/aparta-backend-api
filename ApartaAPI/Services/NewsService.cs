@@ -5,6 +5,7 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ApartaAPI.Services
 {
@@ -108,12 +109,36 @@ namespace ApartaAPI.Services
             return ApiResponse<NewsDto>.Success(resultDto, ApiResponse.SM04_CREATE_SUCCESS);
         }
 
-        public async Task<ApiResponse<NewsDto>> UpdateNewsAsync(string newsId, UpdateNewsDto dto)
+        public async Task<ApiResponse<NewsDto>> UpdateNewsAsync(string newsId, UpdateNewsDto dto, string userId)
         {
             var news = await _newsRepository.FirstOrDefaultAsync(n => n.NewsId == newsId);
             if (news == null)
             {
                 return ApiResponse<NewsDto>.Fail(ApiResponse.SM01_NO_RESULTS); 
+            }
+
+            // Kiểm tra quyền: author, admin, hoặc user có permission "news.update"
+            var user = await _context.Users
+                .Include(u => u.Role)
+                    .ThenInclude(r => r.Permissions)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            
+            if (user == null)
+            {
+                return ApiResponse<NewsDto>.Fail("User not found");
+            }
+
+            var isAuthor = news.AuthorUserId == userId;
+            var roleName = user.Role?.RoleName?.Trim().ToLower() ?? "";
+            var isAdmin = roleName == "admin";
+            
+            // Kiểm tra permission "news.update" trong role
+            var hasUpdatePermission = user.Role?.Permissions?
+                .Any(p => p.Name?.Trim().ToLower() == "news.update") ?? false;
+
+            if (!isAuthor && !isAdmin && !hasUpdatePermission)
+            {
+                return ApiResponse<NewsDto>.Fail("You don't have permission to update this news. Only author, admin, or user with 'news.update' permission can update.");
             }
 
             // Update fields if provided
@@ -168,12 +193,36 @@ namespace ApartaAPI.Services
             return ApiResponse<NewsDto>.Success(resultDto, ApiResponse.SM03_UPDATE_SUCCESS);
         }
 
-        public async Task<ApiResponse> DeleteNewsAsync(string newsId)
+        public async Task<ApiResponse> DeleteNewsAsync(string newsId, string userId)
         {
             var news = await _newsRepository.FirstOrDefaultAsync(n => n.NewsId == newsId);
             if (news == null)
             {
                 return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
+
+            // Kiểm tra quyền: author, admin, hoặc user có permission "news.delete"
+            var user = await _context.Users
+                .Include(u => u.Role)
+                    .ThenInclude(r => r.Permissions)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            
+            if (user == null)
+            {
+                return ApiResponse.Fail("User not found");
+            }
+
+            var isAuthor = news.AuthorUserId == userId;
+            var roleName = user.Role?.RoleName?.Trim().ToLower() ?? "";
+            var isAdmin = roleName == "admin";
+            
+            // Kiểm tra permission "news.delete" trong role
+            var hasDeletePermission = user.Role?.Permissions?
+                .Any(p => p.Name?.Trim().ToLower() == "news.delete") ?? false;
+
+            if (!isAuthor && !isAdmin && !hasDeletePermission)
+            {
+                return ApiResponse.Fail("You don't have permission to delete this news. Only author, admin, or user with 'news.delete' permission can delete.");
             }
 
             // Soft delete: Set Status = "delete"

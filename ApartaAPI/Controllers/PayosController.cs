@@ -1,103 +1,75 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.PayOS;
+using System;
 
 namespace ApartaAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize] // Tắt authorize tạm thời
 public class PayosController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
     private readonly PayOSService _payOSService;
+    private readonly IConfiguration _configuration;
 
-    public PayosController(IInvoiceService invoiceService, PayOSService payOSService)
+    public PayosController(IInvoiceService invoiceService, PayOSService payOSService, IConfiguration configuration)
     {
         _invoiceService = invoiceService;
         _payOSService = payOSService;
+        _configuration = configuration;
     }
 
-    /// <summary>
-    /// Payment success callback (redirect from PayOS)
-    /// Automatically updates invoice and payment status when payment is successful
-    /// </summary>
     [HttpGet("payment/success")]
     public async Task<ActionResult> PaymentSuccess([FromQuery] string? invoiceId = null, [FromQuery] string? orderCode = null)
     {
         try
         {
-            // Check if orderCode is provided
+            var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+            
             if (string.IsNullOrEmpty(orderCode))
             {
-                return Ok(new
-                {
-                    success = false,
-                    message = "OrderCode không được tìm thấy",
-                    invoiceId = invoiceId,
-                    orderCode = orderCode
-                });
+                var errorUrl = $"{frontendUrl}/home?payment=error&message=" + Uri.EscapeDataString("OrderCode không được tìm thấy");
+                return Redirect(errorUrl);
             }
 
             Console.WriteLine($"Payment success callback: invoiceId={invoiceId}, orderCode={orderCode}");
 
-            // Automatically process payment and update invoice status
             var success = await _invoiceService.ProcessPaymentWebhookAsync(null, orderCode);
 
             if (!success)
             {
                 Console.WriteLine($"Failed to process payment for orderCode={orderCode}");
-                return Ok(new
-                {
-                    success = false,
-                    message = "Thanh toán thành công nhưng không thể cập nhật trạng thái. Vui lòng thử lại.",
-                    invoiceId = invoiceId,
-                    orderCode = orderCode
-                });
+                var errorUrl = $"{frontendUrl}/home?payment=error&message=" + Uri.EscapeDataString("Thanh toán thành công nhưng không thể cập nhật trạng thái. Vui lòng thử lại.") + $"&invoiceId={invoiceId}&orderCode={orderCode}";
+                return Redirect(errorUrl);
             }
 
             Console.WriteLine($"Successfully updated invoice status for orderCode={orderCode}");
 
-            // Return success response
-            return Ok(new
-            {
-                success = true,
-                message = "Thanh toán thành công",
-                invoiceId = invoiceId,
-                orderCode = orderCode
-            });
+            var redirectUrl = $"{frontendUrl}/home?payment=success&invoiceId={invoiceId}&orderCode={orderCode}";
+            
+            return Redirect(redirectUrl);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Payment success callback error: {ex.Message}");
-            return BadRequest(new 
-            { 
-                success = false, 
-                message = ex.Message,
-                invoiceId = invoiceId,
-                orderCode = orderCode
-            });
+            var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+            var errorUrl = $"{frontendUrl}/home?payment=error&message=" + Uri.EscapeDataString(ex.Message) + $"&invoiceId={invoiceId}&orderCode={orderCode}";
+            return Redirect(errorUrl);
         }
     }
 
-    /// <summary>
-    /// Payment cancel callback (redirect from PayOS)
-    /// </summary>
     [HttpGet("payment/cancel")]
-    public ActionResult PaymentCancel()
+    public ActionResult PaymentCancel([FromQuery] string? invoiceId = null)
     {
-        return Ok(new
-        {
-            success = false,
-            message = "Thanh toán đã bị hủy"
-        });
+        var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+        var redirectUrl = $"{frontendUrl}/home?payment=cancel" + (string.IsNullOrEmpty(invoiceId) ? "" : $"&invoiceId={invoiceId}");
+        
+        return Redirect(redirectUrl);
     }
 
-    /// <summary>
-    /// Manually trigger payment update (for testing/local development)
-    /// Use this endpoint after successful payment when webhook is not available
-    /// </summary>
     [HttpPost("payment/manual-update")]
     public async Task<IActionResult> ManualPaymentUpdate([FromBody] ManualPaymentUpdateRequest request)
     {
@@ -145,9 +117,6 @@ public class PayosController : ControllerBase
         public string OrderCode { get; set; } = null!;
     }
 
-    /// <summary>
-    /// PayOS webhook endpoint - Process payment when PayOS notifies us
-    /// </summary>
     [HttpPost("payment/webhook")]
     public async Task<IActionResult> PaymentWebhook(
         [FromBody] WebhookPayload payload,

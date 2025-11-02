@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.Services.Interfaces;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
 public class MeterReadingsController : ControllerBase
 {
     private readonly IMeterReadingService _service;
@@ -18,8 +18,8 @@ public class MeterReadingsController : ControllerBase
         _service = service;
     }
 
-    // lấy danh sách chỉ số điện nước của các căn hộ trong tòa nhà 
     [HttpGet("recording-sheet")]
+    [Authorize(Policy = "CanReadMeterReadingSheet")]
     public async Task<ActionResult<ApiResponse<List<ApartmentMeterInfoDto>>>> GetRecordingSheet(
         [FromQuery] string buildingCode)
     {
@@ -39,16 +39,23 @@ public class MeterReadingsController : ControllerBase
     }
 
 
-    // lưu số điện nước 
     [HttpPost("record")]
+    [Authorize(Policy = "CanCreateMeterReading")]
     public async Task<ActionResult<ApiResponse<MeterReadingDto>>> RecordReading(
-        [FromBody] RecordMeterReadingRequest request,
-        [FromQuery] string staffId)
+        [FromBody] RecordMeterReadingRequest request)
     {
         try
         {
+            var userId = User.FindFirst("id")?.Value ?? 
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<MeterReadingDto>.Fail("User ID not found in token. Please login again."));
+            }
+
             string billingPeriod = DateTime.Now.ToString("yyyy-MM");
-            var result = await _service.RecordMeterReadingAsync(request, staffId, billingPeriod);
+            var result = await _service.RecordMeterReadingAsync(request, userId, billingPeriod);
 
             return Ok(ApiResponse<MeterReadingDto>.Success(
                 result,
@@ -69,8 +76,8 @@ public class MeterReadingsController : ControllerBase
         }
     }
 
-    // lấy tiến độ ghi chỉ số cho một tòa nhà trong một kỳ hóa đơn
     [HttpGet("progress/{buildingCode}")]
+    [Authorize(Policy = "CanReadMeterReadingProgress")]
     public async Task<ActionResult<ApiResponse<RecordingProgressDto>>> GetProgress(
         string buildingCode,
         [FromQuery] string? billingPeriod = null)
@@ -79,7 +86,6 @@ public class MeterReadingsController : ControllerBase
         {
             billingPeriod ??= DateTime.Now.ToString("yyyy-MM");
 
-            // validate billing period format
             if (!DateTime.TryParseExact(billingPeriod, "yyyy-MM", null, System.Globalization.DateTimeStyles.None, out _))
             {
                 return BadRequest(ApiResponse<RecordingProgressDto>.Fail("Định dạng billingPeriod không hợp lệ. Sử dụng định dạng yyyy-MM"));
@@ -103,8 +109,8 @@ public class MeterReadingsController : ControllerBase
     }
 
 
-    // tạo hóa đơn cho tất cả căn hộ trong tòa nhà 
     [HttpPost("generate-invoices/{buildingCode}")]
+    [Authorize(Policy = "CanCreateMeterReading")]
     public async Task<ActionResult<ApiResponse<int>>> GenerateInvoices(
         string buildingCode)
     {
@@ -112,10 +118,8 @@ public class MeterReadingsController : ControllerBase
         {
             string billingPeriod = DateTime.Now.ToString("yyyy-MM");
 
-            // kiểm tra tiến độ ghi chỉ số - phải đạt 100% cho tất cả loại đồng hồ trước khi tạo hóa đơn
             var progress = await _service.GetRecordingProgressAsync(buildingCode, billingPeriod);
             
-            // kiểm tra xem tất cả loại đồng hồ đã hoàn thành chưa
             bool allMetersComplete = progress.ProgressByMeterType.Values.All(progressValue => progressValue >= 100);
             
             if (!allMetersComplete)
@@ -133,12 +137,10 @@ public class MeterReadingsController : ControllerBase
                 ));
             }
 
-            // sử dụng BuildingId từ kết quả tiến độ ghi chỉ số
             var count = await _service.GenerateMonthlyInvoicesAsync(progress.BuildingId, billingPeriod);
             
             if (count == 0)
             {
-                // nếu không có hóa đơn nào được tạo, có thể là vì tất cả chỉ số đã được ghi
                 return Ok(ApiResponse<int>.Success(
                     count,
                     "Không có hóa đơn nào được tạo. Các hóa đơn đều đã được tạo."
@@ -160,15 +162,14 @@ public class MeterReadingsController : ControllerBase
         }
     }
 
-    // lấy tất cả chỉ số điện nước đã ghi cho một tòa nhà trong một kỳ hóa đơn
     [HttpGet("recorded-readings")]
+    [Authorize(Policy = "CanReadMeterReadingRecord")]
     public async Task<ActionResult<ApiResponse<List<MeterReadingDto>>>> GetRecordedReadings(
         [FromQuery] string buildingCode,
         [FromQuery] string billingPeriod)
     {
         try
         {
-            // validate billing period format
             if (!DateTime.TryParseExact(billingPeriod, "yyyy-MM", null, System.Globalization.DateTimeStyles.None, out _))
             {
                 return BadRequest(ApiResponse<List<MeterReadingDto>>.Fail("Định dạng billingPeriod không hợp lệ. Sử dụng định dạng yyyy-MM"));
@@ -191,8 +192,8 @@ public class MeterReadingsController : ControllerBase
         }
     }
 
-    // lấy lịch sử ghi chỉ số cho một căn hộ
     [HttpGet("history/{apartmentId}")]
+    [Authorize(Policy = "CanReadMeterReadingHistory")]
     public async Task<ActionResult<ApiResponse<List<MeterReadingDto>>>> GetHistory(
         string apartmentId,
         [FromQuery] string meterId,

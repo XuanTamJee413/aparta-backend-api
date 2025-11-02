@@ -3,6 +3,8 @@ using ApartaAPI.DTOs.News;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers
 {
@@ -25,9 +27,16 @@ namespace ApartaAPI.Controllers
             [FromQuery] string? searchTerm,
             [FromQuery] string? status) 
         {
-            var query = new NewsSearchDto(searchTerm, status);
-            var response = await _newsService.GetAllNewsAsync(query);
-            return Ok(response);
+            try
+            {
+                var query = new NewsSearchDto(searchTerm, status);
+                var response = await _newsService.GetAllNewsAsync(query);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<IEnumerable<NewsDto>>.Fail($"An error occurred while loading news: {ex.Message}"));
+            }
         }
 
         // POST: api/News - News mới
@@ -37,32 +46,39 @@ namespace ApartaAPI.Controllers
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 400)]
         public async Task<ActionResult<ApiResponse<NewsDto>>> CreateNews([FromBody] CreateNewsDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join("; ", ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage));
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                    
+                    return BadRequest(ApiResponse<NewsDto>.Fail(errors));
+                }
+
+                // Lấy userId từ token JWT
+                var userId = User.FindFirst("id")?.Value ?? 
+                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 
-                return BadRequest(ApiResponse<NewsDto>.Fail(errors));
-            }
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(ApiResponse<NewsDto>.Fail("User ID not found in token. Please login again."));
+                }
 
-            // Lấy userId từ token, nếu không có thì dùng hardcode để test
-            var userId = User.FindFirst("id")?.Value;
-            
-            // TEMPORARY: Hardcode authorUserId để test (vì đang lỗi authorize)
-            if (string.IsNullOrEmpty(userId))
+                var response = await _newsService.CreateNewsAsync(request, userId);
+                
+                if (!response.Succeeded)
+                {
+                    return BadRequest(response);
+                }
+
+                return CreatedAtAction(nameof(GetAllNews), new { id = response.Data!.NewsId }, response);
+            }
+            catch (Exception ex)
             {
-                userId = "BD0BC556-622E-4393-8B9D-A94EA922E6AD"; // TODO: Remove after fixing auth
+                return StatusCode(500, ApiResponse<NewsDto>.Fail($"An error occurred while creating news: {ex.Message}"));
             }
-
-            var response = await _newsService.CreateNewsAsync(request, userId);
-            
-            if (!response.Succeeded)
-            {
-                return BadRequest(response);
-            }
-
-            return CreatedAtAction(nameof(GetAllNews), new { id = response.Data!.NewsId }, response);
         }
 
         // PUT: api/News/{id} - Sửa news
@@ -73,27 +89,43 @@ namespace ApartaAPI.Controllers
         [ProducesResponseType(typeof(ApiResponse<NewsDto>), 404)]
         public async Task<ActionResult<ApiResponse<NewsDto>>> UpdateNews(string id, [FromBody] UpdateNewsDto request)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = string.Join("; ", ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage));
-                
-                return BadRequest(ApiResponse<NewsDto>.Fail(errors));
-            }
-
-            var response = await _newsService.UpdateNewsAsync(id, request);
-            
-            if (!response.Succeeded)
-            {
-                if (response.Message == ApiResponse.SM01_NO_RESULTS)
+                if (!ModelState.IsValid)
                 {
-                    return NotFound(response);
+                    var errors = string.Join("; ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                    
+                    return BadRequest(ApiResponse<NewsDto>.Fail(errors));
                 }
-                return BadRequest(response);
-            }
 
-            return Ok(response);
+                // Lấy userId từ token JWT
+                var userId = User.FindFirst("id")?.Value ?? 
+                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(ApiResponse<NewsDto>.Fail("User ID not found in token. Please login again."));
+                }
+
+                var response = await _newsService.UpdateNewsAsync(id, request, userId);
+                
+                if (!response.Succeeded)
+                {
+                    if (response.Message == ApiResponse.SM01_NO_RESULTS)
+                    {
+                        return NotFound(response);
+                    }
+                    return BadRequest(response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<NewsDto>.Fail($"An error occurred while updating news: {ex.Message}"));
+            }
         }
 
         // DELETE: api/News/{id} - Xóa news
@@ -103,18 +135,34 @@ namespace ApartaAPI.Controllers
         [ProducesResponseType(typeof(ApiResponse), 404)]
         public async Task<ActionResult<ApiResponse>> DeleteNews(string id)
         {
-            var response = await _newsService.DeleteNewsAsync(id);
-            
-            if (!response.Succeeded)
+            try
             {
-                if (response.Message == ApiResponse.SM01_NO_RESULTS)
+                // Lấy userId từ token JWT
+                var userId = User.FindFirst("id")?.Value ?? 
+                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                
+                if (string.IsNullOrEmpty(userId))
                 {
-                    return NotFound(response);
+                    return Unauthorized(ApiResponse.Fail("User ID not found in token. Please login again."));
                 }
-                return BadRequest(response);
-            }
 
-            return Ok(response);
+                var response = await _newsService.DeleteNewsAsync(id, userId);
+                
+                if (!response.Succeeded)
+                {
+                    if (response.Message == ApiResponse.SM01_NO_RESULTS)
+                    {
+                        return NotFound(response);
+                    }
+                    return BadRequest(response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.Fail($"An error occurred while deleting news: {ex.Message}"));
+            }
         }
     }
 }

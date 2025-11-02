@@ -8,7 +8,7 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "AdminOnly")]
     public class ManagerController : ControllerBase
     {
         private readonly IManagerService _managerService;

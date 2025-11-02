@@ -887,6 +887,10 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.IsSystemDefined)
+                .HasColumnName("is_system_defined");
+            entity.Property(e => e.IsActive)
+                .HasColumnName("is_active");
 
             entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
                 .UsingEntity<Dictionary<string, object>>(

@@ -10,7 +10,7 @@ namespace ApartaAPI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<ProjectDto>>> GetAllAsync(ProjectQueryParameters query);
         Task<ApiResponse<ProjectDto>> GetByIdAsync(string id);
-        Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto);
+        Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto, string adminId);
         Task<ApiResponse> UpdateAsync(string id, ProjectUpdateDto dto);
     }
 }

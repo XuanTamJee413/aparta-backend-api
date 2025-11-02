@@ -7,7 +7,6 @@ namespace ApartaAPI.Services.Interfaces
     {
         Task<string?> LoginAsync(string phone, string password);
         Task<User?> GetUserByPhoneAsync(string phone);
-        Task<IEnumerable<object>> GetRolesAsync();
         Task<User?> UpdateProfileAsync(string userId, ProfileUpdateDto dto);
     }
 }

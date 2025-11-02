@@ -1,13 +1,15 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
+﻿using ApartaAPI.Data;
+using ApartaAPI.DTOs.Auth;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
-using Microsoft.Extensions.Configuration;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
-using ApartaAPI.DTOs.Auth;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ApartaAPI.Services
 {
@@ -16,13 +18,13 @@ namespace ApartaAPI.Services
     {
         private readonly IMapper _mapper;
         private readonly IRepository<User> _userRepository;
-        private readonly IRepository<Role> _roleRepository;
+        private readonly ApartaDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthService(IRepository<User> userRepository, IRepository<Role> roleRepository, IConfiguration configuration, IMapper mapper)
+        public AuthService(IRepository<User> userRepository, ApartaDbContext context, IConfiguration configuration, IMapper mapper)
         {
             _userRepository = userRepository;
-            _roleRepository = roleRepository;
+            _context = context;
             _configuration = configuration;
             _mapper = mapper;
         }
@@ -37,27 +39,37 @@ namespace ApartaAPI.Services
                 return null;
 
             // Get role information
-            var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == user.RoleId);
-            if (role == null) return null;
+            var role = await _context.Roles.Include(r => r.Permissions)
+                .FirstOrDefaultAsync(r => r.RoleId == user.RoleId);
+            if (role == null || !role.IsActive) return null;
+
+            if (role.RoleName == "resident")
+            {
+                if (string.IsNullOrEmpty(user.ApartmentId))
+                {
+                    return null;
+                }
+                var project = await _context.Apartments
+                    .Where(a => a.ApartmentId == user.ApartmentId)
+                    .Select(a => a.Building.Project)
+                    .FirstOrDefaultAsync();
+
+                if (project == null || !project.IsActive)
+                {
+                    return null;
+                }
+            }
 
             // Generate JWT token
-            return GenerateJwtToken(user, role.RoleName ?? "unknown");
+            return GenerateJwtToken(user, role);
         }
 
         public async Task<User?> GetUserByPhoneAsync(string phone)
         {
-            return await _userRepository.FirstOrDefaultAsync(u => u.Phone == phone && !u.IsDeleted);
-        }
-        public async Task<IEnumerable<object>> GetRolesAsync()
-        {
-            var roles = await _roleRepository.GetAllAsync();
-            return roles.Select(r => new { 
-                RoleId = r.RoleId, 
-                RoleName = r.RoleName 
-            });
+            return await _userRepository.FirstOrDefaultAsync(u => u.Phone == phone && !u.IsDeleted && u.Status.ToLower() == "active");
         }
 
-        private string GenerateJwtToken(User user, string roleName)
+        private string GenerateJwtToken(User user, Role role)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
@@ -68,17 +80,25 @@ namespace ApartaAPI.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
+            {
+                new Claim("id", user.UserId),
+                new Claim("name", user.Name),
+                new Claim("phone", user.Phone),
+                new Claim("email", user.Email),
+                new Claim("role", role.RoleName ?? "unknown"),
+                new Claim("role_id", user.RoleId),
+                new Claim("apartment_id", user.ApartmentId ?? ""),
+                new Claim("staff_code", user.StaffCode ?? "")
+            };
+
+            if (role.Permissions != null)
+            {
+                foreach (var perm in role.Permissions)
                 {
-                    new Claim("id", user.UserId),
-                    new Claim("name", user.Name),
-                    new Claim("phone", user.Phone),
-                    new Claim("email", user.Email),
-                    new Claim("role", roleName),
-                    new Claim("role_id", user.RoleId),
-                    new Claim("apartment_id", user.ApartmentId ?? ""),
-                    new Claim("staff_code", user.StaffCode ?? "")
-                };
+                    claims.Add(new Claim("permission", perm.Name));
+                }
+            }
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
@@ -107,7 +127,7 @@ namespace ApartaAPI.Services
             user.Status = user.Status;
             user.Phone = user.Phone;   
             user.Email = user.Email;
-            user.LastLoginAt = DateTime.UtcNow; // <--- THÊM DÒNG NÀY TRONG SERVICE
+            user.LastLoginAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
 

@@ -29,6 +29,7 @@
         public const string SM21_DELETION_FAILED = "Cannot delete. This item is currently in use or has dependencies.";
         public const string SM22_INVALID_COUPON = "Coupon not found or invalid.";
         public const string SM23_IMPORT_FAILED = "Data import failed. Please check the file format and data.";
+        public const string SM24_SYSTEM_ROLES_IMMUTABLE = "System Roles cannot be modified.";
 
         public static string GetMessageFromCode(string code)
         {
@@ -57,7 +58,8 @@
                 SM21_DELETION_FAILED => SM21_DELETION_FAILED,
                 SM22_INVALID_COUPON => SM22_INVALID_COUPON,
                 SM23_IMPORT_FAILED => SM23_IMPORT_FAILED,
-                _ => code 
+                SM24_SYSTEM_ROLES_IMMUTABLE => SM24_SYSTEM_ROLES_IMMUTABLE,
+                _ => code
             };
         }
 

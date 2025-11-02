@@ -1,12 +1,9 @@
-﻿using ApartaAPI.DTOs.Common; // Thêm
+﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq; // Cần cho filter/sort
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -21,12 +18,12 @@ namespace ApartaAPI.Services
         // --- CẬP NHẬT CONSTRUCTOR ---
         public ProjectService(
             IRepository<Project> repository,
-            IRepository<Subscription> subscriptionRepository, // Thêm
-            IRepository<Building> buildingRepository, // Thêm cho mục 2
+            IRepository<Subscription> subscriptionRepository,
+            IRepository<Building> buildingRepository,
             IMapper mapper)
         {
             _repository = repository;
-            _subscriptionRepository = subscriptionRepository; // Thêm
+            _subscriptionRepository = subscriptionRepository;
             _mapper = mapper;
         }
 
@@ -78,7 +75,7 @@ namespace ApartaAPI.Services
             // SRS 2.1.3 - 2A: Trả về SM01 khi không có kết quả
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<ProjectDto>>.Success(new List<ProjectDto>(), "SM01");
+                return ApiResponse<IEnumerable<ProjectDto>>.Success(new List<ProjectDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<ProjectDto>>.Success(dtos);
@@ -90,7 +87,7 @@ namespace ApartaAPI.Services
 
             if (entity == null)
             {
-                return ApiResponse<ProjectDto>.Fail("SM01");
+                return ApiResponse<ProjectDto>.Fail(ApiResponse.SM01_NO_RESULTS);
             }
 
             var dto = _mapper.Map<ProjectDto>(entity);
@@ -98,24 +95,25 @@ namespace ApartaAPI.Services
         }
 
         // (UC 2.1.4)
-        public async Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto)
+        public async Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto, string adminId)
         {
             // Exception 3E: Required field missing
             if (string.IsNullOrWhiteSpace(dto.ProjectCode) || string.IsNullOrWhiteSpace(dto.Name))
             {
-                return ApiResponse<ProjectDto>.Fail("SM02"); //
+                return ApiResponse<ProjectDto>.Fail(ApiResponse.SM02_REQUIRED);
             }
 
             // Exception 3E: Duplicate Project Code
             var exists = await _repository.FirstOrDefaultAsync(p => p.ProjectCode == dto.ProjectCode);
             if (exists != null)
             {
-                return ApiResponse<ProjectDto>.Fail("SM16"); //
+                return ApiResponse<ProjectDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ProjectCode");
             }
 
             var now = DateTime.UtcNow;
             var entity = _mapper.Map<Project>(dto);
 
+            entity.AdminId = adminId;
             entity.CreatedAt ??= now;
             entity.UpdatedAt = now;
             entity.IsActive = true;
@@ -125,7 +123,7 @@ namespace ApartaAPI.Services
 
             var resultDto = _mapper.Map<ProjectDto>(entity);
             // Normal Flow: Trả về SM04 (Create success)
-            return ApiResponse<ProjectDto>.Success(resultDto, "SM04");
+            return ApiResponse<ProjectDto>.SuccessWithCode(resultDto, ApiResponse.SM04_CREATE_SUCCESS, "Project");
         }
 
         // (UC 2.1.5)
@@ -134,13 +132,13 @@ namespace ApartaAPI.Services
             var entity = await _repository.FirstOrDefaultAsync(p => p.ProjectId == id);
             if (entity == null)
             {
-                return ApiResponse.Fail("SM01"); // Not Found
+                return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS); // Not Found
             }
 
             // --- KIỂM TRA VALIDATION CƠ BẢN ---
             if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
             {
-                return ApiResponse.Fail("SM02"); // Name không được rỗng nếu có cập nhật
+                return ApiResponse.Fail(ApiResponse.SM02_REQUIRED); // Name không được rỗng nếu có cập nhật
             }
             // BR-19: ProjectCode không được sửa, bỏ qua check duplicate nếu code không đổi hoặc null
 
@@ -174,11 +172,11 @@ namespace ApartaAPI.Services
             if (!success)
             {
                 // Có thể thêm log lỗi ở đây
-                return ApiResponse.Fail("SM15"); // Lỗi lưu CSDL chung
+                return ApiResponse.Fail(ApiResponse.SM15_PAYMENT_FAILED); // Lỗi lưu CSDL chung
             }
 
             // Normal Flow: Trả về SM03 (Update success)
-            return ApiResponse.Success("SM03");
+            return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
         }
     }
 }

@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ApartaAPI.DTOs.ApartmentMembers;
-using ApartaAPI.Services.Interfaces;
+﻿using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApartaAPI.Controllers
 {
@@ -17,6 +18,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "CanReadMember")]
         public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentMemberDto>>>> GetApartmentMembers(
             [FromQuery] ApartmentMemberQueryParameters query)
         {
@@ -25,6 +27,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "CanReadMember")]
         public async Task<ActionResult<ApartmentMemberDto>> GetApartmentMember(string id)
         {
             var member = await _service.GetByIdAsync(id);
@@ -33,6 +36,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CanCreateMember")]
         public async Task<ActionResult<ApartmentMemberDto>> PostApartmentMember([FromBody] ApartmentMemberCreateDto request)
         {
             var created = await _service.CreateAsync(request);
@@ -41,6 +45,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "CanUpdateMember")]
         public async Task<IActionResult> PutApartmentMember(string id, [FromBody] ApartmentMemberUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
@@ -49,6 +54,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "CanDeleteMember")]
         public async Task<IActionResult> DeleteApartmentMember(string id)
         {
             var deleted = await _service.DeleteAsync(id);

@@ -15,11 +15,16 @@ namespace ApartaAPI.Services
     public class BuildingService : IBuildingService
     {
         private readonly IRepository<Building> _repository;
+        private readonly IRepository<Project> _projectRepository;
         private readonly IMapper _mapper;
 
-        public BuildingService(IRepository<Building> repository, IMapper mapper)
+        public BuildingService(
+            IRepository<Building> repository,
+            IRepository<Project> projectRepository,
+            IMapper mapper)
         {
             _repository = repository;
+            _projectRepository = projectRepository;
             _mapper = mapper;
         }
 
@@ -37,31 +42,30 @@ namespace ApartaAPI.Services
                     (searchTerm == null ||
                         (b.Name.ToLower().Contains(searchTerm) ||
                          b.BuildingCode.ToLower().Contains(searchTerm)));
-                // Removed IsActive filter as requested
 
-                var allEntities = await _repository.FindAsync(predicate); // Fetch all matching search term
+                var allEntities = await _repository.FindAsync(predicate);
 
                 // Apply pagination in memory
                 var totalCount = allEntities.Count();
                 var paginatedEntities = allEntities
-                                        .OrderBy(b => b.BuildingCode) // Default order if none specified
+                                        .OrderBy(b => b.BuildingCode)
                                         .Skip(query.Skip)
                                         .Take(query.Take)
-                                        .ToList(); // Execute query here
+                                        .ToList();
 
                 var dtos = _mapper.Map<IEnumerable<BuildingDto>>(paginatedEntities);
                 var paginatedResult = new PaginatedResult<BuildingDto>(dtos, totalCount);
 
                 if (totalCount == 0)
                 {
-                    return ApiResponse<PaginatedResult<BuildingDto>>.Success(paginatedResult, "SM01"); // SM01 for no results
+                    return ApiResponse<PaginatedResult<BuildingDto>>.Success(paginatedResult, ApiResponse.SM01_NO_RESULTS);
                 }
 
                 return ApiResponse<PaginatedResult<BuildingDto>>.Success(paginatedResult);
             }
             catch (Exception)
             {
-                return ApiResponse<PaginatedResult<BuildingDto>>.Fail("An unexpected error occurred."); // Generic error message
+                return ApiResponse<PaginatedResult<BuildingDto>>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -74,7 +78,7 @@ namespace ApartaAPI.Services
 
                 if (entity == null)
                 {
-                    return ApiResponse<BuildingDto>.Fail("SM01"); // SM01 Not found
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM01_NO_RESULTS);
                 }
 
                 var dto = _mapper.Map<BuildingDto>(entity);
@@ -82,7 +86,7 @@ namespace ApartaAPI.Services
             }
             catch (Exception)
             {
-                return ApiResponse<BuildingDto>.Fail("An unexpected error occurred.");
+                return ApiResponse<BuildingDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -92,16 +96,36 @@ namespace ApartaAPI.Services
             try
             {
                 // Validation: Required fields
-                if (string.IsNullOrWhiteSpace(dto.ProjectId) || string.IsNullOrWhiteSpace(dto.BuildingCode) || string.IsNullOrWhiteSpace(dto.Name))
+                if (string.IsNullOrWhiteSpace(dto.ProjectId))
                 {
-                    return ApiResponse<BuildingDto>.Fail("SM02"); // SM02 Required field missing
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM02_REQUIRED);
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.BuildingCode))
+                {
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM02_REQUIRED);
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                {
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM02_REQUIRED);
+                }
+
+                // Validation: Check if Project exists
+                var project = await _projectRepository.FirstOrDefaultAsync(p => p.ProjectId == dto.ProjectId);
+                if (project == null)
+                {
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM01_NO_RESULTS);
                 }
 
                 // Validation: Duplicate Building Code within the same Project
-                var exists = await _repository.FirstOrDefaultAsync(b => b.ProjectId == dto.ProjectId && b.BuildingCode == dto.BuildingCode);
+                var exists = await _repository.FirstOrDefaultAsync(b => 
+                    b.ProjectId == dto.ProjectId && 
+                    b.BuildingCode == dto.BuildingCode);
+                
                 if (exists != null)
                 {
-                    return ApiResponse<BuildingDto>.Fail("SM16"); // SM16 Duplicate code
+                    return ApiResponse<BuildingDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "BuildingCode");
                 }
 
                 var now = DateTime.UtcNow;
@@ -110,17 +134,18 @@ namespace ApartaAPI.Services
                 entity.CreatedAt = now;
                 entity.UpdatedAt = now;
                 entity.IsActive = true;
+                entity.NumApartments = 0;
+                entity.NumResidents = 0;
 
                 await _repository.AddAsync(entity);
                 await _repository.SaveChangesAsync();
 
                 var resultDto = _mapper.Map<BuildingDto>(entity);
-                // BR-10: Logging handled by interceptor/middleware ideally, but basic log here.
-                return ApiResponse<BuildingDto>.Success(resultDto, "SM04"); // SM04 Create success
+                return ApiResponse<BuildingDto>.SuccessWithCode(resultDto, ApiResponse.SM04_CREATE_SUCCESS, "Building");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<BuildingDto>.Fail("An unexpected error occurred during creation.");
+                return ApiResponse<BuildingDto>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
 
@@ -133,28 +158,41 @@ namespace ApartaAPI.Services
 
                 if (entity == null)
                 {
-                    return ApiResponse.Fail("SM01"); // SM01 Not found
+                    return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
                 }
 
                 // Validation: Required field Name if provided
                 if (dto.Name != null && string.IsNullOrWhiteSpace(dto.Name))
                 {
-                    return ApiResponse.Fail("SM02"); // SM02 Required field missing (if name is being updated to empty)
+                    return ApiResponse.Fail(ApiResponse.SM02_REQUIRED);
                 }
 
-                // BR-19: Building Code cannot be changed - handled by DTO and Mapper config.
+                // Check if there are no actual changes
+                bool hasChanges = false;
+
+                if (dto.Name != null && dto.Name != entity.Name)
+                    hasChanges = true;
+
+                if (dto.IsActive.HasValue && dto.IsActive.Value != entity.IsActive)
+                    hasChanges = true;
+
+                if (!hasChanges)
+                {
+                    return ApiResponse.Success(ApiResponse.SM20_NO_CHANGES);
+                }
+
+                // BR-19: Building Code cannot be changed - handled by DTO and Mapper config
                 _mapper.Map(dto, entity);
                 entity.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.UpdateAsync(entity);
                 await _repository.SaveChangesAsync();
 
-                // BR-10: Logging handled by interceptor/middleware ideally, but basic log here.
-                return ApiResponse.Success("SM03"); // SM03 Update success
+                return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
             }
             catch (Exception)
             {
-                return ApiResponse.Fail("An unexpected error occurred during update.");
+                return ApiResponse.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
     }

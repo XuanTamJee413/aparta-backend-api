@@ -1,6 +1,7 @@
 ﻿using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -17,6 +18,7 @@ namespace ApartaAPI.Controllers
             _service = service;
         }
         [HttpPost("fast-checkin")]
+        [Authorize(Policy = "CanCreateVisitor")]
         public async Task<ActionResult<VisitorDto>> CreateVisit([FromBody] VisitorCreateDto dto)
         {
             if (!ModelState.IsValid)

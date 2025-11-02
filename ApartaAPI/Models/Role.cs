@@ -13,6 +13,10 @@ public partial class Role
 
     public DateTime? UpdatedAt { get; set; }
 
+    public bool IsSystemDefined { get; set; }
+
+    public bool IsActive { get; set; }
+
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 
     public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();

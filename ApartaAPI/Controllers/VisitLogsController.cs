@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApartaAPI.Controllers
@@ -18,6 +19,7 @@ namespace ApartaAPI.Controllers
         // phuong thuc da join visitor de lay visitor id, visitor name, join apartment de lay apartment code
         // GET: api/VisitLogs/all
         [HttpGet("all")]
+        [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<IEnumerable<VisitLogStaffViewDto>>> GetVisitLogsForStaff()
         {
             var logs = await _service.GetStaffViewLogsAsync();
@@ -25,6 +27,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}/checkin")]
+        [Authorize(Policy = "CanCheckInVisitor")]
         public async Task<IActionResult> CheckInVisit(string id)
         {
             var success = await _service.CheckInAsync(id);
@@ -38,6 +41,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}/checkout")]
+        [Authorize(Policy = "CanCheckOutVisitor")]
         public async Task<IActionResult> CheckOutVisit(string id)
         {
             var success = await _service.CheckOutAsync(id);

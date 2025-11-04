@@ -34,11 +34,11 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<Invoice> Invoices { get; set; }
 
+    public virtual DbSet<InvoiceItem> InvoiceItems { get; set; }
+
     public virtual DbSet<Log> Logs { get; set; }
 
     public virtual DbSet<Message> Messages { get; set; }
-
-    public virtual DbSet<Meter> Meters { get; set; }
 
     public virtual DbSet<MeterReading> MeterReadings { get; set; }
 
@@ -88,7 +88,7 @@ public partial class ApartaDbContext : DbContext
         {
             entity.HasKey(e => e.ApartmentId).HasName("PK__APARTMEN__DC51C2EC7DE49FAE");
 
-            entity.ToTable("APARTMENT");
+            entity.ToTable("APARTMENT", tb => tb.HasTrigger("TRG_Apartment_UpdateCounts"));
 
             entity.HasIndex(e => new { e.BuildingId, e.Code }, "UQ_Apartment_Code_Building").IsUnique();
 
@@ -117,8 +117,6 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
 
-            entity.ToTable(tb => tb.UseSqlOutputClause(false));
-
             entity.HasOne(d => d.Building).WithMany(p => p.Apartments)
                 .HasForeignKey(d => d.BuildingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -129,7 +127,7 @@ public partial class ApartaDbContext : DbContext
         {
             entity.HasKey(e => e.ApartmentMemberId).HasName("PK__APARTMEN__07BC3F23062F4794");
 
-            entity.ToTable("APARTMENT_MEMBER");
+            entity.ToTable("APARTMENT_MEMBER", tb => tb.HasTrigger("TRG_ApartmentMember_UpdateBuildingResidents"));
 
             entity.HasIndex(e => e.IdNumber, "UQ__APARTMEN__D58CDE11342FD0E9").IsUnique();
 
@@ -175,8 +173,6 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
 
-            entity.ToTable(tb => tb.UseSqlOutputClause(false));
-
             entity.HasOne(d => d.Apartment).WithMany(p => p.ApartmentMembers)
                 .HasForeignKey(d => d.ApartmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -218,9 +214,7 @@ public partial class ApartaDbContext : DbContext
         {
             entity.HasKey(e => e.BuildingId).HasName("PK__BUILDING__9C9FBF7FBCE5497E");
 
-            entity.ToTable("BUILDING");
-
-            entity.HasIndex(e => e.BuildingCode, "UQ__BUILDING__B04D26DBFD232E91").IsUnique();
+            entity.ToTable("BUILDING", tb => tb.HasTrigger("TRG_Building_UpdateProjectCounts"));
 
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
@@ -233,6 +227,9 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
@@ -248,9 +245,6 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
-
-            entity.ToTable(tb => tb.UseSqlOutputClause(false));
 
             entity.HasOne(d => d.Project).WithMany(p => p.Buildings)
                 .HasForeignKey(d => d.ProjectId)
@@ -439,6 +433,44 @@ public partial class ApartaDbContext : DbContext
                 .HasConstraintName("FK_Invoice_Staff");
         });
 
+        modelBuilder.Entity<InvoiceItem>(entity =>
+        {
+            entity.HasKey(e => e.InvoiceItemId).HasName("PK__INVOICE___84ECDEE99590E6F5");
+
+            entity.ToTable("INVOICE_ITEM");
+
+            entity.Property(e => e.InvoiceItemId)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("invoice_item_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.FeeType)
+                .HasMaxLength(50)
+                .HasColumnName("fee_type");
+            entity.Property(e => e.InvoiceId)
+                .HasMaxLength(50)
+                .HasColumnName("invoice_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Total)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("total");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("unit_price");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.Invoice).WithMany(p => p.InvoiceItems)
+                .HasForeignKey(d => d.InvoiceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InvoiceItem_Invoice");
+        });
+
         modelBuilder.Entity<Log>(entity =>
         {
             entity.HasKey(e => e.LogId).HasName("PK__LOG__9E2397E044C7D5AE");
@@ -501,31 +533,6 @@ public partial class ApartaDbContext : DbContext
                 .HasConstraintName("FK_Message_Sender");
         });
 
-        modelBuilder.Entity<Meter>(entity =>
-        {
-            entity.HasKey(e => e.MeterId).HasName("PK__METER__6647C3157098003C");
-
-            entity.ToTable("METER");
-
-            entity.Property(e => e.MeterId)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("meter_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasColumnName("status");
-            entity.Property(e => e.Type)
-                .HasMaxLength(50)
-                .HasColumnName("type");
-            entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_at");
-        });
-
         modelBuilder.Entity<MeterReading>(entity =>
         {
             entity.HasKey(e => e.MeterReadingId).HasName("PK__METER_RE__BDCAA50ED79AB34D");
@@ -539,40 +546,40 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
+            entity.Property(e => e.BillingPeriod)
+                .HasMaxLength(7)
+                .HasColumnName("billing_period");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
-            entity.Property(e => e.CurrentReading).HasColumnName("current_reading");
-            entity.Property(e => e.MeterId)
+            entity.Property(e => e.FeeType)
                 .HasMaxLength(50)
-                .HasColumnName("meter_id");
-            entity.Property(e => e.PreviousReading).HasColumnName("previous_reading");
+                .HasColumnName("fee_type");
+            entity.Property(e => e.InvoiceItemId)
+                .HasMaxLength(50)
+                .HasColumnName("invoice_item_id");
             entity.Property(e => e.ReadingDate).HasColumnName("reading_date");
-            entity.Property(e => e.BillingPeriod)
-                .HasMaxLength(7)
-                .HasColumnName("billing_period");
+            entity.Property(e => e.ReadingValue)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("reading_value");
             entity.Property(e => e.RecordedBy)
                 .HasMaxLength(50)
                 .HasColumnName("recorded_by");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.IsInvoiced)
-                .HasDefaultValue(false)
-                .HasColumnName("is_invoiced");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.MeterReadings)
                 .HasForeignKey(d => d.ApartmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MeterReading_Apartment");
 
-            entity.HasOne(d => d.Meter).WithMany(p => p.MeterReadings)
-                .HasForeignKey(d => d.MeterId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_MeterReading_Meter");
+            entity.HasOne(d => d.InvoiceItem).WithMany(p => p.MeterReadings)
+                .HasForeignKey(d => d.InvoiceItemId)
+                .HasConstraintName("FK_MeterReading_InvoiceItem");
 
-            entity.HasOne(d => d.RecordedByUser).WithMany()
+            entity.HasOne(d => d.RecordedByNavigation).WithMany(p => p.MeterReadings)
                 .HasForeignKey(d => d.RecordedBy)
                 .HasConstraintName("FK_MeterReading_User");
         });
@@ -598,15 +605,16 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.PublishedDate)
                 .HasColumnType("datetime")
                 .HasColumnName("published_date");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasColumnName("status");
             entity.Property(e => e.Title)
                 .HasMaxLength(255)
                 .HasColumnName("title");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.Status)
-                .HasMaxLength(255)
-                .HasColumnName("status");
+
             entity.HasOne(d => d.AuthorUser).WithMany(p => p.News)
                 .HasForeignKey(d => d.AuthorUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -768,6 +776,9 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
@@ -783,7 +794,6 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.IsActive).HasColumnName("is_active");
 
             entity.HasOne(d => d.Admin).WithMany(p => p.Projects)
                 .HasForeignKey(d => d.AdminId)
@@ -894,16 +904,16 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.IsSystemDefined).HasColumnName("is_system_defined");
             entity.Property(e => e.RoleName)
                 .HasMaxLength(255)
                 .HasColumnName("role_name");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.IsSystemDefined)
-                .HasColumnName("is_system_defined");
-            entity.Property(e => e.IsActive)
-                .HasColumnName("is_active");
 
             entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
                 .UsingEntity<Dictionary<string, object>>(
@@ -980,23 +990,23 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.ResidentId)
                 .HasMaxLength(50)
                 .HasColumnName("resident_id");
+            entity.Property(e => e.ResidentNote)
+                .HasMaxLength(255)
+                .HasColumnName("resident_note");
             entity.Property(e => e.ServiceId)
                 .HasMaxLength(50)
                 .HasColumnName("service_id");
+            entity.Property(e => e.StaffNote)
+                .HasMaxLength(255)
+                .HasColumnName("staff_note");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-			entity.Property(e => e.ResidentNote)
-				.HasMaxLength(255)
-				.HasColumnName("resident_note");
-			entity.Property(e => e.StaffNote)
-				.HasMaxLength(255)
-				.HasColumnName("staff_note");
 
-			entity.HasOne(d => d.Resident).WithMany(p => p.ServiceBookings)
+            entity.HasOne(d => d.Resident).WithMany(p => p.ServiceBookings)
                 .HasForeignKey(d => d.ResidentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ServiceBooking_Resident");

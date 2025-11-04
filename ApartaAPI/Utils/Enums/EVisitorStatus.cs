@@ -15,6 +15,9 @@ namespace ApartaAPI.Utils.Enums
 
         [Display(Name = "Đã check-out")]
         [EnumMember(Value = "Checked-out")] 
-        CheckedOut
+        CheckedOut,
+        [Display(Name = "Đã Hủy")]
+        [EnumMember(Value = "Canceled")] 
+        Canceled
     }
 }

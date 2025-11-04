@@ -35,7 +35,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}/checkin")]
-        [Authorize(Policy = "CanCheckInVisitor")]
+        [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> CheckInVisit(string id)
         {
             var success = await _service.CheckInAsync(id);
@@ -49,7 +49,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}/checkout")]
-        [Authorize(Policy = "CanCheckOutVisitor")]
+        [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> CheckOutVisit(string id)
         {
             var success = await _service.CheckOutAsync(id);

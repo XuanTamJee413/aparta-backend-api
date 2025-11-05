@@ -34,6 +34,24 @@ namespace ApartaAPI.Controllers
             return Ok(response);
         }
 
+        /// Kiểm tra xem có meterReading trong tháng này chưa
+        [HttpGet("check/{apartmentId}/{feeType}/{billingPeriod}")]
+        [Authorize(Policy = "CanReadMeterReadings")]
+        public async Task<ActionResult<ApiResponse<MeterReadingCheckResponse>>> CheckMeterReadingExists(
+            string apartmentId, 
+            string feeType, 
+            string billingPeriod)
+        {
+            var response = await _service.CheckMeterReadingExistsAsync(apartmentId, feeType, billingPeriod);
+
+            if (!response.Succeeded)
+            {
+                return NotFound(response);
+            }
+
+            return Ok(response);
+        }
+
         // Thêm các chỉ số mới cho một căn hộ
         [HttpPost("for-apartment/{apartmentId}")]
         [Authorize(Policy = "CanCreateMeterReadings")]

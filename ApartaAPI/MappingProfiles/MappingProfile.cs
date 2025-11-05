@@ -3,6 +3,7 @@ using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
@@ -141,10 +142,13 @@ namespace ApartaAPI.Profiles
             CreateMap<ApartmentUpdateDto, Apartment>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            // Invoice mappings
-            CreateMap<Invoice, InvoiceDto>()
-                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
-                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
+            // Invoice mappings
+            CreateMap<Invoice, InvoiceDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
+
+            // MeterReading mappings
+            CreateMap<MeterReading, MeterReadingDto>();
         }
     }
 }

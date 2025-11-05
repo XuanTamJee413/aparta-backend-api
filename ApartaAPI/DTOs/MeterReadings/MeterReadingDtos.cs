@@ -28,5 +28,11 @@ namespace ApartaAPI.DTOs.MeterReadings
         string? BillingPeriod,
         string? InvoiceItemId
     );
+
+    public sealed record MeterReadingCheckResponse(
+        bool Exists,
+        MeterReadingDto? MeterReading,
+        MeterReadingDto? LatestReading // Chỉ số mới nhất trước đó (nếu có)
+    );
 }
 

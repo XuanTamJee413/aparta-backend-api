@@ -5,6 +5,7 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.Linq;
 
 namespace ApartaAPI.Services
@@ -79,15 +80,59 @@ namespace ApartaAPI.Services
             // Tạo danh sách các MeterReading
             foreach (var readingDto in readings)
             {
+                //format: yyyy-MM
+                var billingPeriod = readingDto.ReadingDate.ToString("yyyy-MM");
+
+                // Kiểm tra xem đã tồn tại meterReading trong tháng này chưa
+                var existingReading = await _meterReadingRepository.FirstOrDefaultAsync(mr =>
+                    mr.ApartmentId == apartmentId &&
+                    mr.FeeType == readingDto.FeeType &&
+                    mr.BillingPeriod == billingPeriod);
+
+                if (existingReading != null)
+                {
+                    // Đã tồn tại chỉ số trong tháng này, không được tạo mới
+                    var message = ApiResponse.SM34_READING_EXISTS_IN_PERIOD
+                        .Replace("{feeType}", readingDto.FeeType)
+                        .Replace("{billingPeriod}", billingPeriod);
+                    return ApiResponse.Fail(message);
+                }
+
+                // Kiểm tra chỉ số mới nhất trước đó (nếu có)
+                // Tìm tất cả meterReadings của cùng apartment và feeType
+                var allReadings = await _meterReadingRepository.FindAsync(mr =>
+                    mr.ApartmentId == apartmentId &&
+                    mr.FeeType == readingDto.FeeType);
+
+                // Tìm meterReading mới nhất có billingPeriod < billingPeriod hiện tại
+                var latestReading = allReadings
+                    .Where(mr => !string.IsNullOrEmpty(mr.BillingPeriod) && 
+                                 mr.BillingPeriod.CompareTo(billingPeriod) < 0)
+                    .OrderByDescending(mr => mr.BillingPeriod)
+                    .FirstOrDefault();
+
+                if (latestReading != null)
+                {
+                    // Có chỉ số trước đó, kiểm tra giá trị mới phải >= giá trị chỉ số mới nhất
+                    if (readingDto.ReadingValue < latestReading.ReadingValue)
+                    {
+                        var message = ApiResponse.SM35_READING_VALUE_TOO_LOW
+                            .Replace("{newValue}", readingDto.ReadingValue.ToString("F2"))
+                            .Replace("{previousValue}", latestReading.ReadingValue.ToString("F2"));
+                        return ApiResponse.Fail(message);
+                    }
+                }
+
                 var meterReading = new MeterReading
                 {
                     MeterReadingId = Guid.NewGuid().ToString("N"),
                     ApartmentId = apartmentId,
                     FeeType = readingDto.FeeType,
                     ReadingValue = readingDto.ReadingValue,
-                    ReadingDate = readingDto.ReadingDate,
+                    ReadingDate = readingDto.ReadingDate, 
+                    BillingPeriod = billingPeriod, 
                     RecordedBy = userId,
-                    InvoiceItemId = null, // Rất quan trọng! Để NULL
+                    InvoiceItemId = null, // Để NULL
                     CreatedAt = now,
                     UpdatedAt = null
                 };
@@ -95,7 +140,6 @@ namespace ApartaAPI.Services
                 meterReadings.Add(meterReading);
             }
 
-            // Batch insert: Thêm tất cả vào database một lần
             await _context.Set<MeterReading>().AddRangeAsync(meterReadings);
             await _context.SaveChangesAsync();
 
@@ -122,6 +166,35 @@ namespace ApartaAPI.Services
                 return ApiResponse.Fail(ApiResponse.SM30_READING_LOCKED);
             }
 
+            // Kiểm tra chỉ số mới nhất trước đó (nếu có)
+            if (!string.IsNullOrEmpty(meterReading.BillingPeriod))
+            {
+                // Tìm tất cả meterReadings của cùng apartment và feeType
+                var allReadings = await _meterReadingRepository.FindAsync(mr =>
+                    mr.ApartmentId == meterReading.ApartmentId &&
+                    mr.FeeType == meterReading.FeeType &&
+                    mr.MeterReadingId != readingId); // Loại trừ chính nó
+
+                // Tìm meterReading mới nhất có billingPeriod < billingPeriod hiện tại
+                var latestReading = allReadings
+                    .Where(mr => !string.IsNullOrEmpty(mr.BillingPeriod) && 
+                                 mr.BillingPeriod.CompareTo(meterReading.BillingPeriod) < 0)
+                    .OrderByDescending(mr => mr.BillingPeriod)
+                    .FirstOrDefault();
+
+                if (latestReading != null)
+                {
+                    // Có chỉ số trước đó, kiểm tra giá trị mới phải >= giá trị chỉ số mới nhất
+                    if (updateDto.ReadingValue < latestReading.ReadingValue)
+                    {
+                        var message = ApiResponse.SM35_READING_VALUE_TOO_LOW
+                            .Replace("{newValue}", updateDto.ReadingValue.ToString("F2"))
+                            .Replace("{previousValue}", latestReading.ReadingValue.ToString("F2"));
+                        return ApiResponse.Fail(message);
+                    }
+                }
+            }
+
             // Cập nhật giá trị
             meterReading.ReadingValue = updateDto.ReadingValue;
             meterReading.UpdatedAt = DateTime.UtcNow;
@@ -138,6 +211,7 @@ namespace ApartaAPI.Services
 
             return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
         }
+
     }
 }
 

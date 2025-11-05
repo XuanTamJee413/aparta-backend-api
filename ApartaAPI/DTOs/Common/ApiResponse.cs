@@ -105,6 +105,12 @@
         // SM33: Tạo chỉ số thành công (với {count})
         public const string SM33_METER_READING_CREATE_SUCCESS = "Tạo thành công {count} bản ghi chỉ số.";
 
+        // SM34: Đã tồn tại chỉ số trong tháng này
+        public const string SM34_READING_EXISTS_IN_PERIOD = "Đã tồn tại chỉ số {feeType} trong tháng {billingPeriod}. Vui lòng cập nhật thay vì tạo mới.";
+
+        // SM35: Chỉ số mới phải lớn hơn hoặc bằng chỉ số tháng trước
+        public const string SM35_READING_VALUE_TOO_LOW = "Chỉ số mới ({newValue}) phải lớn hơn hoặc bằng chỉ số tháng trước ({previousValue}).";
+
         public static string GetMessageFromCode(string code)
         {
             return code switch
@@ -142,6 +148,8 @@
                 SM31_READING_LIST_EMPTY => SM31_READING_LIST_EMPTY,
                 SM32_READING_UPDATE_EMPTY => SM32_READING_UPDATE_EMPTY,
                 SM33_METER_READING_CREATE_SUCCESS => SM33_METER_READING_CREATE_SUCCESS,
+                SM34_READING_EXISTS_IN_PERIOD => SM34_READING_EXISTS_IN_PERIOD,
+                SM35_READING_VALUE_TOO_LOW => SM35_READING_VALUE_TOO_LOW,
                 _ => code
             };
         }

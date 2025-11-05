@@ -99,7 +99,6 @@ namespace ApartaAPI.Controllers
             return Ok(response);
         }
 
-        // GET: api/Buildings/{buildingId}/apartments
         // Lấy danh sách căn hộ có status = "Đã thuê" thuộc building có is_active = true và project có is_active = true
         [HttpGet("{buildingId}/rented-apartments")]
         [Authorize(Policy = "CanReadBuilding")]

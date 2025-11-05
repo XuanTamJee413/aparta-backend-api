@@ -21,7 +21,7 @@ namespace ApartaAPI.Controllers
 
         // Lấy danh sách các loại phí (fee_type) cân trả hằng tháng cho một căn hộ
         [HttpGet("services-for-apartment/{apartmentId}")]
-        [Authorize]
+        [Authorize(Policy = "CanReadMeterReadings")]
         public async Task<ActionResult<ApiResponse<IEnumerable<string>>>> GetServicesForApartment(string apartmentId)
         {
             var response = await _service.GetServicesForApartmentAsync(apartmentId);
@@ -36,7 +36,7 @@ namespace ApartaAPI.Controllers
 
         // Thêm các chỉ số mới cho một căn hộ
         [HttpPost("for-apartment/{apartmentId}")]
-        [Authorize]
+        [Authorize(Policy = "CanCreateMeterReadings")]
         public async Task<ActionResult<ApiResponse>> CreateMeterReadings(
             string apartmentId,
             [FromBody] List<MeterReadingCreateDto> readings)
@@ -71,7 +71,7 @@ namespace ApartaAPI.Controllers
 
         // Sửa một chỉ số đã ghi (chỉ khi chưa bị khóa - invoice_item_id = null)
         [HttpPut("{readingId}")]
-        [Authorize]
+        [Authorize(Policy = "CanUpdateMeterReadings")]
         public async Task<ActionResult<ApiResponse>> UpdateMeterReading(
             string readingId,
             [FromBody] MeterReadingUpdateDto updateDto)

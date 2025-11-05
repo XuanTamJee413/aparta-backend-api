@@ -68,6 +68,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 			builder.Services.AddScoped<IVehicleService, VehicleService>();
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
+			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 			builder.Services.AddSingleton<PayOSService>();
 			
 			// Custom Repositories

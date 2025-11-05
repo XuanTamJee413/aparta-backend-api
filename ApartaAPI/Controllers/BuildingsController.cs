@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.DTOs.Buildings;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -53,8 +54,7 @@ namespace ApartaAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Create a generic fail response if model state is invalid
-                return BadRequest(ApiResponse<BuildingDto>.Fail("Invalid input data."));
+                return BadRequest(ApiResponse<BuildingDto>.Fail(ApiResponse.SM25_INVALID_INPUT));
             }
 
             var response = await _service.CreateAsync(request);
@@ -80,7 +80,7 @@ namespace ApartaAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse.Fail("Invalid input data."));
+                return BadRequest(ApiResponse.Fail(ApiResponse.SM25_INVALID_INPUT));
             }
 
             var response = await _service.UpdateAsync(id, request);
@@ -99,6 +99,25 @@ namespace ApartaAPI.Controllers
             return Ok(response);
         }
 
-        // No DELETE endpoint as per requirement (deactivation handled via PUT)
+        // GET: api/Buildings/{buildingId}/apartments
+        // Lấy danh sách căn hộ có status = "Đã thuê" thuộc building có is_active = true và project có is_active = true
+        [HttpGet("{buildingId}/rented-apartments")]
+        [Authorize(Policy = "CanReadBuilding")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentDto>>>> GetRentedApartmentsByBuilding(string buildingId)
+        {
+            var response = await _service.GetRentedApartmentsByBuildingAsync(buildingId);
+
+            if (!response.Succeeded)
+            {
+                if (response.Message == ApiResponse.SM01_NO_RESULTS || response.Message == ApiResponse.SM27_PROJECT_NOT_FOUND)
+                {
+                    return NotFound(response);
+                }
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
     }
 }

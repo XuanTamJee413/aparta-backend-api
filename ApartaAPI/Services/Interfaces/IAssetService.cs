@@ -1,10 +1,11 @@
 ﻿using ApartaAPI.DTOs.Assets;
+using ApartaAPI.DTOs.Common;
 
 namespace ApartaAPI.Services.Interfaces
 {
     public interface IAssetService
     {
-        Task<IEnumerable<AssetDto>> GetAllAsync();
+        Task<ApiResponse<IEnumerable<AssetDto>>> GetAllAsync(AssetQueryParameters query);
         Task<AssetDto?> GetByIdAsync(string id);
         Task<AssetDto> CreateAsync(AssetCreateDto dto);
         Task<bool> UpdateAsync(string id, AssetUpdateDto dto);

@@ -1,8 +1,10 @@
-﻿using ApartaAPI.DTOs.Assets;
+﻿using Microsoft.AspNetCore.Mvc;
+using ApartaAPI.DTOs.Assets;
 using ApartaAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ApartaAPI.DTOs.Common; 
+using Microsoft.AspNetCore.Authorization; 
 
 namespace ApartaAPI.Controllers
 {
@@ -19,10 +21,11 @@ namespace ApartaAPI.Controllers
 
         [HttpGet]
         [Authorize(Policy = "CanReadAsset")]
-        public async Task<ActionResult<IEnumerable<AssetDto>>> GetAssets()
+        public async Task<ActionResult<ApiResponse<IEnumerable<AssetDto>>>> GetAssets(
+            [FromQuery] AssetQueryParameters query) 
         {
-            var assets = await _service.GetAllAsync();
-            return Ok(assets);
+            var response = await _service.GetAllAsync(query); 
+            return Ok(response); 
         }
 
         [HttpGet("{id}")]
@@ -47,8 +50,8 @@ namespace ApartaAPI.Controllers
         public async Task<IActionResult> PutAsset(string id, [FromBody] AssetUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
-            return Ok(); 
+            if (!updated) return NotFound(); 
+            return Ok();
         }
 
         [HttpDelete("{id}")]
@@ -57,7 +60,7 @@ namespace ApartaAPI.Controllers
         {
             var deleted = await _service.DeleteAsync(id);
             if (!deleted) return NotFound();
-            return Ok(); 
+            return Ok();
         }
     }
 }

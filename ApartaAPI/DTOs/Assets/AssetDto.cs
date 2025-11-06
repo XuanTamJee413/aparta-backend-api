@@ -2,6 +2,13 @@
 
 namespace ApartaAPI.DTOs.Assets
 {
+    public sealed record AssetQueryParameters(
+       string? BuildingId,  
+       string? SearchTerm,   
+       string? SortBy,       
+       string? SortOrder
+   );
+
     public class AssetDto
     {
         public string AssetId { get; set; }

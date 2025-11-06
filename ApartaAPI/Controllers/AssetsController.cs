@@ -50,7 +50,7 @@ namespace ApartaAPI.Controllers
         public async Task<IActionResult> PutAsset(string id, [FromBody] AssetUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound(); 
+            //if (!updated) return NotFound(); 
             return Ok();
         }
 

@@ -15,16 +15,16 @@ public class InvoiceDto
     public DateOnly EndDate { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public string? ResidentName { get; set; } // Tên user của apartment phải trả
+    public string? ResidentName { get; set; }
 }
 
 public class InvoiceQueryParameters
 {
-    public string? Status { get; set; } // Filter by status (PENDING, PAID, etc.)
-    public string? SearchTerm { get; set; } // Search by apartment code or user name
-    public string? Month { get; set; } // Filter by month (yyyy-MM format)
-    public string? SortBy { get; set; } // Sort by: "date", "amount", etc.
-    public string? SortOrder { get; set; } // "asc" or "desc"
+    public string? Status { get; set; }
+    public string? SearchTerm { get; set; }
+    public string? Month { get; set; }
+    public string? SortBy { get; set; }
+    public string? SortOrder { get; set; } 
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 50;
 }
@@ -33,4 +33,13 @@ public class GenerateInvoicesRequest
 {
     public string BuildingId { get; set; } = null!;
     public string? BillingPeriod { get; set; } 
+}
+
+public class ApartmentInvoicesDto
+{
+    public string ApartmentId { get; set; } = null!;
+    public string ApartmentCode { get; set; } = null!;
+    public string? ResidentName { get; set; }
+    public List<InvoiceDto> Invoices { get; set; } = new List<InvoiceDto>();
+    public decimal TotalAmount { get; set; }
 }

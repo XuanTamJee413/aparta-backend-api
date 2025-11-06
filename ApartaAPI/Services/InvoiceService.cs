@@ -1,5 +1,6 @@
 using ApartaAPI.Data;
 using ApartaAPI.DTOs;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
@@ -46,16 +47,14 @@ public class InvoiceService : IInvoiceService
         _configuration = configuration;
     }
 
+    /**
+    * Lấy danh sách hóa đơn của người dùng
+    */
     public async Task<List<InvoiceDto>> GetUserInvoicesAsync(string userId)
     {
-        // Get user and their apartment
         var user = await _userRepo.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (user == null || string.IsNullOrEmpty(user.ApartmentId))
-        {
-            return new List<InvoiceDto>();
-        }
+        if (user == null || string.IsNullOrEmpty(user.ApartmentId)) return new List<InvoiceDto>();
 
-        // Get all invoices for user's apartment with navigation properties
         var invoices = await _context.Invoices
             .Include(i => i.Apartment)
             .ThenInclude(a => a.Users)
@@ -78,39 +77,80 @@ public class InvoiceService : IInvoiceService
         return result;
     }
 
-    public async Task<List<InvoiceDto>> GetInvoicesAsync(string? status = null, string? apartmentCode = null)
+    /**
+    * Lấy danh sách hóa đơn của tòa nhà
+    */
+    public async Task<List<InvoiceDto>> GetInvoicesAsync(string buildingId, string userId, string? status = null, string? apartmentCode = null)
     {
-        // Get all invoices with navigation properties
-        var query = _context.Invoices
-            .Include(i => i.Apartment)
-            .ThenInclude(a => a.Users)
-            .ThenInclude(u => u.Role)
-            .Include(i => i.Staff)
-            .AsQueryable();
+        // 1) Authorization: ensure user has access to the project's building
+        var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
+        if (building == null)
+        {
+            return new List<InvoiceDto>();
+        }
+
+        // TODO: Authorization check - Tạm thời bỏ qua logic kiểm tra quyền theo project
+        // Vì staff có thể quản lý tất cả mọi project, không chỉ một project
+        // Logic này sẽ được sửa lại sau
+        // var user = await _userRepo.FirstOrDefaultAsync(u => u.UserId == userId);
+        // if (user == null)
+        // {
+        //     return new List<InvoiceDto>();
+        // }
+        //
+        // // Load user projects for access check
+        // var userWithProjects = await _context.Users
+        //     .Include(u => u.Projects)
+        //     .FirstOrDefaultAsync(u => u.UserId == userId);
+        //
+        // var hasProjectAccess = userWithProjects?.Projects?.Any(p => p.ProjectId == building.ProjectId) == true;
+        // if (!hasProjectAccess)
+        // {
+        //     // No access -> return empty
+        //     return new List<InvoiceDto>();
+        // }
+
+        // 2) Query invoices filtered by building
+        // Sử dụng join rõ ràng để tránh lỗi navigation property trong Where clause
+        var joinedQuery = _context.Invoices
+            .Join(
+                _context.Apartments,
+                invoice => invoice.ApartmentId,
+                apartment => apartment.ApartmentId,
+                (invoice, apartment) => new { Invoice = invoice, Apartment = apartment }
+            )
+            .Where(x => x.Apartment.BuildingId == buildingId);
 
         // Filter by status (optional)
         if (!string.IsNullOrWhiteSpace(status))
         {
-            query = query.Where(i => i.Status == status);
+            joinedQuery = joinedQuery.Where(x => x.Invoice.Status == status);
         }
 
         // Filter by apartment code (optional)
         if (!string.IsNullOrWhiteSpace(apartmentCode))
         {
             var code = apartmentCode.Trim().ToLower();
-            query = query.Where(i => i.Apartment.Code.ToLower().Contains(code));
+            joinedQuery = joinedQuery.Where(x => x.Apartment.Code.ToLower().Contains(code));
         }
 
-        // Get all invoices (no pagination)
-        var invoices = await query
-            .OrderByDescending(i => i.CreatedAt) // Newest first
+        // Lấy danh sách Invoice IDs sau khi filter
+        var invoiceIds = await joinedQuery
+            .Select(x => x.Invoice.InvoiceId)
             .ToListAsync();
 
-        // Map to DTOs with resident name
+        var invoices = await _context.Invoices
+            .Where(i => invoiceIds.Contains(i.InvoiceId))
+            .Include(i => i.Apartment)
+            .ThenInclude(a => a.Users)
+            .ThenInclude(u => u.Role)
+            .Include(i => i.Staff)
+            .OrderByDescending(i => i.StartDate) // Newest period first
+            .ToListAsync();
+
         var result = invoices.Select(invoice =>
         {
             var dto = _mapper.Map<InvoiceDto>(invoice);
-            // Lấy cư dân có role là "resident", nếu không có thì lấy user đầu tiên
             var resident = invoice.Apartment.Users
                 .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident") 
                 ?? invoice.Apartment.Users.FirstOrDefault();
@@ -121,6 +161,34 @@ public class InvoiceService : IInvoiceService
         return result;
     }
 
+    /**
+     * Lấy danh sách hóa đơn của tòa nhà (grouped by apartment)
+     */
+    public async Task<List<ApartmentInvoicesDto>> GetInvoicesGroupedByApartmentAsync(string buildingId, string userId, string? status = null, string? apartmentCode = null)
+    {
+        // Lấy danh sách invoices (dùng lại logic từ GetInvoicesAsync)
+        var invoices = await GetInvoicesAsync(buildingId, userId, status, apartmentCode);
+
+        // Group by apartment
+        var groupedResult = invoices
+            .GroupBy(i => new { i.ApartmentId, i.ApartmentCode, i.ResidentName })
+            .Select(g => new ApartmentInvoicesDto
+            {
+                ApartmentId = g.Key.ApartmentId,
+                ApartmentCode = g.Key.ApartmentCode,
+                ResidentName = g.Key.ResidentName,
+                Invoices = g.OrderByDescending(i => i.StartDate).ToList(),
+                TotalAmount = g.Sum(i => i.Price)
+            })
+            .OrderBy(x => x.ApartmentCode)
+            .ToList();
+
+        return groupedResult;
+    }
+
+    /**
+    * Tạo link thanh toán cho hóa đơn
+    */
     public async Task<string?> CreatePaymentLinkAsync(string invoiceId, string baseUrl)
     {
         // Get invoice
@@ -188,6 +256,9 @@ public class InvoiceService : IInvoiceService
         return paymentResult.Data.checkoutUrl;
     }
 
+    /**
+    * Xử lý webhook thanh toán
+    */
     public async Task<bool> ProcessPaymentWebhookAsync(string? invoiceId, string orderCode)
     {
         try
@@ -235,6 +306,9 @@ public class InvoiceService : IInvoiceService
         }
     }
 
+    /**
+    * Tạo hóa đơn cho tòa nhà
+    */
     public async Task<(bool Success, string Message, int ProcessedCount)> GenerateInvoicesAsync(GenerateInvoicesRequest request, string userId)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -270,7 +344,7 @@ public class InvoiceService : IInvoiceService
             if (!readingsToProcess.Any())
             {
                 await transaction.RollbackAsync();
-                return (true, "Không có chỉ số mới nào cần xử lý.", 0);
+                return (true, ApiResponse.SM01_NO_RESULTS, 0);
             }
 
             // Tải Bảng giá (Price_Quotation)
@@ -316,7 +390,7 @@ public class InvoiceService : IInvoiceService
                     }
                     catch (FormatException)
                     {
-                        return (false, "Lỗi: billingPeriod không đúng định dạng yyyy-MM.", 0);
+                        return (false, ApiResponse.SM25_INVALID_INPUT, 0);
                     }
 
                     // 3. Tính ngày 1 của tháng TIẾP THEO (Yêu cầu của bạn)
@@ -413,12 +487,13 @@ public class InvoiceService : IInvoiceService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, $"Đã xử lý thành công {processedCount} chỉ số.", processedCount);
+            var message = ApiResponse.SM38_INVOICE_GENERATE_SUCCESS.Replace("{count}", processedCount.ToString());
+            return (true, message, processedCount);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Lỗi khi xử lý: {ex.Message}", 0);
+            return (false, ApiResponse.SM40_SYSTEM_ERROR, 0);
         }
     }
 }

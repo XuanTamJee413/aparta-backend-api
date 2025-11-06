@@ -26,12 +26,12 @@ public class BillingController : ControllerBase
         {
             if (request == null)
             {
-                return BadRequest(ApiResponse<object>.Fail("Request body không được để trống."));
+                return BadRequest(ApiResponse<object>.Fail(ApiResponse.SM25_INVALID_INPUT));
             }
 
             if (string.IsNullOrWhiteSpace(request.BuildingId))
             {
-                return BadRequest(ApiResponse<object>.Fail("BuildingId không được để trống."));
+                return BadRequest(ApiResponse<object>.Fail(ApiResponse.SM02_REQUIRED));
             }
 
             // Lấy userId từ token (người đăng nhập)
@@ -40,7 +40,7 @@ public class BillingController : ControllerBase
             
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized(ApiResponse<object>.Fail("User ID not found in token. Please login again."));
+                return Unauthorized(ApiResponse<object>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
             var result = await _invoiceService.GenerateInvoicesAsync(request, userId);
@@ -55,9 +55,9 @@ public class BillingController : ControllerBase
                 result.Message
             ));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, ApiResponse<object>.Fail($"Error: {ex.Message}"));
+            return StatusCode(500, ApiResponse<object>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
         }
     }
 }

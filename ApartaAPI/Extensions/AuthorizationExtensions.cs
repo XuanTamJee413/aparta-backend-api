@@ -191,6 +191,8 @@ namespace ApartaAPI.Extensions
                 options.AddPolicy("CanUpdateMeterReadings", policy =>
                     policy.RequireClaim("Permission", "meterreading.update"));
 
+                options.AddPolicy("CanReadMeterReadingStatus", policy =>
+                    policy.RequireClaim("Permission", "meterreading.read.status"));
                 // Policy cho Invoice
                 options.AddPolicy("CanCreateInvoicePayment", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||

@@ -119,7 +119,7 @@ namespace ApartaAPI.Controllers
 
         // Xem tình trạng ghi chỉ số theo tòa nhà
         [HttpGet("by-building/{buildingId}")]
-        [Authorize(Policy = "CanReadMeterReadings")]
+        [Authorize(Policy = "CanReadMeterReadingStatus")]
         public async Task<ActionResult<ApiResponse<IEnumerable<MeterReadingStatusDto>>>> GetMeterReadingStatusByBuilding(
             string buildingId,
             [FromQuery] string? billingPeriod = null)

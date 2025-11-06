@@ -304,11 +304,28 @@ public class InvoiceService : IInvoiceService
 
                 if (existingInvoice == null)
                 {
-                    // issueDate là ngày hôm tạo (ngày hiện tại)
-                    var issueDate = DateOnly.FromDateTime(DateTime.UtcNow);
-                    // dueDate là 15 tháng sau issueDate
-                    var dueDate = issueDate.AddMonths(15);
-                    
+                    // 2. Parse chuỗi "yyyy-MM" thành ngày 1 của tháng đó
+                    DateTime firstDayOfBillingMonth;
+                    try
+                    {
+                        firstDayOfBillingMonth = DateTime.ParseExact(
+                            $"{billingPeriod}-01",
+                            "yyyy-MM-dd",
+                            System.Globalization.CultureInfo.InvariantCulture
+                        );
+                    }
+                    catch (FormatException)
+                    {
+                        return (false, "Lỗi: billingPeriod không đúng định dạng yyyy-MM.", 0);
+                    }
+
+                    // 3. Tính ngày 1 của tháng TIẾP THEO (Yêu cầu của bạn)
+                    DateTime firstDayOfNextMonth = firstDayOfBillingMonth.AddMonths(1);
+
+                    // 4. Chuyển đổi sang DateOnly (Vì Bảng Invoice của bạn dùng DateOnly)
+                    var issueDate = DateOnly.FromDateTime(firstDayOfNextMonth);
+                    var dueDate = issueDate.AddDays(14); 
+
                     invoiceToUse = new Invoice
                     {
                         InvoiceId = Guid.NewGuid().ToString("N"),

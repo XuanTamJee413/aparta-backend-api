@@ -368,7 +368,7 @@ public class InvoiceService : IInvoiceService
             if (!readingsToProcess.Any())
             {
                 await transaction.RollbackAsync();
-                return (true, ApiResponse.SM01_NO_RESULTS, 0);
+                return (true, ApiResponse.SM20_NO_CHANGES, 0);
             }
 
             // Tải Bảng giá (Price_Quotation)

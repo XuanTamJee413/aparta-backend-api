@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs;
 using ApartaAPI.DTOs.Common;
@@ -18,6 +18,7 @@ public class InvoiceController : ControllerBase
         _service = service;
     }
 
+    //lấy danh sách hóa đơn của chính mình
     [HttpGet("my-invoices")]
     [Authorize(Policy = "CanReadInvoiceResident")]
     public async Task<ActionResult<ApiResponse<List<InvoiceDto>>>> GetMyInvoices()
@@ -45,6 +46,7 @@ public class InvoiceController : ControllerBase
         }
     }
 
+    // lấy danh sách hóa đơn của tòa nhà, nhóm theo căn hộ
     [HttpGet("/api/buildings/{buildingId}/invoices")]
     [Authorize(Policy = "CanReadInvoiceStaff")]
     public async Task<ActionResult<ApiResponse<List<ApartmentInvoicesDto>>>> GetInvoices(
@@ -75,6 +77,7 @@ public class InvoiceController : ControllerBase
         }
     }
 
+    // lấy chi tiết hóa đơn theo id
     [HttpGet("{invoiceId}")]
     [Authorize(Policy = "CanReadInvoiceStaff")]
     public async Task<ActionResult<ApiResponse<InvoiceDetailDto>>> GetInvoiceById(string invoiceId)
@@ -112,6 +115,7 @@ public class InvoiceController : ControllerBase
         }
     }
 
+    // tạo liên kết thanh toán cho hóa đơn
     [HttpPost("{invoiceId}/pay")]
     [Authorize(Policy = "CanCreateInvoicePayment")]
     public async Task<ActionResult<ApiResponse<string>>> CreatePayment(string invoiceId)

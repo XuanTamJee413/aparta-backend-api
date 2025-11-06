@@ -48,7 +48,7 @@ public class InvoiceController : ControllerBase
 
     // lấy danh sách hóa đơn của tòa nhà, nhóm theo căn hộ
     [HttpGet("/api/buildings/{buildingId}/invoices")]
-    [Authorize(Policy = "CanReadInvoiceStaff")]
+    [Authorize(Policy = "CanReadInvoiceItem")]
     public async Task<ActionResult<ApiResponse<List<ApartmentInvoicesDto>>>> GetInvoices(
         [FromRoute] string buildingId,
         [FromQuery] string? status = null,
@@ -79,7 +79,7 @@ public class InvoiceController : ControllerBase
 
     // lấy chi tiết hóa đơn theo id
     [HttpGet("{invoiceId}")]
-    [Authorize(Policy = "CanReadInvoiceStaff")]
+    [Authorize(Policy = "CanReadInvoiceItem")]
     public async Task<ActionResult<ApiResponse<InvoiceDetailDto>>> GetInvoiceById(string invoiceId)
     {
         try

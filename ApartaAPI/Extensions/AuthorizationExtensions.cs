@@ -200,10 +200,10 @@ namespace ApartaAPI.Extensions
                     ctx.User.HasClaim("permission", "invoice.pay.create")
                 ));
 
-                options.AddPolicy("CanReadInvoiceStaff", policy => policy.RequireAssertion(ctx =>
+                options.AddPolicy("CanReadInvoiceItem", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
                     ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "invoice.staff.read")
+                    ctx.User.HasClaim("permission", "invoice.item.read")
                 ));
 
                 options.AddPolicy("CanReadInvoiceResident", policy => policy.RequireAssertion(ctx =>

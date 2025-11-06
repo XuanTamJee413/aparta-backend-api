@@ -210,6 +210,12 @@ namespace ApartaAPI.Extensions
                     ctx.User.HasClaim("permission", "invoice.resident.read")
                 ));
 
+                //Policy cho Billing 
+                options.AddPolicy("CanGenerateBilling", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.HasClaim("permission", "billing.generate")
+                ));
+
             });
 
             return services;

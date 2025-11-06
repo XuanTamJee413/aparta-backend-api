@@ -8,5 +8,6 @@ public interface IInvoiceService
     Task<List<InvoiceDto>> GetInvoicesAsync(string? status = null, string? apartmentCode = null);
     Task<string?> CreatePaymentLinkAsync(string invoiceId, string baseUrl);
     Task<bool> ProcessPaymentWebhookAsync(string? invoiceId, string orderCode);
+    Task<(bool Success, string Message, int ProcessedCount)> GenerateInvoicesAsync(GenerateInvoicesRequest request, string userId);
 }
 

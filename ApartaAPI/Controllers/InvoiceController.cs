@@ -75,6 +75,43 @@ public class InvoiceController : ControllerBase
         }
     }
 
+    [HttpGet("{invoiceId}")]
+    [Authorize(Policy = "CanReadInvoiceStaff")]
+    public async Task<ActionResult<ApiResponse<InvoiceDetailDto>>> GetInvoiceById(string invoiceId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(invoiceId))
+            {
+                return BadRequest(ApiResponse<InvoiceDetailDto>.Fail(ApiResponse.SM25_INVALID_INPUT));
+            }
+
+            var userId = User.FindFirst("id")?.Value ??
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<InvoiceDetailDto>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
+            }
+
+            var invoiceDetail = await _service.GetInvoiceDetailAsync(invoiceId, userId);
+
+            if (invoiceDetail == null)
+            {
+                return NotFound(ApiResponse<InvoiceDetailDto>.Fail(ApiResponse.SM01_NO_RESULTS));
+            }
+
+            return Ok(ApiResponse<InvoiceDetailDto>.Success(
+                invoiceDetail,
+                ApiResponse.SM41_INVOICE_DETAIL_SUCCESS
+            ));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<InvoiceDetailDto>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
+        }
+    }
+
     [HttpPost("{invoiceId}/pay")]
     [Authorize(Policy = "CanCreateInvoicePayment")]
     public async Task<ActionResult<ApiResponse<string>>> CreatePayment(string invoiceId)
@@ -94,7 +131,7 @@ public class InvoiceController : ControllerBase
                 ApiResponse.SM37_PAYMENT_LINK_SUCCESS
             ));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
         }

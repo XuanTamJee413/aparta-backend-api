@@ -147,6 +147,22 @@ namespace ApartaAPI.Profiles
                 .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
                 .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
 
+            CreateMap<InvoiceItem, InvoiceItemDto>();
+
+            CreateMap<Invoice, InvoiceDetailDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null))
+                .ForMember(dest => dest.ResidentName, opt => opt.Ignore())
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.InvoiceItems.OrderBy(i => i.CreatedAt)))
+                .AfterMap((src, dest) =>
+                {
+                    var resident = src.Apartment.Users
+                        .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident");
+                    dest.ResidentName = resident != null 
+                        ? resident.Name 
+                        : src.Apartment.Users.FirstOrDefault()?.Name;
+                });
+
             // MeterReading mappings
             CreateMap<MeterReading, MeterReadingDto>();
         }

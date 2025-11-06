@@ -187,6 +187,30 @@ public class InvoiceService : IInvoiceService
     }
 
     /**
+     * Lấy thông tin chi tiết của một hóa đơn
+     */
+    public async Task<InvoiceDetailDto?> GetInvoiceDetailAsync(string invoiceId, string userId)
+    {
+        // Truy vấn Hóa đơn tổng với Include InvoiceItems
+        var invoice = await _context.Invoices
+            .Include(i => i.Apartment)
+            .ThenInclude(a => a.Users)
+            .ThenInclude(u => u.Role)
+            .Include(i => i.Staff)
+            .Include(i => i.InvoiceItems)
+            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+
+        if (invoice == null)
+        {
+            return null;
+        }
+
+        // Sử dụng AutoMapper để map Invoice -> InvoiceDetailDto
+        var detailDto = _mapper.Map<InvoiceDetailDto>(invoice);
+        return detailDto;
+    }
+
+    /**
     * Tạo link thanh toán cho hóa đơn
     */
     public async Task<string?> CreatePaymentLinkAsync(string invoiceId, string baseUrl)

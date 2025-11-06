@@ -126,6 +126,9 @@
         // SM40: Lỗi hệ thống
         public const string SM40_SYSTEM_ERROR = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
 
+        // SM41: Lấy thông tin chi tiết hóa đơn thành công
+        public const string SM41_INVOICE_DETAIL_SUCCESS = "Lấy thông tin chi tiết hóa đơn thành công.";
+
         public static string GetMessageFromCode(string code)
         {
             return code switch
@@ -170,6 +173,7 @@
                 SM38_INVOICE_GENERATE_SUCCESS => SM38_INVOICE_GENERATE_SUCCESS,
                 SM39_PAYMENT_LINK_FAILED => SM39_PAYMENT_LINK_FAILED,
                 SM40_SYSTEM_ERROR => SM40_SYSTEM_ERROR,
+                SM41_INVOICE_DETAIL_SUCCESS => SM41_INVOICE_DETAIL_SUCCESS,
                 _ => code
             };
         }

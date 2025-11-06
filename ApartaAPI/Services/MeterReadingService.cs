@@ -256,6 +256,123 @@ namespace ApartaAPI.Services
             return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
         }
 
+        public async Task<ApiResponse<IEnumerable<MeterReadingStatusDto>>> GetMeterReadingStatusByBuildingAsync(string buildingId, string? billingPeriod)
+        {
+            try
+            {
+                // Bước 1: Xử lý Đầu vào
+                // Xử lý Default (nếu billingPeriod là null hoặc rỗng, lấy tháng hiện tại)
+                if (string.IsNullOrWhiteSpace(billingPeriod))
+                {
+                    billingPeriod = DateTime.Now.ToString("yyyy-MM");
+                }
+
+                // Bước 2: Tải 3 Nguồn Dữ liệu Gốc
+                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã thuê"
+                var apartments = await _apartmentRepository.FindAsync(a =>
+                    a.BuildingId == buildingId &&
+                    a.Status == "Đã thuê");
+
+                if (!apartments.Any())
+                {
+                    return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                        new List<MeterReadingStatusDto>(),
+                        "Không có căn hộ nào có trạng thái 'Đã thuê' trong tòa nhà này."
+                    );
+                }
+
+                // Tải Dịch vụ (Cột) - TẤT CẢ Price_Quotation có building_id == buildingId VÀ CalculationMethod == "PER_UNIT_METER"
+                var priceQuotations = await _priceQuotationRepository.FindAsync(pq =>
+                    pq.BuildingId == buildingId &&
+                    pq.CalculationMethod == "PER_UNIT_METER");
+
+                var feeTypes = priceQuotations
+                    .Select(pq => pq.FeeType)
+                    .Distinct()
+                    .ToList();
+
+                if (!feeTypes.Any())
+                {
+                    return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                        new List<MeterReadingStatusDto>(),
+                        "Không có loại phí nào dùng đồng hồ (PER_UNIT_METER) trong tòa nhà này."
+                    );
+                }
+
+                // Tải Dữ liệu (Dữ liệu đã ghi) - TẤT CẢ Meter_Reading có building_id == buildingId VÀ billingPeriod
+                var meterReadings = await _context.MeterReadings
+                    .Include(mr => mr.Apartment)
+                    .Include(mr => mr.RecordedByNavigation) // Include User để lấy tên người ghi
+                    .Where(mr =>
+                        mr.Apartment.BuildingId == buildingId &&
+                        mr.BillingPeriod == billingPeriod)
+                    .ToListAsync();
+
+                // Bước 3: Tạo Bảng kết quả (Trộn dữ liệu)
+                var result = new List<MeterReadingStatusDto>();
+
+                // Vòng lặp 1: Theo Căn hộ
+                foreach (var apartment in apartments)
+                {
+                    // Vòng lặp 2: Theo Dịch vụ
+                    foreach (var feeType in feeTypes)
+                    {
+                        // Tra cứu: Tìm kiếm trong danh sách đã ghi
+                        var matchingReading = meterReadings.FirstOrDefault(mr =>
+                            mr.ApartmentId == apartment.ApartmentId &&
+                            mr.FeeType == feeType);
+
+                        if (matchingReading != null)
+                        {
+                            // TÌM THẤY - Đã ghi
+                            var status = string.IsNullOrEmpty(matchingReading.InvoiceItemId)
+                                ? "Đã ghi"
+                                : "Đã ghi - Đã khóa";
+
+                            var dto = new MeterReadingStatusDto(
+                                ApartmentId: apartment.ApartmentId,
+                                ApartmentCode: apartment.Code,
+                                FeeType: feeType,
+                                ReadingValue: matchingReading.ReadingValue,
+                                ReadingId: matchingReading.MeterReadingId,
+                                ReadingDate: matchingReading.ReadingDate,
+                                RecordedByName: matchingReading.RecordedByNavigation?.Name,
+                                InvoiceItemId: matchingReading.InvoiceItemId,
+                                Status: status
+                            );
+                            result.Add(dto);
+                        }
+                        else
+                        {
+                            // KHÔNG TÌM THẤY - Chưa ghi
+                            var dto = new MeterReadingStatusDto(
+                                ApartmentId: apartment.ApartmentId,
+                                ApartmentCode: apartment.Code,
+                                FeeType: feeType,
+                                ReadingValue: null,
+                                ReadingId: null,
+                                ReadingDate: null,
+                                RecordedByName: null,
+                                InvoiceItemId: null,
+                                Status: "Chưa ghi"
+                            );
+                            result.Add(dto);
+                        }
+                    }
+                }
+
+                // Bước 4: Trả về
+                return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                    result,
+                    $"Lấy danh sách tình trạng ghi chỉ số thành công. Tổng số: {result.Count} dòng."
+                );
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Fail($"Lỗi khi lấy dữ liệu: {ex.Message}");
+            }
+        }
+
     }
 }
 

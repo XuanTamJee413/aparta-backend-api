@@ -34,5 +34,17 @@ namespace ApartaAPI.DTOs.MeterReadings
         MeterReadingDto? MeterReading,
         MeterReadingDto? LatestReading // Chỉ số mới nhất trước đó (nếu có)
     );
+
+    public sealed record MeterReadingStatusDto(
+        string ApartmentId,
+        string ApartmentCode,
+        string FeeType,
+        decimal? ReadingValue,
+        string? ReadingId,
+        DateOnly? ReadingDate,
+        string? RecordedByName,
+        string? InvoiceItemId,
+        string Status // "Đã ghi - Đã khóa", "Đã ghi", hoặc "Chưa ghi"
+    );
 }
 

@@ -111,6 +111,21 @@
         // SM35: Chỉ số mới phải lớn hơn hoặc bằng chỉ số tháng trước
         public const string SM35_READING_VALUE_TOO_LOW = "Chỉ số mới ({newValue}) phải lớn hơn hoặc bằng chỉ số tháng trước ({previousValue}).";
 
+        // SM36: Lấy danh sách hóa đơn thành công
+        public const string SM36_INVOICE_LIST_SUCCESS = "Lấy danh sách hóa đơn thành công.";
+
+        // SM37: Tạo link thanh toán thành công
+        public const string SM37_PAYMENT_LINK_SUCCESS = "Tạo link thanh toán thành công.";
+
+        // SM38: Tạo hóa đơn thành công (với {count})
+        public const string SM38_INVOICE_GENERATE_SUCCESS = "Đã xử lý thành công {count} chỉ số.";
+
+        // SM39: Không thể tạo link thanh toán
+        public const string SM39_PAYMENT_LINK_FAILED = "Không thể tạo link thanh toán. Vui lòng kiểm tra lại hóa đơn.";
+
+        // SM40: Lỗi hệ thống
+        public const string SM40_SYSTEM_ERROR = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
+
         public static string GetMessageFromCode(string code)
         {
             return code switch
@@ -150,6 +165,11 @@
                 SM33_METER_READING_CREATE_SUCCESS => SM33_METER_READING_CREATE_SUCCESS,
                 SM34_READING_EXISTS_IN_PERIOD => SM34_READING_EXISTS_IN_PERIOD,
                 SM35_READING_VALUE_TOO_LOW => SM35_READING_VALUE_TOO_LOW,
+                SM36_INVOICE_LIST_SUCCESS => SM36_INVOICE_LIST_SUCCESS,
+                SM37_PAYMENT_LINK_SUCCESS => SM37_PAYMENT_LINK_SUCCESS,
+                SM38_INVOICE_GENERATE_SUCCESS => SM38_INVOICE_GENERATE_SUCCESS,
+                SM39_PAYMENT_LINK_FAILED => SM39_PAYMENT_LINK_FAILED,
+                SM40_SYSTEM_ERROR => SM40_SYSTEM_ERROR,
                 _ => code
             };
         }
@@ -195,7 +215,7 @@
 
     public sealed record ApiResponse<T>(T? Data) : ApiResponse
     {
-        public static new ApiResponse<T> Success(T data, string message = "") =>
+        public static ApiResponse<T> Success(T data, string message = "") =>
             new(data) { Succeeded = true, Message = message };
 
 

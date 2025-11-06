@@ -24,45 +24,54 @@ public class InvoiceController : ControllerBase
     {
         try
         {
-            var userId = User.FindFirst("id")?.Value ?? 
+            var userId = User.FindFirst("id")?.Value ??
                          User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized(ApiResponse<List<InvoiceDto>>.Fail("User ID not found in token. Please login again."));
+                return Unauthorized(ApiResponse<List<InvoiceDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
             var invoices = await _service.GetUserInvoicesAsync(userId);
 
             return Ok(ApiResponse<List<InvoiceDto>>.Success(
                 invoices,
-                "Lấy danh sách hóa đơn thành công"
+                ApiResponse.SM36_INVOICE_LIST_SUCCESS
             ));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<List<InvoiceDto>>.Fail($"Error: {ex.Message}"));
+            return StatusCode(500, ApiResponse<List<InvoiceDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
         }
     }
 
-    [HttpGet]
+    [HttpGet("/api/buildings/{buildingId}/invoices")]
     [Authorize(Policy = "CanReadInvoiceStaff")]
-    public async Task<ActionResult<ApiResponse<List<InvoiceDto>>>> GetInvoices(
+    public async Task<ActionResult<ApiResponse<List<ApartmentInvoicesDto>>>> GetInvoices(
+        [FromRoute] string buildingId,
         [FromQuery] string? status = null,
         [FromQuery] string? apartmentCode = null)
     {
         try
         {
-            var invoices = await _service.GetInvoicesAsync(status, apartmentCode);
+            var userId = User.FindFirst("id")?.Value ??
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return Ok(ApiResponse<List<InvoiceDto>>.Success(
-                invoices,
-                "Lấy danh sách hóa đơn thành công"
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<List<ApartmentInvoicesDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
+            }
+
+            var groupedInvoices = await _service.GetInvoicesGroupedByApartmentAsync(buildingId, userId, status, apartmentCode);
+
+            return Ok(ApiResponse<List<ApartmentInvoicesDto>>.Success(
+                groupedInvoices,
+                ApiResponse.SM36_INVOICE_LIST_SUCCESS
             ));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<List<InvoiceDto>>.Fail($"Error: {ex.Message}"));
+            return StatusCode(500, ApiResponse<List<ApartmentInvoicesDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
         }
     }
 
@@ -74,22 +83,20 @@ public class InvoiceController : ControllerBase
         {
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var checkoutUrl = await _service.CreatePaymentLinkAsync(invoiceId, baseUrl);
-            
+
             if (string.IsNullOrEmpty(checkoutUrl))
             {
-                return BadRequest(ApiResponse<string>.Fail(
-                    "Không thể tạo link thanh toán. Vui lòng kiểm tra lại hóa đơn."
-                ));
+                return BadRequest(ApiResponse<string>.Fail(ApiResponse.SM39_PAYMENT_LINK_FAILED));
             }
 
             return Ok(ApiResponse<string>.Success(
                 checkoutUrl,
-                "Tạo link thanh toán thành công"
+                ApiResponse.SM37_PAYMENT_LINK_SUCCESS
             ));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.Fail($"Error: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
         }
     }
 }

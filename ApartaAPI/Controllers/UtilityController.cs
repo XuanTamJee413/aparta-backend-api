@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.Utilities;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.Utilities;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http; 
@@ -21,11 +22,12 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Utility
 		[HttpGet]
-        [Authorize(Policy = "CanReadUtility")]
-        [ProducesResponseType(typeof(IEnumerable<UtilityDto>), StatusCodes.Status200OK)]
-		public async Task<ActionResult<IEnumerable<UtilityDto>>> GetUtilities()
+		[Authorize(Policy = "CanReadUtility")]
+		[ProducesResponseType(typeof(PagedList<UtilityDto>), StatusCodes.Status200OK)] 
+		public async Task<ActionResult<PagedList<UtilityDto>>> GetUtilities(
+			[FromQuery] ServiceQueryParameters parameters) 
 		{
-			var utilities = await _utilityService.GetAllUtilitiesAsync();
+			var utilities = await _utilityService.GetAllUtilitiesAsync(parameters);
 			return Ok(utilities);
 		}
 
@@ -48,9 +50,10 @@ namespace ApartaAPI.Controllers
 
 		// POST: api/Utility
 		[HttpPost]
-        [Authorize(Policy = "CanCreateUtility")]
-        [ProducesResponseType(typeof(UtilityDto), StatusCodes.Status201Created)]
+		[Authorize(Policy = "CanCreateUtility")]
+		[ProducesResponseType(typeof(UtilityDto), StatusCodes.Status201Created)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		[ProducesResponseType(StatusCodes.Status409Conflict)] 
 		public async Task<ActionResult<UtilityDto>> PostUtility([FromBody] UtilityCreateDto utilityCreateDto)
 		{
 			if (!ModelState.IsValid)
@@ -58,31 +61,54 @@ namespace ApartaAPI.Controllers
 				return BadRequest(ModelState);
 			}
 
-			var createdUtilityDto = await _utilityService.AddUtilityAsync(utilityCreateDto);
+			try
+			{
+				var createdUtilityDto = await _utilityService.AddUtilityAsync(utilityCreateDto);
 
-			return CreatedAtAction(
-				nameof(GetUtility),
-				new { id = createdUtilityDto.UtilityId },
-				createdUtilityDto
-			);
+				return CreatedAtAction(
+					nameof(GetUtility),
+					new { id = createdUtilityDto.UtilityId },
+					createdUtilityDto
+				);
+			}
+			catch (ArgumentException ex) 
+			{
+				return BadRequest(new { message = ex.Message }); 
+			}
+			catch (InvalidOperationException ex) 
+			{
+				return Conflict(new { message = ex.Message }); 
+			}
 		}
 
 		// PUT: api/Utility/{id}
 		[HttpPut("{id}")]
-        [Authorize(Policy = "CanUpdateUtility")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+		[Authorize(Policy = "CanUpdateUtility")]
+		[ProducesResponseType(StatusCodes.Status204NoContent)]
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		[ProducesResponseType(StatusCodes.Status409Conflict)] 
 		public async Task<IActionResult> PutUtility(string id, [FromBody] UtilityUpdateDto utilityUpdateDto)
 		{
-			var updatedUtilityDto = await _utilityService.UpdateUtilityAsync(id, utilityUpdateDto);
-
-			if (updatedUtilityDto == null)
+			try
 			{
-				return NotFound();
-			}
+				var updatedUtilityDto = await _utilityService.UpdateUtilityAsync(id, utilityUpdateDto);
 
-			return NoContent();
+				if (updatedUtilityDto == null)
+				{
+					return NotFound();
+				}
+
+				return NoContent();
+			}
+			catch (ArgumentException ex) 
+			{
+				return BadRequest(new { message = ex.Message }); 
+			}
+			catch (InvalidOperationException ex) 
+			{
+				return Conflict(new { message = ex.Message });
+			}
 		}
 
 		// DELETE: api/Utility/{id}

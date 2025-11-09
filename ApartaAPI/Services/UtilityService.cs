@@ -5,7 +5,8 @@ using ApartaAPI.DTOs.Utilities;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
-using System.Collections.Generic; // Cần thiết cho ICollection
+using System.Collections.Generic;
+using ApartaAPI.DTOs.Common;
 
 namespace ApartaAPI.Services
 {
@@ -18,23 +19,22 @@ namespace ApartaAPI.Services
 			_utilityRepository = utilityRepository;
 		}
 
-		// ĐÃ SỬA: Cập nhật MapToDto để bao gồm Location và PeriodTime
 		private UtilityDto MapToDto(Utility utility) => new UtilityDto(
 			utility.UtilityId,
 			utility.Name,
 			utility.Status,
-			utility.Location,    // Bao gồm Location
-			utility.PeriodTime,  // Bao gồm PeriodTime
+			utility.Location,   
+			utility.PeriodTime,  
 			utility.CreatedAt,
 			utility.UpdatedAt
 		);
 
-		// ĐÃ SỬA: Cập nhật MapToModel để bao gồm Location và PeriodTime
+
 		private Utility MapToModel(UtilityCreateDto dto) => new Utility
 		{
 			UtilityId = Guid.NewGuid().ToString(),
-			Name = dto.Name ?? string.Empty, // Xử lý null
-			Status = dto.Status ?? "Available", // Gán giá trị mặc định nếu cần
+			Name = dto.Name ?? string.Empty, 
+			Status = dto.Status ?? "Available", 
 			Location = dto.Location,
 			PeriodTime = dto.PeriodTime,
 			CreatedAt = DateTime.UtcNow,
@@ -42,10 +42,33 @@ namespace ApartaAPI.Services
 		};
 
 
-		public async Task<IEnumerable<UtilityDto>> GetAllUtilitiesAsync()
+		public async Task<PagedList<UtilityDto>> GetAllUtilitiesAsync(ServiceQueryParameters parameters)
 		{
 			var utilities = await _utilityRepository.GetAllAsync();
-			return utilities.Select(u => MapToDto(u)).ToList();
+			var query = utilities.AsQueryable();
+
+			if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+			{
+				var searchTerm = parameters.SearchTerm.Trim().ToLower();
+				query = query.Where(u => u.Name.ToLower().Contains(searchTerm));
+			}
+
+			if (!string.IsNullOrWhiteSpace(parameters.Status))
+			{
+				var status = parameters.Status.Trim();
+				query = query.Where(u => u.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+			}
+
+			var totalCount = query.Count();
+
+			var pagedQuery = query
+				.Skip((parameters.PageNumber - 1) * parameters.PageSize)
+				.Take(parameters.PageSize);
+
+			var items = pagedQuery
+				.Select(u => MapToDto(u))
+				.ToList();
+			return new PagedList<UtilityDto>(items, totalCount, parameters.PageNumber, parameters.PageSize);
 		}
 
 		public async Task<UtilityDto?> GetUtilityByIdAsync(string id)
@@ -56,15 +79,30 @@ namespace ApartaAPI.Services
 
 		public async Task<UtilityDto> AddUtilityAsync(UtilityCreateDto utilityDto)
 		{
-			var newUtility = MapToModel(utilityDto);
+			if (utilityDto.PeriodTime.HasValue && utilityDto.PeriodTime.Value < 1)
+			{
+				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 1.");
+			}
 
+			if (string.IsNullOrWhiteSpace(utilityDto.Name))
+			{
+				throw new ArgumentException("Tên tiện ích không được để trống.");
+			}
+
+			var trimmedName = utilityDto.Name.Trim();
+			var existingByName = await _utilityRepository.FirstOrDefaultAsync(u => u.Name.ToLower() == trimmedName.ToLower());
+			if (existingByName != null)
+			{
+				throw new InvalidOperationException($"Tiện ích có tên '{trimmedName}' đã tồn tại.");
+			}
+
+			var newUtility = MapToModel(utilityDto);
 			var addedUtility = await _utilityRepository.AddAsync(newUtility);
 			await _utilityRepository.SaveChangesAsync();
 
 			return MapToDto(addedUtility);
 		}
 
-		// ĐÃ SỬA: Cập nhật UpdateUtilityAsync để xử lý Location và PeriodTime
 		public async Task<UtilityDto?> UpdateUtilityAsync(string id, UtilityUpdateDto utilityDto)
 		{
 			var existingUtility = await _utilityRepository.FirstOrDefaultAsync(u => u.UtilityId == id);
@@ -74,15 +112,29 @@ namespace ApartaAPI.Services
 				return null;
 			}
 
-			// Cập nhật các trường, chỉ thay đổi nếu giá trị mới được cung cấp (không null)
+			if (utilityDto.PeriodTime.HasValue && utilityDto.PeriodTime.Value <= 1)
+			{
+				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 1.");
+			}
+
+			if (!string.IsNullOrWhiteSpace(utilityDto.Name))
+			{
+				var trimmedName = utilityDto.Name.Trim();
+				if (!existingUtility.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase))
+				{
+					var existingByName = await _utilityRepository.FirstOrDefaultAsync(u => u.Name.ToLower() == trimmedName.ToLower());
+					if (existingByName != null)
+					{
+						throw new InvalidOperationException($"Tiện ích có tên '{trimmedName}' đã tồn tại.");
+					}
+				}
+			}
+
 			existingUtility.Name = utilityDto.Name ?? existingUtility.Name;
 			existingUtility.Status = utilityDto.Status ?? existingUtility.Status;
-
-			// Cập nhật trường mới
 			existingUtility.Location = utilityDto.Location ?? existingUtility.Location;
 			existingUtility.PeriodTime = utilityDto.PeriodTime ?? existingUtility.PeriodTime;
-
-			existingUtility.UpdatedAt = DateTime.UtcNow; // Update timestamp
+			existingUtility.UpdatedAt = DateTime.UtcNow;
 
 			var updatedUtility = await _utilityRepository.UpdateAsync(existingUtility);
 			await _utilityRepository.SaveChangesAsync();

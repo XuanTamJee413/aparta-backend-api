@@ -1,4 +1,5 @@
-﻿using ApartaAPI.Services.Interfaces;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,6 @@ using static ApartaAPI.DTOs.ServiceBooking.ServiceBookingDtos;
 namespace ApartaAPI.Controllers
 {
 	[Route("api/servicebookings")]
-	[Authorize] 
 	public class ServiceBookingController : ControllerBase
 	{
 		private readonly IServiceBookingService _bookingService;
@@ -55,7 +55,7 @@ namespace ApartaAPI.Controllers
 			}
 			catch (InvalidOperationException ex)
 			{
-				return NotFound(new { message = ex.Message });
+				return BadRequest(new { message = ex.Message });
 			}
 			catch (Exception ex)
 			{
@@ -88,6 +88,54 @@ namespace ApartaAPI.Controllers
 			}
 
 			return Ok(booking);
+		}
+
+
+		// OPERATION STAFF
+	
+
+		// GET: api/servicebookings
+		/// <summary>
+		/// (Staff) Lấy tất cả service bookings (có lọc và phân trang).
+		/// </summary>
+		[HttpGet]
+		[ProducesResponseType(typeof(PagedList<ServiceBookingDto>), StatusCodes.Status200OK)]
+		public async Task<ActionResult<PagedList<ServiceBookingDto>>> GetAllBookings(
+			[FromQuery] ServiceQueryParameters parameters)
+		{
+			var bookings = await _bookingService.GetAllBookingsAsync(parameters);
+			return Ok(bookings);
+		}
+
+
+		// PUT: api/servicebookings/{id}
+		/// <summary>
+		/// (Staff) Cập nhật trạng thái/giá của một booking (Duyệt/Từ chối/Hoàn thành).
+		/// </summary>
+		[HttpPut("{id}")]
+		[ProducesResponseType(typeof(ServiceBookingDto), StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		public async Task<ActionResult<ServiceBookingDto>> UpdateBookingStatus(string id, [FromBody] ServiceBookingUpdateDto updateDto)
+		{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+
+			try
+			{
+				var updatedBooking = await _bookingService.UpdateBookingStatusAsync(id, updateDto);
+				if (updatedBooking == null)
+				{
+					return NotFound();
+				}
+				return Ok(updatedBooking);
+			}
+			catch (ArgumentException ex) // Bắt lỗi validation (ví dụ: giá âm)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
 		}
 	}
 }

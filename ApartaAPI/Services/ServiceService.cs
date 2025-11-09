@@ -74,13 +74,28 @@ namespace ApartaAPI.Services
 
 		public async Task<ServiceDto?> GetServiceByIdAsync(string id)
 		{
-			// Giả sử hàm này đã được tối ưu (ví dụ: dùng FirstOrDefaultAsync)
 			var service = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == id);
 			return service != null ? MapToDto(service) : null;
 		}
 
 		public async Task<ServiceDto> AddServiceAsync(ServiceCreateDto serviceDto)
 		{
+			if (serviceDto.Price.HasValue && serviceDto.Price.Value <= 0)
+			{
+				throw new ArgumentException("Giá dịch vụ phải lớn hơn 0.");
+			}
+
+			if (!string.IsNullOrWhiteSpace(serviceDto.Name))
+			{
+				var existingService = await _serviceRepository.FirstOrDefaultAsync(s => s.Name.ToLower() == serviceDto.Name.Trim().ToLower());
+				if (existingService != null)
+				{
+					throw new InvalidOperationException($"Dịch vụ có tên '{serviceDto.Name}' đã tồn tại.");
+				}
+			}
+			
+
+
 			var newService = MapToModel(serviceDto);
 
 			var addedService = await _serviceRepository.AddAsync(newService);
@@ -88,6 +103,7 @@ namespace ApartaAPI.Services
 
 			return MapToDto(addedService);
 		}
+
 
 		public async Task<ServiceDto?> UpdateServiceAsync(string id, ServiceUpdateDto serviceDto)
 		{
@@ -98,6 +114,21 @@ namespace ApartaAPI.Services
 				return null;
 			}
 
+			if (serviceDto.Price.HasValue && serviceDto.Price.Value <= 0)
+			{
+				throw new ArgumentException("Giá dịch vụ phải lớn hơn 0.");
+			}
+
+			if (!string.IsNullOrWhiteSpace(serviceDto.Name) &&
+				!existingService.Name.Equals(serviceDto.Name.Trim(), StringComparison.OrdinalIgnoreCase))
+			{
+				var duplicateService = await _serviceRepository.FirstOrDefaultAsync(s => s.Name.ToLower() == serviceDto.Name.Trim().ToLower());
+				if (duplicateService != null)
+				{
+					throw new InvalidOperationException($"Dịch vụ có tên '{serviceDto.Name}' đã tồn tại.");
+				}
+			}
+
 			existingService.Name = serviceDto.Name ?? existingService.Name;
 			existingService.Price = serviceDto.Price ?? existingService.Price;
 			if (serviceDto.Status != null)
@@ -106,12 +137,11 @@ namespace ApartaAPI.Services
 			}
 			existingService.UpdatedAt = DateTime.UtcNow;
 
-			var updatedService = await _serviceRepository.UpdateAsync(existingService);
+			await _serviceRepository.UpdateAsync(existingService);
 			await _serviceRepository.SaveChangesAsync();
 
-			return MapToDto(updatedService);
+			return MapToDto(existingService);
 		}
-
 		public async Task<bool> DeleteServiceAsync(string id)
 		{
 			var serviceToDelete = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == id);

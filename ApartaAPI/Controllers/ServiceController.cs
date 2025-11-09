@@ -22,7 +22,7 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Service
 		[HttpGet]
-        [Authorize(Policy = "CanReadService")]
+        //[Authorize(Policy = "CanReadService")]
         [ProducesResponseType(typeof(PagedList<ServiceDto>), StatusCodes.Status200OK)]
 		public async Task<ActionResult<PagedList<ServiceDto>>> GetServices(
 			[FromQuery] ServiceQueryParameters parameters)
@@ -33,8 +33,8 @@ namespace ApartaAPI.Controllers
 
 		// GET: api/Service/{id}
 		[HttpGet("{id}")]
-        [Authorize(Policy = "CanReadService")]
-        [ProducesResponseType(typeof(ServiceDto), StatusCodes.Status200OK)]
+		[Authorize(Policy = "CanReadService")]
+		[ProducesResponseType(typeof(ServiceDto), StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<ActionResult<ServiceDto>> GetService(string id)
 		{
@@ -60,13 +60,19 @@ namespace ApartaAPI.Controllers
 				return BadRequest(ModelState);
 			}
 
-			var createdServiceDto = await _serviceService.AddServiceAsync(serviceCreateDto);
-
-			return CreatedAtAction(
-				nameof(GetService),
-				new { id = createdServiceDto.ServiceId },
-				createdServiceDto
-			);
+			try
+			{
+				var createdServiceDto = await _serviceService.AddServiceAsync(serviceCreateDto);
+				return CreatedAtAction(nameof(GetService), new { id = createdServiceDto.ServiceId }, createdServiceDto);
+			}
+			catch (ArgumentException ex) // Lỗi validate input (giá <= 0, tên trống...)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+			catch (InvalidOperationException ex) // Lỗi conflict (tên trùng...)
+			{
+				return Conflict(new { message = ex.Message }); // Trả về 409 Conflict
+			}
 		}
 
 		// PUT: api/Service/{id}
@@ -78,14 +84,23 @@ namespace ApartaAPI.Controllers
 		public async Task<IActionResult> PutService(string id, [FromBody] ServiceUpdateDto serviceUpdateDto)
 		{
 
-			var updatedServiceDto = await _serviceService.UpdateServiceAsync(id, serviceUpdateDto);
-
-			if (updatedServiceDto == null)
+			try
 			{
-				return NotFound();
+				var updatedServiceDto = await _serviceService.UpdateServiceAsync(id, serviceUpdateDto);
+				if (updatedServiceDto == null)
+				{
+					return NotFound();
+				}
+				return NoContent();
 			}
-
-			return NoContent();
+			catch (ArgumentException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+			catch (InvalidOperationException ex)
+			{
+				return Conflict(new { message = ex.Message });
+			}
 		}
 
 		// DELETE: api/Service/{id}

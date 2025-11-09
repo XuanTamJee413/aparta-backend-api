@@ -24,10 +24,11 @@ namespace ApartaAPI.DTOs.ServiceBooking
 			DateTime? CreatedAt
 		);
 
-		// public sealed record ServiceBookingUpdateDto(
-		//     string Status,
-		//     decimal? PaymentAmount,
-		//     string? StaffNote
-		// );
+		public sealed record ServiceBookingUpdateDto(
+			string Status,
+			decimal? PaymentAmount,
+			string? StaffNote
+		);
+
 	}
 }

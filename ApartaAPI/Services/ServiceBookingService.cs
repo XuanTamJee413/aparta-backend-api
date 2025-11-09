@@ -1,4 +1,5 @@
-﻿using ApartaAPI.Models;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using System;
@@ -39,6 +40,11 @@ namespace ApartaAPI.Services
 			if (resident == null)
 			{
 				throw new InvalidOperationException("Không tìm thấy cư dân.");
+			}
+
+			if (createDto.BookingDate < DateTime.UtcNow.Date)
+			{
+				throw new InvalidOperationException("Không thể đặt dịch vụ cho ngày trong quá khứ.");
 			}
 
 			var newBooking = new ServiceBooking
@@ -92,7 +98,80 @@ namespace ApartaAPI.Services
 			booking.Service = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == booking.ServiceId);
 			booking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == booking.ResidentId);
 
-			return MapToDto(booking); 
+			return MapToDto(booking);
+		}
+
+		public async Task<PagedList<ServiceBookingDto>> GetAllBookingsAsync(ServiceQueryParameters parameters)
+		{
+			// Tải tất cả dữ liệu (theo pattern của bạn)
+			var allBookings = await _bookingRepository.GetAllAsync();
+			var allServices = await _serviceRepository.GetAllAsync();
+			var allUsers = await _userRepository.GetAllAsync();
+
+			// Join thủ công vào bộ nhớ TRƯỚC KHI LỌC
+			var query = allBookings.Select(b =>
+			{
+				b.Service = allServices.FirstOrDefault(s => s.ServiceId == b.ServiceId);
+				b.Resident = allUsers.FirstOrDefault(u => u.UserId == b.ResidentId);
+				return MapToDto(b); // Map sang DTO để lọc
+			}).AsQueryable();
+
+			// Lọc theo Trạng thái (Status)
+			if (!string.IsNullOrWhiteSpace(parameters.Status))
+			{
+				var status = parameters.Status.Trim();
+				query = query.Where(b => b.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+			}
+
+			// Lọc theo Tên dịch vụ (SearchTerm)
+			if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+			{
+				var searchTerm = parameters.SearchTerm.Trim().ToLower();
+				query = query.Where(b => b.ServiceName != null && b.ServiceName.ToLower().Contains(searchTerm));
+			}
+
+			// Sắp xếp
+			query = query.OrderByDescending(b => b.CreatedAt);
+
+			// Phân trang
+			var totalCount = query.Count();
+			var pagedItems = query
+				.Skip((parameters.PageNumber - 1) * parameters.PageSize)
+				.Take(parameters.PageSize)
+				.ToList();
+
+			return new PagedList<ServiceBookingDto>(pagedItems, totalCount, parameters.PageNumber, parameters.PageSize);
+		}
+
+		// 2. Cập nhật Booking (giống template)
+		public async Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto)
+		{
+			var existingBooking = await _bookingRepository.FirstOrDefaultAsync(b => b.ServiceBookingId == bookingId);
+
+			if (existingBooking == null)
+			{
+				return null;
+			}
+
+			// (Bạn có thể thêm validation logic ở đây nếu cần, ví dụ:
+			// if (updateDto.PaymentAmount.HasValue && updateDto.PaymentAmount.Value < 0)
+			// {
+			//    throw new ArgumentException("Giá thực tế không thể âm.");
+			// }
+
+			existingBooking.Status = updateDto.Status ?? existingBooking.Status;
+			existingBooking.PaymentAmount = updateDto.PaymentAmount ?? existingBooking.PaymentAmount;
+			existingBooking.StaffNote = updateDto.StaffNote ?? existingBooking.StaffNote;
+			existingBooking.UpdatedAt = DateTime.UtcNow;
+
+			await _bookingRepository.UpdateAsync(existingBooking);
+			await _bookingRepository.SaveChangesAsync();
+
+			// Load lại thông tin liên quan để trả về DTO đầy đủ
+			existingBooking.Service = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == existingBooking.ServiceId);
+			existingBooking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == existingBooking.ResidentId);
+
+			return MapToDto(existingBooking);
 		}
 
 

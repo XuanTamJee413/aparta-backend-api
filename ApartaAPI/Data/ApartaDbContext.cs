@@ -36,9 +36,9 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<InvoiceItem> InvoiceItems { get; set; }
 
-    public virtual DbSet<Log> Logs { get; set; }
-
     public virtual DbSet<Message> Messages { get; set; }
+
+    public virtual DbSet<Meter> Meters { get; set; }
 
     public virtual DbSet<MeterReading> MeterReadings { get; set; }
 
@@ -63,6 +63,8 @@ public partial class ApartaDbContext : DbContext
     public virtual DbSet<Service> Services { get; set; }
 
     public virtual DbSet<ServiceBooking> ServiceBookings { get; set; }
+
+    public virtual DbSet<StaffBuildingAssignment> StaffBuildingAssignments { get; set; }
 
     public virtual DbSet<Subscription> Subscriptions { get; set; }
 
@@ -471,34 +473,6 @@ public partial class ApartaDbContext : DbContext
                 .HasConstraintName("FK_InvoiceItem_Invoice");
         });
 
-        modelBuilder.Entity<Log>(entity =>
-        {
-            entity.HasKey(e => e.LogId).HasName("PK__LOG__9E2397E044C7D5AE");
-
-            entity.ToTable("LOG");
-
-            entity.Property(e => e.LogId)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("log_id");
-            entity.Property(e => e.Action)
-                .HasMaxLength(255)
-                .HasColumnName("action");
-            entity.Property(e => e.Details).HasColumnName("details");
-            entity.Property(e => e.Timestamp)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("timestamp");
-            entity.Property(e => e.UserId)
-                .HasMaxLength(50)
-                .HasColumnName("user_id");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Logs)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Log_User");
-        });
-
         modelBuilder.Entity<Message>(entity =>
         {
             entity.HasKey(e => e.MessageId).HasName("PK__MESSAGE__0BBF6EE602F93070");
@@ -531,6 +505,31 @@ public partial class ApartaDbContext : DbContext
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Message_Sender");
+        });
+
+        modelBuilder.Entity<Meter>(entity =>
+        {
+            entity.HasKey(e => e.MeterId).HasName("PK__METER__6647C3157098003C");
+
+            entity.ToTable("METER");
+
+            entity.Property(e => e.MeterId)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("meter_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasColumnName("status");
+            entity.Property(e => e.Type)
+                .HasMaxLength(50)
+                .HasColumnName("type");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<MeterReading>(entity =>
@@ -1015,6 +1014,40 @@ public partial class ApartaDbContext : DbContext
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ServiceBooking_Service");
+        });
+
+        modelBuilder.Entity<StaffBuildingAssignment>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.BuildingId }).HasName("PK__STAFF_BU__5077CCF885BB5D62");
+
+            entity.ToTable("STAFF_BUILDING_ASSIGNMENT");
+
+            entity.Property(e => e.UserId)
+                .HasMaxLength(50)
+                .HasColumnName("user_id");
+            entity.Property(e => e.BuildingId)
+                .HasMaxLength(50)
+                .HasColumnName("building_id");
+            entity.Property(e => e.AssignmentEndDate).HasColumnName("assignment_end_date");
+            entity.Property(e => e.AssignmentStartDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnName("assignment_start_date");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.ScopeOfWork)
+                .HasMaxLength(255)
+                .HasColumnName("scope_of_work");
+
+            entity.HasOne(d => d.Building).WithMany(p => p.StaffBuildingAssignments)
+                .HasForeignKey(d => d.BuildingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StaffAssign_Building");
+
+            entity.HasOne(d => d.User).WithMany(p => p.StaffBuildingAssignments)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StaffAssign_User");
         });
 
         modelBuilder.Entity<Subscription>(entity =>

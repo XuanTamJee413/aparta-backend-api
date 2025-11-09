@@ -41,8 +41,6 @@ public partial class User
 
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 
-    public virtual ICollection<Log> Logs { get; set; } = new List<Log>();
-
     public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 
     public virtual ICollection<MeterReading> MeterReadings { get; set; } = new List<MeterReading>();
@@ -58,6 +56,8 @@ public partial class User
     public virtual Role Role { get; set; } = null!;
 
     public virtual ICollection<ServiceBooking> ServiceBookings { get; set; } = new List<ServiceBooking>();
+
+    public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignments { get; set; } = new List<StaffBuildingAssignment>();
 
     public virtual ICollection<TaskAssignment> TaskAssignmentAssigneeUsers { get; set; } = new List<TaskAssignment>();
 

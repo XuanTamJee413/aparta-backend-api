@@ -32,4 +32,6 @@ public partial class Building
     public virtual ICollection<PriceQuotation> PriceQuotations { get; set; } = new List<PriceQuotation>();
 
     public virtual Project Project { get; set; } = null!;
+
+    public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignments { get; set; } = new List<StaffBuildingAssignment>();
 }

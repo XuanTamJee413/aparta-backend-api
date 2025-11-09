@@ -26,7 +26,6 @@ namespace ApartaAPI.Services
         {
             var query = _repository.GetStaffViewLogsQuery();
 
-            // 2. Áp dụng Filtering (Lọc)
             if (!string.IsNullOrEmpty(queryParams.ApartmentId))
             {
                 query = query.Where(v => v.ApartmentId == queryParams.ApartmentId);
@@ -41,10 +40,8 @@ namespace ApartaAPI.Services
                 );
             }
 
-            // 3. Áp dụng Sorting (Sắp xếp)
             if (!string.IsNullOrEmpty(queryParams.SortColumn))
             {
-                // ... (logic sắp xếp giữ nguyên như cũ) ...
                 Expression<Func<VisitLog, object>> keySelector = queryParams.SortColumn.ToLower() switch
                 {
                     "visitorfullname" => v => v.Visitor.FullName,
@@ -62,11 +59,8 @@ namespace ApartaAPI.Services
                 query = query.OrderByDescending(vl => vl.CheckinTime);
             }
 
-            // 4. Áp dụng Projection (Chọn lọc cột DTO bằng AutoMapper)
             var dtoQuery = query.ProjectTo<VisitLogStaffViewDto>(_mapper.ConfigurationProvider);
 
-            // 5. Áp dụng Pagination (Phân trang)
-            // Thay vì dùng PaginatedList.CreateAsync, chúng ta dùng constructor của PagedList
             var totalCount = await dtoQuery.CountAsync();
 
             var items = await dtoQuery

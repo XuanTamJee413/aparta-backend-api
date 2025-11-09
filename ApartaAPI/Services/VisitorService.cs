@@ -37,7 +37,11 @@ namespace ApartaAPI.Services
             {
                 throw new ValidationException($"Căn hộ với ID '{dto.ApartmentId}' không tồn tại.");
             }
-
+            var existingVisitor = await _visitorRepository.FirstOrDefaultAsync(v => v.IdNumber == dto.IdNumber);
+            if (existingVisitor != null)
+            {
+                throw new ValidationException("Số CCCD/Hộ chiếu này đã tồn tại trong hệ thống.");
+            }
             var newVisitor = _mapper.Map<Visitor>(dto);
             newVisitor.VisitorId = Guid.NewGuid().ToString("N");
             await _visitorRepository.AddAsync(newVisitor);
@@ -52,6 +56,11 @@ namespace ApartaAPI.Services
             {
                 if (DateTime.TryParse(dto.CheckinTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var checkinTime))
                 {
+                    if (checkinTime <= DateTime.Now)
+                    {
+                        throw new ValidationException("Thời gian check-in phải là một thời điểm trong tương lai.");
+                    }
+
                     newVisitLog.CheckinTime = checkinTime.ToUniversalTime();
                 }
                 else

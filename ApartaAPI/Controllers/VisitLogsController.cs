@@ -40,10 +40,10 @@ namespace ApartaAPI.Controllers
         {
             var success = await _service.CheckInAsync(id);
 
-            if (!success)
-            {
-                return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'."));
-            }
+            //if (!success)
+            //{
+            //    return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'."));
+            //}
 
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
@@ -54,10 +54,10 @@ namespace ApartaAPI.Controllers
         {
             var success = await _service.CheckOutAsync(id);
 
-            if (!success)
-            {
-                return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in."));
-            }
+            //if (!success)
+            //{
+            //    return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in."));
+            //}
 
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }

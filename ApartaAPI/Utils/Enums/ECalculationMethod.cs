@@ -7,56 +7,47 @@ namespace ApartaAPI.Utils.Enums
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ECalculationMethod
     {
-        [Display(Name = "Tính theo diện tích (m2)")]
+        [EnumMetadata("Cố định", "Thu một khoản tiền không đổi hàng tháng (ví dụ: Tiền thuê, Phí quản lý).")]
+        [EnumMember(Value = "FIXED")]
+        FIXED,
+
+        [EnumMetadata("Theo đồng hồ (đơn giá)", "Tính theo chỉ số tiêu thụ (điện, nước) với 1 giá duy nhất.")]
+        [EnumMember(Value = "PER_UNIT_METER")]
+        PER_UNIT_METER,
+
+        [EnumMetadata("Theo diện tích (m²)", "Tính phí dựa trên diện tích (m²) của căn hộ.")]
         [EnumMember(Value = "PER_AREA")]
         PER_AREA,
 
-        [Display(Name = "Cố định theo phương tiện")]
-        [EnumMember(Value = "FIXED_PER_VEHICLE")]
-        FIXED_PER_VEHICLE,
+        [EnumMetadata("Theo đầu người", "Tính phí dựa trên số lượng người đăng ký ở trong phòng.")]
+        [EnumMember(Value = "PER_PERSON")]
+        PER_PERSON,
 
-        [Display(Name = "Tính theo giờ")]
-        [EnumMember(Value = "PER_HOUR")]
-        PER_HOUR,
+        [EnumMetadata("Theo số lượng (Item)", "Tính phí dựa trên số lượng vật phẩm đăng ký (ví dụ: Phí giữ xe).")]
+        [EnumMember(Value = "PER_ITEM")]
+        PER_ITEM,
 
-        [Display(Name = "Tính lũy tiến (theo bậc): ví dụ tiền điện, nước,... dùng càng nhiều giá sẽ càng tăng")]
+        [EnumMetadata("Thu một lần", "Chỉ thu một lần duy nhất khi phát sinh (ví dụ: Phí làm thẻ).")]
+        [EnumMember(Value = "ONE_TIME")]
+        ONE_TIME,
+
+        /*
+        // --- Lũy tiến (TIERED) ---
+        [EnumMetadata("Tính lũy tiến (Theo bậc)", "Áp dụng đơn giá khác nhau cho các bậc tiêu thụ khác nhau (ví dụ: tiền điện, nước).")]
         [EnumMember(Value = "TIERED")]
         TIERED,
+        */
+    }
 
-        [Display(Name = "Tính đồng giá (ví dụ: nước nóng, gas,..  được cung cấp bởi tòa nhà, vẫn tính theo số như số điện nhưng không lũy tiến)")]
-        [EnumMember(Value = "FIXED_RATE")]
-        FIXED_RATE,
-
-        [Display(Name = "Tính theo người/tháng")]
-        [EnumMember(Value = "PER_PERSON_PER_MONTH")]
-        PER_PERSON_PER_MONTH,
-
-        [Display(Name = "Tính theo lượt sử dụng")]
-        [EnumMember(Value = "PER_USE")]
-        PER_USE,
-
-        [Display(Name = "Thu phí một lần")]
-        [EnumMember(Value = "FIXED_ONE_TIME")]
-        FIXED_ONE_TIME,
-
-        [Display(Name = "Cố định theo thú cưng/tháng")]
-        [EnumMember(Value = "FIXED_PER_PET_PER_MONTH")]
-        FIXED_PER_PET_PER_MONTH,
-
-        [Display(Name = "Tính theo gói (ví dụ: thuê BBQ)")]
-        [EnumMember(Value = "PER_SLOT")]
-        PER_SLOT,
-
-        [Display(Name = "Cố định theo tháng (chung)")]
-        [EnumMember(Value = "FIXED_PER_MONTH")]
-        FIXED_PER_MONTH,
-
-        [Display(Name = "Tính theo kg")]
-        [EnumMember(Value = "PER_KG")]
-        PER_KG,
-
-        [Display(Name = "Phạt % theo ngày quá hạn")]
-        [EnumMember(Value = "PERCENT_PER_DAY_ON_DEBT")]
-        PERCENT_PER_DAY_ON_DEBT
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    public class EnumMetadataAttribute : Attribute
+    {
+        public string Name { get; }
+        public string Description { get; }
+        public EnumMetadataAttribute(string name, string description)
+        {
+            Name = name;
+            Description = description;
+        }
     }
 }

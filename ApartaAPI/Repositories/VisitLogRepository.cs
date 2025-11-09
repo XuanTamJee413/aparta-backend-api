@@ -16,7 +16,7 @@ namespace ApartaAPI.Repositories
                 .Include(a => a.Apartment)
                 .Include(v => v.Visitor)
                 .Where(v => v.Status != "Deleted")
-                .AsQueryable(); // Trả về IQueryable để service có thể xây dựng truy vấn tiếp
+                .AsQueryable();
         }
     }
 }

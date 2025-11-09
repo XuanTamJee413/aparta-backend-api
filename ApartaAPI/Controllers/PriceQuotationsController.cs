@@ -1,6 +1,7 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Services.Interfaces;
+using ApartaAPI.Utils.Helper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -73,12 +74,6 @@ namespace ApartaAPI.Controllers
 
         }
 
-        /// <summary>
-        /// Lấy danh sách tất cả đơn giá (fees) của một tòa nhà cụ thể.
-        /// </summary>
-        /// <param name="buildingId">ID của tòa nhà cần xem.</param>
-        /// <response code="200">Trả về danh sách các đơn giá (có thể rỗng).</response>
-        /// <response code="404">Không tìm thấy tòa nhà (Building) với ID đã cung cấp.</response>
         [HttpGet("building/{buildingId}")]
         public async Task<IActionResult> GetPriceQuotationsByBuilding(string buildingId)
         {
@@ -92,12 +87,6 @@ namespace ApartaAPI.Controllers
             return Ok(priceQuotations);
         }
 
-        /// <summary>
-        /// Lấy thông tin chi tiết của một đơn giá (fee) theo ID.
-        /// </summary>
-        /// <param name="id">ID của đơn giá cần tìm.</param>
-        /// <response code="200">Trả về thông tin chi tiết của đơn giá.</response>
-        /// <response code="404">Không tìm thấy đơn giá với ID đã cung cấp.</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(PriceQuotationDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -217,6 +206,21 @@ namespace ApartaAPI.Controllers
                 return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
             }
             return Ok(ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Price Quotation"));
+        }
+
+        [HttpGet("calculation-methods")]
+        [ProducesResponseType(typeof(ApiResponse<List<EnumOptionDto>>), StatusCodes.Status200OK)]
+        public IActionResult GetCalculationMethods()
+        {
+            try
+            {
+                var methods = EnumHelper.GetCalculationMethodOptions();
+                return Ok(ApiResponse<List<EnumOptionDto>>.Success(methods));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse.Fail(ex.Message));
+            }
         }
     }
 }

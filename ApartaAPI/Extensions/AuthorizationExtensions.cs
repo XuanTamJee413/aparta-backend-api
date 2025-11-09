@@ -182,31 +182,17 @@ namespace ApartaAPI.Extensions
                 ));
 
                 // Policy cho MeterReading
-                options.AddPolicy("CanCreateMeterReading", policy => policy.RequireAssertion(ctx =>
-                    ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "meterreading.record.create")
-                ));
+                options.AddPolicy("CanReadMeterReadings", policy =>
+                    policy.RequireClaim("Permission", "meterreading.read")); 
 
-                options.AddPolicy("CanReadMeterReadingProgress", policy => policy.RequireAssertion(ctx =>
-                    ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "meterreading.progress.read")
-                ));
+                options.AddPolicy("CanCreateMeterReadings", policy =>
+                    policy.RequireClaim("Permission", "meterreading.create"));
 
-                options.AddPolicy("CanReadMeterReadingRecord", policy => policy.RequireAssertion(ctx =>
-                    ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "meterreading.record.read")
-                ));
+                options.AddPolicy("CanUpdateMeterReadings", policy =>
+                    policy.RequireClaim("Permission", "meterreading.update"));
 
-                options.AddPolicy("CanReadMeterReadingHistory", policy => policy.RequireAssertion(ctx =>
-                    ctx.User.IsInRole("resident") ||
-                    ctx.User.HasClaim("permission", "meterreading.history.read")
-                ));
-
-                options.AddPolicy("CanReadMeterReadingSheet", policy => policy.RequireAssertion(ctx =>
-                    ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "meterreading.sheet.read")
-                ));
-
+                options.AddPolicy("CanReadMeterReadingStatus", policy =>
+                    policy.RequireClaim("Permission", "meterreading.read.status"));
                 // Policy cho Invoice
                 options.AddPolicy("CanCreateInvoicePayment", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
@@ -214,16 +200,22 @@ namespace ApartaAPI.Extensions
                     ctx.User.HasClaim("permission", "invoice.pay.create")
                 ));
 
-                options.AddPolicy("CanReadInvoiceStaff", policy => policy.RequireAssertion(ctx =>
+                options.AddPolicy("CanReadInvoiceItem", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
                     ctx.User.IsInRole("manager") ||
-                    ctx.User.HasClaim("permission", "invoice.staff.read")
+                    ctx.User.HasClaim("permission", "invoice.item.read")
                 ));
 
                 options.AddPolicy("CanReadInvoiceResident", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
                     ctx.User.IsInRole("resident") ||
                     ctx.User.HasClaim("permission", "invoice.resident.read")
+                ));
+
+                //Policy cho Billing 
+                options.AddPolicy("CanGenerateBilling", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.HasClaim("permission", "billing.generate")
                 ));
 
             });

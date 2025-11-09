@@ -13,9 +13,6 @@ using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-
-using ApartaAPI.DTOs.Assets;
-using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.Apartments;
 
@@ -145,18 +142,29 @@ namespace ApartaAPI.Profiles
             CreateMap<ApartmentUpdateDto, Apartment>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<MeterReading, MeterReadingDto>()
-                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
-                .ForMember(dest => dest.MeterType, opt => opt.MapFrom(src => src.Meter.Type))
-                .ForMember(dest => dest.Consumption, opt => opt.Ignore()) 
-                .ForMember(dest => dest.EstimatedCost, opt => opt.Ignore())
-                .ForMember(dest => dest.RecordedByName, opt => opt.MapFrom(src => src.RecordedByUser != null ? src.RecordedByUser.Name : null))
-                .ForMember(dest => dest.RecordedAt, opt => opt.MapFrom(src => src.UpdatedAt));
+            // Invoice mappings
+            CreateMap<Invoice, InvoiceDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
 
-            // Invoice mappings
-            CreateMap<Invoice, InvoiceDto>()
-                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
-                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null));
+            CreateMap<InvoiceItem, InvoiceItemDto>();
+
+            CreateMap<Invoice, InvoiceDetailDto>()
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment.Code))
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.Staff != null ? src.Staff.Name : null))
+                .ForMember(dest => dest.ResidentName, opt => opt.Ignore())
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.InvoiceItems.OrderBy(i => i.CreatedAt)))
+                .AfterMap((src, dest) =>
+                {
+                    var resident = src.Apartment.Users
+                        .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident");
+                    dest.ResidentName = resident != null 
+                        ? resident.Name 
+                        : src.Apartment.Users.FirstOrDefault()?.Name;
+                });
+
+            // MeterReading mappings
+            CreateMap<MeterReading, MeterReadingDto>();
         }
     }
 }

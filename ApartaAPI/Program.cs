@@ -47,6 +47,8 @@ namespace ApartaAPI
 
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+			
+			// Services
 			builder.Services.AddScoped<IProjectService, ProjectService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddScoped<IServiceService, ServiceService>();
@@ -55,32 +57,26 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 			builder.Services.AddHostedService<SubscriptionExpiryService>();
-            builder.Services.AddScoped<IRoleService, RoleService>();
-            builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
+			builder.Services.AddScoped<IRoleService, RoleService>();
+			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
 			builder.Services.AddScoped<IAssetService, AssetService>();
-            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
-            builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
-            builder.Services.AddScoped<IManagerService, ManagerService>();
-            builder.Services.AddScoped<INewsService, NewsService>();
-            builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
-            builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
-            builder.Services.AddScoped<IMeterReadingRepository, MeterReadingRepository>();
-            builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
-            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
-            builder.Services.AddSingleton<PayOSService>();
-            builder.Services.AddEndpointsApiExplorer();
-
-			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            builder.Services.AddScoped<IProjectService, ProjectService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IManagerService, ManagerService>();
-            builder.Services.AddScoped<INewsService, NewsService>();
+			builder.Services.AddScoped<IManagerService, ManagerService>();
+			builder.Services.AddScoped<INewsService, NewsService>();
+			builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
+			builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 			builder.Services.AddScoped<IVehicleService, VehicleService>();
-            builder.Services.AddScoped<IApartmentService, ApartmentService>();
+			builder.Services.AddScoped<IApartmentService, ApartmentService>();
+			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+			builder.Services.AddSingleton<PayOSService>();
+			
+			// Custom Repositories
+			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
 
-            builder.Services.AddEndpointsApiExplorer();
+			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options =>
 			{
 				// 1. Định nghĩa Security Scheme (Cách Swagger biết về Authentication)
@@ -96,24 +92,23 @@ namespace ApartaAPI
 
 				// 2. Thêm Security Requirement (Áp dụng scheme này cho các API)
 				options.AddSecurityRequirement(new OpenApiSecurityRequirement
-	{
-		{
-			new OpenApiSecurityScheme
-			{
-				Reference = new OpenApiReference
 				{
-					Type = ReferenceType.SecurityScheme,
-					Id = "Bearer" // Phải khớp với tên đã định nghĩa ở trên
-                }
-			},
-			new string[] {} // Không yêu cầu scopes cụ thể
-        }
-	});
+					{
+						new OpenApiSecurityScheme
+						{
+							Reference = new OpenApiReference
+							{
+								Type = ReferenceType.SecurityScheme,
+								Id = "Bearer" // Phải khớp với tên đã định nghĩa ở trên
+							}
+						},
+						new string[] {} // Không yêu cầu scopes cụ thể
+					}
+				});
 			});
 
-
-            // JWT Authentication
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+			// JWT Authentication
+			var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 			var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
 			var issuer = jwtSettings["Issuer"] ?? "ApartaAPI";
 			var audience = jwtSettings["Audience"] ?? "ApartaAPI";
@@ -134,9 +129,9 @@ namespace ApartaAPI
 					};
 				});
 
-            builder.Services.AddAuthorizationPolicies();
+			builder.Services.AddAuthorizationPolicies();
 
-            var app = builder.Build();
+			var app = builder.Build();
 
 			if (app.Environment.IsDevelopment())
 			{

@@ -1,425 +1,378 @@
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.MeterReadings;
+using ApartaAPI.Data;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Linq;
 
-namespace ApartaAPI.Services;
-
-public class MeterReadingService : IMeterReadingService
+namespace ApartaAPI.Services
 {
-    private readonly IMeterReadingRepository _meterReadingRepo;
-    private readonly IRepository<Apartment> _apartmentRepo;
-    private readonly IRepository<Meter> _meterRepo;
-    private readonly IPriceQuotationRepository _priceQuotationRepo;
-    private readonly IRepository<Invoice> _invoiceRepo;
-    private readonly IRepository<User> _userRepo;
-    private readonly IRepository<Building> _buildingRepo;
-    private readonly IMapper _mapper;
-
-    public MeterReadingService(
-        IMeterReadingRepository meterReadingRepo,
-        IRepository<Apartment> apartmentRepo,
-        IRepository<Meter> meterRepo,
-        IPriceQuotationRepository priceQuotationRepo,
-        IRepository<Invoice> invoiceRepo,
-        IRepository<User> userRepo,
-        IRepository<Building> buildingRepo,
-        IMapper mapper)
+    public class MeterReadingService : IMeterReadingService
     {
-        _meterReadingRepo = meterReadingRepo;
-        _apartmentRepo = apartmentRepo;
-        _meterRepo = meterRepo;
-        _priceQuotationRepo = priceQuotationRepo;
-        _invoiceRepo = invoiceRepo;
-        _userRepo = userRepo;
-        _buildingRepo = buildingRepo;
-        _mapper = mapper;
-    }
-    //danh sách căn hộ và thông tin đồng hồ để ghi chỉ số
-    public async Task<List<ApartmentMeterInfoDto>> GetApartmentsForRecordingAsync(string buildingCode, string billingPeriod)
-    {
-        // Lấy các căn hộ Đã thuê trong building có buildingCode
-        var apartments = await _apartmentRepo.FindAsync(
-            a => a.Status == "Đã thuê" && a.Building.BuildingCode == buildingCode
-        );
-        var meters = await _meterRepo.FindAsync(m => m.Status == "ACTIVE");
+        private readonly ApartaDbContext _context;
+        private readonly IRepository<MeterReading> _meterReadingRepository;
+        private readonly IRepository<Apartment> _apartmentRepository;
+        private readonly IRepository<PriceQuotation> _priceQuotationRepository;
+        private readonly IMapper _mapper;
 
-        var result = new List<ApartmentMeterInfoDto>();
-
-        foreach (var apt in apartments)
+        public MeterReadingService(
+            ApartaDbContext context,
+            IRepository<MeterReading> meterReadingRepository,
+            IRepository<Apartment> apartmentRepository,
+            IRepository<PriceQuotation> priceQuotationRepository,
+            IMapper mapper)
         {
-            var aptInfo = new ApartmentMeterInfoDto
+            _context = context;
+            _meterReadingRepository = meterReadingRepository;
+            _apartmentRepository = apartmentRepository;
+            _priceQuotationRepository = priceQuotationRepository;
+            _mapper = mapper;
+        }
+
+        public async Task<ApiResponse<IEnumerable<string>>> GetServicesForApartmentAsync(string apartmentId)
+        {
+            // 1. Tìm Apartment theo apartmentId
+            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == apartmentId);
+            if (apartment == null)
             {
-                ApartmentId = apt.ApartmentId,
-                ApartmentCode = apt.Code,
-                BuildingId = apt.BuildingId,
-                Meters = new List<MeterInfoDto>()
-            };
+                return ApiResponse<IEnumerable<string>>.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
 
-            foreach (var meter in meters)
+            // 2. Lấy buildingId từ Apartment
+            var buildingId = apartment.BuildingId;
+
+            // 3. Tìm PriceQuotation với buildingId và calculation_method = "PER_UNIT_METER"
+            var priceQuotations = await _priceQuotationRepository.FindAsync(pq =>
+                pq.BuildingId == buildingId &&
+                pq.CalculationMethod == "PER_UNIT_METER");
+
+            // 4. Lấy distinct fee_type
+            var feeTypes = priceQuotations
+                .Select(pq => pq.FeeType)
+                .Distinct()
+                .ToList();
+
+            return ApiResponse<IEnumerable<string>>.Success(feeTypes);
+        }
+
+        public async Task<ApiResponse<MeterReadingCheckResponse>> CheckMeterReadingExistsAsync(string apartmentId, string feeType, string billingPeriod)
+        {
+            // Kiểm tra Apartment tồn tại
+            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == apartmentId);
+            if (apartment == null)
             {
-                var currentReading = await _meterReadingRepo.GetByApartmentAndPeriodAsync(
-                    apt.ApartmentId,
-                    meter.MeterId,
-                    billingPeriod
-                );
+                return ApiResponse<MeterReadingCheckResponse>.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
 
-                var lastReading = await _meterReadingRepo.GetLatestReadingAsync(
-                    apt.ApartmentId,
-                    meter.MeterId,
-                    billingPeriod
-                );
+            // Kiểm tra xem đã tồn tại meterReading trong tháng này chưa
+            var existingReading = await _meterReadingRepository.FirstOrDefaultAsync(mr =>
+                mr.ApartmentId == apartmentId &&
+                mr.FeeType == feeType &&
+                mr.BillingPeriod == billingPeriod);
 
-                aptInfo.Meters.Add(new MeterInfoDto
+            MeterReadingDto? meterReadingDto = null;
+            if (existingReading != null)
+            {
+                meterReadingDto = _mapper.Map<MeterReadingDto>(existingReading);
+            }
+
+            // Tìm meterReading mới nhất trước đó (nếu có)
+            var allReadings = await _meterReadingRepository.FindAsync(mr =>
+                mr.ApartmentId == apartmentId &&
+                mr.FeeType == feeType);
+
+            // Tìm meterReading mới nhất có billingPeriod < billingPeriod hiện tại
+            var latestReading = allReadings
+                .Where(mr => !string.IsNullOrEmpty(mr.BillingPeriod) && 
+                             mr.BillingPeriod.CompareTo(billingPeriod) < 0)
+                .OrderByDescending(mr => mr.BillingPeriod)
+                .FirstOrDefault();
+
+            MeterReadingDto? latestReadingDto = null;
+            if (latestReading != null)
+            {
+                latestReadingDto = _mapper.Map<MeterReadingDto>(latestReading);
+            }
+
+            var response = new MeterReadingCheckResponse(
+                Exists: existingReading != null,
+                MeterReading: meterReadingDto,
+                LatestReading: latestReadingDto
+            );
+
+            return ApiResponse<MeterReadingCheckResponse>.Success(response);
+        }
+
+        public async Task<ApiResponse> CreateMeterReadingsAsync(string apartmentId, List<MeterReadingCreateDto> readings, string userId)
+        {
+            if (readings == null || !readings.Any())
+            {
+                return ApiResponse.Fail(ApiResponse.SM31_READING_LIST_EMPTY);
+            }
+
+            // Kiểm tra Apartment tồn tại
+            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == apartmentId);
+            if (apartment == null)
+            {
+                return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ApiResponse.Fail(ApiResponse.SM29_USER_NOT_FOUND);
+            }
+
+            var now = DateTime.UtcNow;
+            var meterReadings = new List<MeterReading>();
+
+            // Tạo danh sách các MeterReading
+            foreach (var readingDto in readings)
+            {
+                //format: yyyy-MM
+                var billingPeriod = readingDto.ReadingDate.ToString("yyyy-MM");
+
+                // Sử dụng method CheckMeterReadingExistsAsync để kiểm tra
+                var checkResult = await CheckMeterReadingExistsAsync(apartmentId, readingDto.FeeType, billingPeriod);
+                if (!checkResult.Succeeded)
                 {
-                    MeterId = meter.MeterId,
-                    MeterType = meter.Type,
-                    LastReading = lastReading?.CurrentReading,
-                    CurrentReading = currentReading?.CurrentReading,
-                    IsRecorded = currentReading != null,
-                    ReadingDate = currentReading?.ReadingDate,
-                    RecordedByName = currentReading?.RecordedByUser?.Name
-                });
+                    return ApiResponse.Fail(checkResult.Message);
+                }
+
+                var checkData = checkResult.Data!;
+
+                // Kiểm tra xem đã tồn tại meterReading trong tháng này chưa
+                if (checkData.Exists && checkData.MeterReading != null)
+                {
+                    // Đã tồn tại chỉ số trong tháng này, không được tạo mới
+                    var message = ApiResponse.SM34_READING_EXISTS_IN_PERIOD
+                        .Replace("{feeType}", readingDto.FeeType)
+                        .Replace("{billingPeriod}", billingPeriod);
+                    return ApiResponse.Fail(message);
+                }
+
+                // Kiểm tra chỉ số mới nhất trước đó (nếu có)
+                if (checkData.LatestReading != null)
+                {
+                    // Có chỉ số trước đó, kiểm tra giá trị mới phải >= giá trị chỉ số mới nhất
+                    if (readingDto.ReadingValue < checkData.LatestReading.ReadingValue)
+                    {
+                        var message = ApiResponse.SM35_READING_VALUE_TOO_LOW
+                            .Replace("{newValue}", readingDto.ReadingValue.ToString("F2"))
+                            .Replace("{previousValue}", checkData.LatestReading.ReadingValue.ToString("F2"));
+                        return ApiResponse.Fail(message);
+                    }
+                }
+
+                var meterReading = new MeterReading
+                {
+                    MeterReadingId = Guid.NewGuid().ToString("N"),
+                    ApartmentId = apartmentId,
+                    FeeType = readingDto.FeeType,
+                    ReadingValue = readingDto.ReadingValue,
+                    ReadingDate = readingDto.ReadingDate, 
+                    BillingPeriod = billingPeriod, 
+                    RecordedBy = userId,
+                    InvoiceItemId = null, // Để NULL
+                    CreatedAt = now,
+                    UpdatedAt = null
+                };
+
+                meterReadings.Add(meterReading);
             }
 
-            result.Add(aptInfo);
+            await _context.Set<MeterReading>().AddRangeAsync(meterReadings);
+            await _context.SaveChangesAsync();
+
+            return ApiResponse.SuccessWithCode(ApiResponse.SM33_METER_READING_CREATE_SUCCESS, null, meterReadings.Count);
         }
 
-        return result;
-    }
-
-    public async Task<MeterReadingDto> RecordMeterReadingAsync(
-        RecordMeterReadingRequest request,
-        string staffId,
-        string billingPeriod)
-    {
-        // Validate input
-        if (request.CurrentReading < 0)
+        public async Task<ApiResponse> UpdateMeterReadingAsync(string readingId, MeterReadingUpdateDto updateDto, string? userId)
         {
-            throw new ArgumentException("Current reading cannot be negative");
-        }
-
-        // Resolve staff user: accept either user_id or staff_code
-        var staffUser = await _userRepo.FirstOrDefaultAsync(u => u.UserId == staffId || u.StaffCode == staffId);
-        if (staffUser == null)
-        {
-            throw new ArgumentException("Staff not found. Please pass a valid user_id or staff_code");
-        }
-        var recordedById = staffUser.UserId;
-
-        // Get apartment and meter for validation
-        var apartment = await _apartmentRepo.GetByIdAsync(request.ApartmentId);
-        if (apartment == null)
-        {
-            throw new ArgumentException("Apartment not found");
-        }
-
-        var meter = await _meterRepo.GetByIdAsync(request.MeterId);
-        if (meter == null)
-        {
-            throw new ArgumentException("Meter not found");
-        }
-
-        // Check if reading already exists (UPSERT logic)
-        var existingReading = await _meterReadingRepo.GetByApartmentAndPeriodAsync(
-            request.ApartmentId,
-            request.MeterId,
-            billingPeriod
-        );
-
-        MeterReading reading;
-        int previousReading;
-
-        if (existingReading != null)
-        {
-            // UPDATE case
-            existingReading.CurrentReading = request.CurrentReading;
-            existingReading.ReadingDate = DateOnly.FromDateTime(DateTime.Now);
-            existingReading.RecordedBy = recordedById;
-            existingReading.UpdatedAt = DateTime.Now;
-
-            await _meterReadingRepo.UpdateAsync(existingReading);
-            reading = existingReading;
-            previousReading = reading.PreviousReading;
-        }
-        else
-        {
-            // INSERT case - get previous reading from last month
-            var lastReading = await _meterReadingRepo.GetLatestReadingAsync(
-                request.ApartmentId,
-                request.MeterId,
-                billingPeriod
-            );
-
-            previousReading = lastReading?.CurrentReading ?? 0;
-
-            reading = new MeterReading
+            if (updateDto == null)
             {
-                MeterReadingId = Guid.NewGuid().ToString(),
-                ApartmentId = request.ApartmentId,
-                MeterId = request.MeterId,
-                PreviousReading = previousReading,
-                CurrentReading = request.CurrentReading,
-                ReadingDate = DateOnly.FromDateTime(DateTime.Now),
-                BillingPeriod = billingPeriod,
-                RecordedBy = recordedById,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
-
-            await _meterReadingRepo.AddAsync(reading);
-
-            // Reload to get navigation properties
-            reading = await _meterReadingRepo.GetByApartmentAndPeriodAsync(
-                request.ApartmentId,
-                request.MeterId,
-                billingPeriod
-            ) ?? reading;
-        }
-
-        // Calculate consumption
-        var consumption = reading.CurrentReading - previousReading;
-
-        // Validate consumption
-        if (consumption < 0)
-        {
-            throw new InvalidOperationException(
-                $"Invalid consumption: current reading ({reading.CurrentReading}) is less than previous reading ({previousReading})"
-            );
-        }
-
-        // Calculate estimated cost
-        var estimatedCost = await CalculateCostAsync(request.MeterId, apartment.BuildingId, consumption);
-
-        // Map using AutoMapper
-        var dto = _mapper.Map<MeterReadingDto>(reading);
-        dto.PreviousReading = previousReading;
-        dto.Consumption = consumption;
-        dto.EstimatedCost = estimatedCost;
-        
-        return dto;
-    }
-
-    public async Task<decimal> CalculateCostAsync(string meterId, string buildingId, int consumption)
-    {
-        if (consumption <= 0) return 0;
-
-        // Get meter to determine type
-        var meter = await _meterRepo.GetByIdAsync(meterId);
-        if (meter == null) return 0;
-
-        // ID cố định lấy từ cấu hình
-        const string ELECTRIC_QUOTATION_ID = "6ad6c5c2-11fc-4a7b-bca7-b9a60535900d";
-        const string WATER_QUOTATION_ID    = "d61950be-8cb5-4c51-9036-d6676d37292a";
-
-        string quotationId;
-        if (meter.Type.Equals("ELECTRIC", StringComparison.OrdinalIgnoreCase))
-        {
-            quotationId = ELECTRIC_QUOTATION_ID;
-        }
-        else if (meter.Type.Equals("WATER", StringComparison.OrdinalIgnoreCase))
-        {
-            quotationId = WATER_QUOTATION_ID;
-        }
-        else
-        {
-            return 0;
-        }
-
-        // Get price quotation directly by ID
-        var priceQuotation = await _priceQuotationRepo.GetByIdAsync(quotationId);
-        
-        if (priceQuotation == null)
-        {
-            return 0;
-        }
-
-        // Tính đơn giản: consumption * unitPrice
-        return consumption * priceQuotation.UnitPrice;
-    }
-
-    public async Task<int> GenerateMonthlyInvoicesAsync(string buildingId, string billingPeriod)
-    {
-        // Get only readings that haven't been invoiced yet
-        var readings = await _meterReadingRepo.GetByBuildingAndPeriodAsync(buildingId, billingPeriod);
-        var uninvoicedReadings = readings.Where(r => !r.IsInvoiced).ToList();
-
-        if (!uninvoicedReadings.Any())
-        {
-            return 0;
-        }
-
-        // Group readings by apartment
-        var apartmentGroups = uninvoicedReadings.GroupBy(r => r.ApartmentId);
-
-        int invoiceCount = 0;
-        var readingsToMarkAsInvoiced = new List<MeterReading>();
-
-        foreach (var group in apartmentGroups)
-        {
-            var apartmentId = group.Key;
-            decimal totalCost = 0;
-            var descriptionParts = new List<string>();
-
-            foreach (var reading in group)
-            {
-                var consumption = reading.CurrentReading - reading.PreviousReading;
-                var cost = await CalculateCostAsync(reading.MeterId, buildingId, consumption);
-
-                totalCost += cost;
-
-                var meterTypeName = reading.Meter.Type == "ELECTRIC" ? "Điện" : "Nước";
-                var unit = reading.Meter.Type == "ELECTRIC" ? "kWh" : "m³";
-
-                descriptionParts.Add($"{meterTypeName}: {consumption} {unit} = {cost:N0} VND");
+                return ApiResponse.Fail(ApiResponse.SM32_READING_UPDATE_EMPTY);
             }
 
-            var periodParts = billingPeriod.Split('-');
-            if (periodParts.Length != 2) continue;
-
-            var year = int.Parse(periodParts[0]);
-            var month = int.Parse(periodParts[1]);
-            
-            // Calculate next month for invoice dates
-            var nextMonthDate = new DateOnly(year, month, 1).AddMonths(1);
-            var startDate = new DateOnly(nextMonthDate.Year, nextMonthDate.Month, 1); // First day of next month
-            var endDate = startDate.AddMonths(1).AddDays(-1); // Last day of next month
-
-            var invoice = new Invoice
+            // Tìm MeterReading theo readingId
+            var meterReading = await _meterReadingRepository.FirstOrDefaultAsync(mr => mr.MeterReadingId == readingId);
+            if (meterReading == null)
             {
-                InvoiceId = Guid.NewGuid().ToString(),
-                ApartmentId = apartmentId,
-                FeeType = "UTILITY",
-                Price = totalCost,
-                Status = "PENDING",
-                Description = string.Join("; ", descriptionParts),
-                StartDate = startDate,
-                EndDate = endDate,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
+            }
 
-            await _invoiceRepo.AddAsync(invoice);
-            invoiceCount++;
+            // Kiểm tra an toàn: invoice_item_id phải là NULL
+            if (!string.IsNullOrEmpty(meterReading.InvoiceItemId))
+            {
+                return ApiResponse.Fail(ApiResponse.SM30_READING_LOCKED);
+            }
 
-            // Mark all readings in this group as invoiced
-            readingsToMarkAsInvoiced.AddRange(group);
+            // Kiểm tra chỉ số mới nhất trước đó (nếu có)
+            if (!string.IsNullOrEmpty(meterReading.BillingPeriod))
+            {
+                // Tìm tất cả meterReadings của cùng apartment và feeType (loại trừ chính nó)
+                var allReadings = await _meterReadingRepository.FindAsync(mr =>
+                    mr.ApartmentId == meterReading.ApartmentId &&
+                    mr.FeeType == meterReading.FeeType &&
+                    mr.MeterReadingId != readingId);
+
+                // Tìm meterReading mới nhất có billingPeriod < billingPeriod hiện tại
+                var latestReading = allReadings
+                    .Where(mr => !string.IsNullOrEmpty(mr.BillingPeriod) && 
+                                 mr.BillingPeriod.CompareTo(meterReading.BillingPeriod) < 0)
+                    .OrderByDescending(mr => mr.BillingPeriod)
+                    .FirstOrDefault();
+
+                if (latestReading != null)
+                {
+                    // Có chỉ số trước đó, kiểm tra giá trị mới phải >= giá trị chỉ số mới nhất
+                    if (updateDto.ReadingValue < latestReading.ReadingValue)
+                    {
+                        var message = ApiResponse.SM35_READING_VALUE_TOO_LOW
+                            .Replace("{newValue}", updateDto.ReadingValue.ToString("F2"))
+                            .Replace("{previousValue}", latestReading.ReadingValue.ToString("F2"));
+                        return ApiResponse.Fail(message);
+                    }
+                }
+            }
+
+            // Cập nhật giá trị
+            meterReading.ReadingValue = updateDto.ReadingValue;
+            meterReading.UpdatedAt = DateTime.UtcNow;
+
+            // Có thể cập nhật recorded_by nếu cần
+            if (!string.IsNullOrEmpty(userId))
+            {
+                meterReading.RecordedBy = userId;
+            }
+
+            // Lưu thay đổi
+            await _meterReadingRepository.UpdateAsync(meterReading);
+            await _meterReadingRepository.SaveChangesAsync();
+
+            return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
         }
 
-        // Mark all used readings as invoiced
-        foreach (var reading in readingsToMarkAsInvoiced)
-        {
-            reading.IsInvoiced = true;
-            reading.UpdatedAt = DateTime.Now;
-            await _meterReadingRepo.UpdateAsync(reading);
-        }
-
-        return invoiceCount;
-    }
-
-    public async Task<RecordingProgressDto> GetRecordingProgressAsync(string buildingCode, string billingPeriod)
-    {
-        // First get the building by code
-        var building = await _buildingRepo.FirstOrDefaultAsync(b => b.BuildingCode == buildingCode);
-        if (building == null)
-        {
-            throw new KeyNotFoundException($"Building with code '{buildingCode}' not found");
-        }
-
-        // Only count apartments that are rented (Đã thuê) - same as recording sheet
-        var apartments = await _apartmentRepo.FindAsync(a => a.BuildingId == building.BuildingId && a.Status == "Đã thuê");
-        var totalApartments = apartments.Count();
-
-        var meters = await _meterRepo.FindAsync(m => m.Status == "ACTIVE");
-
-        var recordedByMeterType = new Dictionary<string, int>();
-        var progressByMeterType = new Dictionary<string, decimal>();
-
-        foreach (var meter in meters)
-        {
-            var recordedCount = await _meterReadingRepo.CountRecordedReadingsAsync(
-                building.BuildingId,
-                billingPeriod,
-                meter.MeterId
-            );
-
-            recordedByMeterType[meter.Type] = recordedCount;
-            progressByMeterType[meter.Type] = totalApartments > 0
-                ? Math.Round((decimal)recordedCount / totalApartments * 100, 2)
-                : 0;
-        }
-
-        return new RecordingProgressDto
-        {
-            BuildingId = building.BuildingId,
-            BillingPeriod = billingPeriod,
-            TotalApartments = totalApartments,
-            RecordedByMeterType = recordedByMeterType,
-            ProgressByMeterType = progressByMeterType,
-            LastUpdated = DateTime.Now
-        };
-    }
-
-    public async Task<List<MeterReadingDto>> GetReadingHistoryAsync(string apartmentId, string meterId, int limit = 12)
-    {
-        var readings = await _meterReadingRepo.GetReadingHistoryAsync(apartmentId, meterId, limit);
-        var apartment = await _apartmentRepo.GetByIdAsync(apartmentId);
-        var meter = await _meterRepo.GetByIdAsync(meterId);
-
-        var result = new List<MeterReadingDto>();
-
-        foreach (var reading in readings)
-        {
-            var consumption = reading.CurrentReading - reading.PreviousReading;
-            var cost = apartment != null ? await CalculateCostAsync(meterId, apartment.BuildingId, consumption) : 0;
-
-            var dto = _mapper.Map<MeterReadingDto>(reading);
-            dto.Consumption = consumption;
-            dto.EstimatedCost = cost;
-            result.Add(dto);
-        }
-
-        return result;
-    }
-
-    public async Task<List<MeterReadingDto>> GetRecordedReadingsByPeriodAsync(string buildingCode, string billingPeriod)
-    {
-        // First get the building by code
-        var building = await _buildingRepo.FirstOrDefaultAsync(b => b.BuildingCode == buildingCode);
-        if (building == null)
-        {
-            throw new KeyNotFoundException($"Không tìm thấy tòa nhà với mã: {buildingCode}");
-        }
-
-        // Lấy tất cả readings đã ghi trong billing period
-        var readings = await _meterReadingRepo.GetByBuildingAndPeriodAsync(building.BuildingId, billingPeriod);
-
-        var result = new List<MeterReadingDto>();
-
-        foreach (var reading in readings)
+        public async Task<ApiResponse<IEnumerable<MeterReadingStatusDto>>> GetMeterReadingStatusByBuildingAsync(string buildingId, string? billingPeriod)
         {
             try
             {
-                var consumption = reading.CurrentReading - reading.PreviousReading;
-                var cost = await CalculateCostAsync(reading.MeterId, building.BuildingId, consumption);
-
-                var dto = _mapper.Map<MeterReadingDto>(reading);
-                dto.Consumption = consumption;
-                dto.EstimatedCost = cost;
-                if (string.IsNullOrEmpty(dto.BillingPeriod))
+                // Bước 1: Xử lý Đầu vào
+                // Xử lý Default (nếu billingPeriod là null hoặc rỗng, lấy tháng hiện tại)
+                if (string.IsNullOrWhiteSpace(billingPeriod))
                 {
-                    dto.BillingPeriod = billingPeriod;
+                    billingPeriod = DateTime.Now.ToString("yyyy-MM");
                 }
-                result.Add(dto);
+
+                // Bước 2: Tải 3 Nguồn Dữ liệu Gốc
+                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã thuê"
+                var apartments = await _apartmentRepository.FindAsync(a =>
+                    a.BuildingId == buildingId &&
+                    a.Status == "Đã thuê");
+
+                if (!apartments.Any())
+                {
+                    return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                        new List<MeterReadingStatusDto>(),
+                        "Không có căn hộ nào có trạng thái 'Đã thuê' trong tòa nhà này."
+                    );
+                }
+
+                // Tải Dịch vụ (Cột) - TẤT CẢ Price_Quotation có building_id == buildingId VÀ CalculationMethod == "PER_UNIT_METER"
+                var priceQuotations = await _priceQuotationRepository.FindAsync(pq =>
+                    pq.BuildingId == buildingId &&
+                    pq.CalculationMethod == "PER_UNIT_METER");
+
+                var feeTypes = priceQuotations
+                    .Select(pq => pq.FeeType)
+                    .Distinct()
+                    .ToList();
+
+                if (!feeTypes.Any())
+                {
+                    return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                        new List<MeterReadingStatusDto>(),
+                        "Không có loại phí nào dùng đồng hồ (PER_UNIT_METER) trong tòa nhà này."
+                    );
+                }
+
+                // Tải Dữ liệu (Dữ liệu đã ghi) - TẤT CẢ Meter_Reading có building_id == buildingId VÀ billingPeriod
+                var meterReadings = await _context.MeterReadings
+                    .Include(mr => mr.Apartment)
+                    .Include(mr => mr.RecordedByNavigation) // Include User để lấy tên người ghi
+                    .Where(mr =>
+                        mr.Apartment.BuildingId == buildingId &&
+                        mr.BillingPeriod == billingPeriod)
+                    .ToListAsync();
+
+                // Bước 3: Tạo Bảng kết quả (Trộn dữ liệu)
+                var result = new List<MeterReadingStatusDto>();
+
+                // Vòng lặp 1: Theo Căn hộ
+                foreach (var apartment in apartments)
+                {
+                    // Vòng lặp 2: Theo Dịch vụ
+                    foreach (var feeType in feeTypes)
+                    {
+                        // Tra cứu: Tìm kiếm trong danh sách đã ghi
+                        var matchingReading = meterReadings.FirstOrDefault(mr =>
+                            mr.ApartmentId == apartment.ApartmentId &&
+                            mr.FeeType == feeType);
+
+                        if (matchingReading != null)
+                        {
+                            // TÌM THẤY - Đã ghi
+                            var status = string.IsNullOrEmpty(matchingReading.InvoiceItemId)
+                                ? "Đã ghi"
+                                : "Đã ghi - Đã khóa";
+
+                            var dto = new MeterReadingStatusDto(
+                                ApartmentId: apartment.ApartmentId,
+                                ApartmentCode: apartment.Code,
+                                FeeType: feeType,
+                                ReadingValue: matchingReading.ReadingValue,
+                                ReadingId: matchingReading.MeterReadingId,
+                                ReadingDate: matchingReading.ReadingDate,
+                                RecordedByName: matchingReading.RecordedByNavigation?.Name,
+                                InvoiceItemId: matchingReading.InvoiceItemId,
+                                Status: status
+                            );
+                            result.Add(dto);
+                        }
+                        else
+                        {
+                            // KHÔNG TÌM THẤY - Chưa ghi
+                            var dto = new MeterReadingStatusDto(
+                                ApartmentId: apartment.ApartmentId,
+                                ApartmentCode: apartment.Code,
+                                FeeType: feeType,
+                                ReadingValue: null,
+                                ReadingId: null,
+                                ReadingDate: null,
+                                RecordedByName: null,
+                                InvoiceItemId: null,
+                                Status: "Chưa ghi"
+                            );
+                            result.Add(dto);
+                        }
+                    }
+                }
+
+                // Bước 4: Trả về
+                return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
+                    result,
+                    $"Lấy danh sách tình trạng ghi chỉ số thành công. Tổng số: {result.Count} dòng."
+                );
             }
             catch (Exception ex)
             {
-                // Log the error but continue with other readings
-                Console.WriteLine($"Error processing reading {reading.MeterReadingId}: {ex.Message}");
+                return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Fail($"Lỗi khi lấy dữ liệu: {ex.Message}");
             }
         }
 
-        return result;
     }
 }
+

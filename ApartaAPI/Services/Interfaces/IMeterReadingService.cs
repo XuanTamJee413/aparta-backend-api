@@ -1,15 +1,15 @@
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.MeterReadings;
 
-namespace ApartaAPI.Services.Interfaces;
-
-public interface IMeterReadingService
+namespace ApartaAPI.Services.Interfaces
 {
-    Task<List<ApartmentMeterInfoDto>> GetApartmentsForRecordingAsync(string buildingCode, string billingPeriod);
-    Task<MeterReadingDto> RecordMeterReadingAsync(RecordMeterReadingRequest request, string staffId, string billingPeriod);
-    Task<decimal> CalculateCostAsync(string meterId, string buildingId, int consumption);
-    Task<int> GenerateMonthlyInvoicesAsync(string buildingId, string billingPeriod);
-    Task<RecordingProgressDto> GetRecordingProgressAsync(string buildingCode, string billingPeriod);
-    Task<List<MeterReadingDto>> GetReadingHistoryAsync(string apartmentId, string meterId, int limit = 12);
-    Task<List<MeterReadingDto>> GetRecordedReadingsByPeriodAsync(string buildingId, string billingPeriod);
+    public interface IMeterReadingService
+    {
+        Task<ApiResponse<IEnumerable<string>>> GetServicesForApartmentAsync(string apartmentId);
+        Task<ApiResponse<MeterReadingCheckResponse>> CheckMeterReadingExistsAsync(string apartmentId, string feeType, string billingPeriod);
+        Task<ApiResponse> CreateMeterReadingsAsync(string apartmentId, List<MeterReadingCreateDto> readings, string userId);
+        Task<ApiResponse> UpdateMeterReadingAsync(string readingId, MeterReadingUpdateDto updateDto, string? userId);
+        Task<ApiResponse<IEnumerable<MeterReadingStatusDto>>> GetMeterReadingStatusByBuildingAsync(string buildingId, string? billingPeriod);
+    }
 }
 

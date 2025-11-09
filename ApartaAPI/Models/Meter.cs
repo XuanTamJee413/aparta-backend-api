@@ -14,6 +14,4 @@ public partial class Meter
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
-
-    public virtual ICollection<MeterReading> MeterReadings { get; set; } = new List<MeterReading>();
 }

@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.Buildings;
+﻿using ApartaAPI.DTOs.Apartments;
+using ApartaAPI.DTOs.Buildings;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
@@ -16,15 +17,18 @@ namespace ApartaAPI.Services
     {
         private readonly IRepository<Building> _repository;
         private readonly IRepository<Project> _projectRepository;
+        private readonly IApartmentService _apartmentService;
         private readonly IMapper _mapper;
 
         public BuildingService(
             IRepository<Building> repository,
             IRepository<Project> projectRepository,
+            IApartmentService apartmentService,
             IMapper mapper)
         {
             _repository = repository;
             _projectRepository = projectRepository;
+            _apartmentService = apartmentService;
             _mapper = mapper;
         }
 
@@ -193,6 +197,51 @@ namespace ApartaAPI.Services
             catch (Exception)
             {
                 return ApiResponse.Fail(ApiResponse.SM15_PAYMENT_FAILED);
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetRentedApartmentsByBuildingAsync(string buildingId)
+        {
+            try
+            {
+                // Kiểm tra Building tồn tại và is_active = true
+                var building = await _repository.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
+                if (building == null)
+                {
+                    return ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM01_NO_RESULTS);
+                }
+
+                if (!building.IsActive)
+                {
+                    return ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM26_BUILDING_NOT_ACTIVE);
+                }
+
+                // Kiểm tra Project tồn tại và is_active = true
+                var project = await _projectRepository.FirstOrDefaultAsync(p => p.ProjectId == building.ProjectId);
+                if (project == null)
+                {
+                    return ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM27_PROJECT_NOT_FOUND);
+                }
+
+                if (!project.IsActive)
+                {
+                    return ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM28_PROJECT_NOT_ACTIVE);
+                }
+
+                // Lấy danh sách căn hộ có status = "Đã thuê" thuộc building này
+                var query = new ApartmentQueryParameters(
+                    BuildingId: buildingId,
+                    Status: "Đã thuê",
+                    SearchTerm: null,
+                    SortBy: null,
+                    SortOrder: null);
+                var response = await _apartmentService.GetAllAsync(query);
+
+                return response;
+            }
+            catch (Exception)
+            {
+                return ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM15_PAYMENT_FAILED);
             }
         }
     }

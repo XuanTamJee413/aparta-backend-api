@@ -1,6 +1,6 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Contracts;
-using ApartaAPI.Models; // Quan trọng
+using ApartaAPI.Models; 
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
@@ -13,17 +13,20 @@ namespace ApartaAPI.Services
         private readonly IRepository<Contract> _contractRepository;
         private readonly IRepository<Apartment> _apartmentRepository;
         private readonly IRepository<ApartmentMember> _apartmentMemberRepository; 
+        private readonly IRepository<User> _userRepository;
         private readonly IMapper _mapper;
 
         public ContractService(
             IRepository<Contract> contractRepository,
             IRepository<Apartment> apartmentRepository,
             IRepository<ApartmentMember> apartmentMemberRepository, 
+            IRepository<User> userRepository,
             IMapper mapper)
         {
             _contractRepository = contractRepository;
             _apartmentRepository = apartmentRepository;
             _apartmentMemberRepository = apartmentMemberRepository; 
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -110,6 +113,39 @@ namespace ApartaAPI.Services
             contract.CreatedAt = now;
             contract.UpdatedAt = now;
             await _contractRepository.AddAsync(contract);
+
+            var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.ApartmentId == dto.ApartmentId);
+
+            if (existingUser != null)
+            {
+                existingUser.Name = dto.OwnerName;
+                existingUser.Phone = dto.OwnerPhoneNumber;
+                existingUser.UpdatedAt = now;
+            }
+            else
+            {
+                var newUser = new User
+                {
+                    UserId = Guid.NewGuid().ToString("N"),
+                    RoleId = "EC13BABB-416F-42EB-BFD4-0725493A63D0", 
+                    ApartmentId = dto.ApartmentId,
+                    Email = dto.OwnerEmail, 
+                    Phone = dto.OwnerPhoneNumber,
+                    Name = dto.OwnerName,
+                   
+                    PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.", 
+                    Status = "Active", 
+                    IsDeleted = false,
+
+                    AvatarUrl = null,
+                    StaffCode = Guid.NewGuid().ToString("N"),
+                    LastLoginAt = null,
+
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+                await _userRepository.AddAsync(newUser);
+            }
 
             var apartmentMember = new ApartmentMember
             {

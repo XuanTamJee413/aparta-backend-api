@@ -28,6 +28,7 @@ namespace ApartaAPI.DTOs.Contracts
         string OwnerName,
         string? OwnerPhoneNumber,
         string? OwnerIdNumber,
+        string? OwnerEmail,
         string? OwnerGender,
         DateOnly? OwnerDateOfBirth,
         string? OwnerNationality

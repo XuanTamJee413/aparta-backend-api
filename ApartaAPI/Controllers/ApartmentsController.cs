@@ -34,16 +34,29 @@ namespace ApartaAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ApartmentDto>> PostApartment([FromBody] ApartmentCreateDto request)
         {
-            var created = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetApartment), new { id = created.ApartmentId }, created);
+            try
+            {
+                var created = await _service.CreateAsync(request);
+                return CreatedAtAction(nameof(GetApartment), new { id = created.ApartmentId }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutApartment(string id, [FromBody] ApartmentUpdateDto request)
         {
-            var updated = await _service.UpdateAsync(id, request);
-            //if (!updated) return NotFound();
-            return Ok(); 
+            try
+            {
+                var updated = await _service.UpdateAsync(id, request);
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]

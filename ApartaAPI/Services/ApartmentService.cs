@@ -93,6 +93,13 @@ namespace ApartaAPI.Services
 
         public async Task<ApartmentDto> CreateAsync(ApartmentCreateDto dto)
         {
+            var existingApartmentCode = await _repository.FirstOrDefaultAsync(
+                 a => a.Code == dto.Code && a.BuildingId == dto.BuildingId
+             );
+            if (existingApartmentCode != null)
+            {
+                throw new InvalidOperationException($"Mã căn hộ '{dto.Code}' đã tồn tại trong tòa nhà này.");
+            }
             var now = DateTime.UtcNow;
             var entity = _mapper.Map<Apartment>(dto);
 
@@ -110,6 +117,25 @@ namespace ApartaAPI.Services
         {
             var entity = await _repository.FirstOrDefaultAsync(a => a.ApartmentId == id);
             if (entity == null) return false;
+
+            if ("Đã Thuê".Equals(entity.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Không thể cập nhật căn hộ vì đang có người thuê.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Code) && dto.Code != entity.Code)
+            {
+                var existing = await _repository.FirstOrDefaultAsync(
+                    a => a.Code == dto.Code &&
+                         a.BuildingId == entity.BuildingId && 
+                         a.ApartmentId != id 
+                );
+
+                if (existing != null)
+                {
+                    throw new InvalidOperationException($"Mã căn hộ '{dto.Code}' đã tồn tại trong tòa nhà này.");
+                }
+            }
 
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;

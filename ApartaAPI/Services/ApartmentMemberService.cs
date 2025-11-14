@@ -35,14 +35,8 @@ namespace ApartaAPI.Services
                     (m.Name != null && m.Name.ToLower().Contains(searchTerm)) ||
                     (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm)) ||
                     (m.IdNumber != null && m.IdNumber.ToLower().Contains(searchTerm)));
-                   
-
-
-
 
             var entities = await _repository.FindAsync(predicate);
-
-            
 
             var validEntities = entities.Where(m => m != null).ToList();
 
@@ -62,7 +56,6 @@ namespace ApartaAPI.Services
                     break;
             }
 
-            
             var dtos = _mapper.Map<IEnumerable<ApartmentMemberDto>>(sortedEntities);
 
             if (!dtos.Any())
@@ -81,6 +74,15 @@ namespace ApartaAPI.Services
 
         public async Task<ApartmentMemberDto> CreateAsync(ApartmentMemberCreateDto dto)
         {
+            if (!string.IsNullOrWhiteSpace(dto.IdNumber))
+            {
+                var existingMember = await _repository.FirstOrDefaultAsync(m => m.IdNumber == dto.IdNumber);
+                if (existingMember != null)
+                {
+                    throw new InvalidOperationException($"ID Number '{dto.IdNumber}' đã tồn tại.");
+                }
+            }
+
             var now = DateTime.UtcNow;
             var entity = _mapper.Map<ApartmentMember>(dto);
 
@@ -99,6 +101,15 @@ namespace ApartaAPI.Services
         {
             var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == id);
             if (entity == null) return false;
+
+            if (!string.IsNullOrWhiteSpace(dto.IdNumber))
+            {
+                var existingMember = await _repository.FirstOrDefaultAsync(m => m.IdNumber == dto.IdNumber);
+                if (existingMember != null)
+                {
+                    throw new InvalidOperationException($"ID Number '{dto.IdNumber}' đã tồn tại.");
+                }
+            }
 
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;

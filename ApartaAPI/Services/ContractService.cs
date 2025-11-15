@@ -54,6 +54,14 @@ namespace ApartaAPI.Services
 
             var validEntities = entities.Where(e => e != null).ToList();
 
+            if (!validEntities.Any())
+            {
+                return ApiResponse<IEnumerable<ContractDto>>.Success(
+                    new List<ContractDto>(),
+                    "SM01"
+                );
+            }
+
             IOrderedEnumerable<Contract> sortedEntities;
             bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
 
@@ -74,13 +82,64 @@ namespace ApartaAPI.Services
                     break;
             }
 
-            var dtos = _mapper.Map<IEnumerable<ContractDto>>(sortedEntities);
+            var sortedList = sortedEntities.ToList();
 
-            if (!dtos.Any())
+            var apartmentIds = sortedList
+                .Select(c => c.ApartmentId)
+                .Distinct()
+                .ToList();
+
+            var apartments = await _apartmentRepository.FindAsync(a => apartmentIds.Contains(a.ApartmentId));
+            var apartmentDict = (apartments ?? Enumerable.Empty<Apartment>())
+                .GroupBy(a => a.ApartmentId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var ownerMembers = await _apartmentMemberRepository.FindAsync(
+                m => apartmentIds.Contains(m.ApartmentId)
+                     && m.IsOwner == true
+                     && m.Status == "Đã Thuê"
+            );
+            var ownerDict = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
+                .GroupBy(m => m.ApartmentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.CreatedAt).FirstOrDefault()
+                );
+
+            var users = await _userRepository.FindAsync(
+                u => apartmentIds.Contains(u.ApartmentId) && !u.IsDeleted
+            );
+            var userDict = (users ?? Enumerable.Empty<User>())
+                .GroupBy(u => u.ApartmentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.CreatedAt).FirstOrDefault()
+                );
+
+            var dtos = sortedList.Select(c =>
             {
-                return ApiResponse<IEnumerable<ContractDto>>.Success(new List<ContractDto>(), "SM01");
-            }
+                apartmentDict.TryGetValue(c.ApartmentId, out var apt);
+                ownerDict.TryGetValue(c.ApartmentId, out var owner);
+                userDict.TryGetValue(c.ApartmentId, out var user);
 
+                var displayName = owner?.Name ?? user?.Name;
+                var displayPhone = owner?.PhoneNumber ?? user?.Phone;
+                var displayEmail = user?.Email;
+
+                return new ContractDto
+                {
+                    ContractId = c.ContractId,
+                    ApartmentId = c.ApartmentId,
+                    ApartmentCode = apt?.Code,
+                    OwnerName = displayName,
+                    OwnerPhoneNumber = displayPhone,
+                    OwnerEmail = displayEmail,
+                    Image = c.Image,
+                    StartDate = c.StartDate,
+                    EndDate = c.EndDate,
+                    CreatedAt = c.CreatedAt
+                };
+            }).ToList();
             return ApiResponse<IEnumerable<ContractDto>>.Success(dtos);
         }
 
@@ -120,6 +179,7 @@ namespace ApartaAPI.Services
             {
                 existingUser.Name = dto.OwnerName;
                 existingUser.Phone = dto.OwnerPhoneNumber;
+                existingUser.Email = dto.OwnerEmail;
                 existingUser.UpdatedAt = now;
             }
             else
@@ -193,7 +253,7 @@ namespace ApartaAPI.Services
 
             var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
-                m => m.ApartmentId == contract.ApartmentId && m.IsOwner == true && m.Status == "Đã Thuê"
+                m => m.ApartmentId == contract.ApartmentId && m.IsOwner == true && m.Status == "Đang Thuê"
             );
 
             try

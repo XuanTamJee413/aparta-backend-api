@@ -8,16 +8,25 @@ namespace ApartaAPI.DTOs.Contracts
         string? SortOrder
     );
 
-    public sealed record ContractDto(
-        string ContractId,
-        string ApartmentId,
-        string? Image,
-        DateOnly? StartDate,
-        DateOnly? EndDate,
-        DateTime? CreatedAt
-    );
+    public sealed record ContractDto
+    {
+        public string ContractId { get; init; } = default!;
+        public string ApartmentId { get; init; } = default!;
+        public string? ApartmentCode { get; init; }
 
-    
+        public string? OwnerName { get; init; }
+        public string? OwnerPhoneNumber { get; init; }
+        public string? OwnerEmail { get; init; }
+
+        public string? Image { get; init; }
+
+        public DateOnly? StartDate { get; init; }
+        public DateOnly? EndDate { get; init; }
+
+        public DateTime? CreatedAt { get; init; }
+    }
+
+
     public sealed record ContractCreateDto(
         [Required]
         string ApartmentId,

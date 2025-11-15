@@ -298,10 +298,10 @@ namespace ApartaAPI.Services
                     );
                 }
 
-                // Tải Dịch vụ (Cột) - TẤT CẢ Price_Quotation có building_id == buildingId VÀ CalculationMethod == "PER_UNIT_METER"
+                // Tải Dịch vụ (Cột) - TẤT CẢ Price_Quotation có building_id == buildingId VÀ CalculationMethod == "PER_UNIT_METER" HOẶC "TIERED"
                 var priceQuotations = await _priceQuotationRepository.FindAsync(pq =>
                     pq.BuildingId == buildingId &&
-                    pq.CalculationMethod == "PER_UNIT_METER");
+                    (pq.CalculationMethod == "PER_UNIT_METER" || pq.CalculationMethod == "TIERED"));
 
                 var feeTypes = priceQuotations
                     .Select(pq => pq.FeeType)
@@ -312,7 +312,7 @@ namespace ApartaAPI.Services
                 {
                     return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
                         new List<MeterReadingStatusDto>(),
-                        "Không có loại phí nào dùng đồng hồ (PER_UNIT_METER) trong tòa nhà này."
+                        "Không có loại phí nào dùng đồng hồ (PER_UNIT_METER hoặc TIERED) trong tòa nhà này."
                     );
                 }
 

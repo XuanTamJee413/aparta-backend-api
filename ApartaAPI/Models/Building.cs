@@ -23,6 +23,10 @@ public partial class Building
 
     public bool IsActive { get; set; }
 
+    public int ReadingWindowStart { get; set; }
+
+    public int ReadingWindowEnd { get; set; }
+
     public virtual ICollection<Apartment> Apartments { get; set; } = new List<Apartment>();
 
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();

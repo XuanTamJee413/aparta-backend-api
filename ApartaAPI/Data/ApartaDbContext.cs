@@ -241,6 +241,12 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.NumResidents)
                 .HasDefaultValue(0)
                 .HasColumnName("num_residents");
+            entity.Property(e => e.ReadingWindowStart)
+                .HasDefaultValue(1)
+                .HasColumnName("reading_window_start");
+            entity.Property(e => e.ReadingWindowEnd)
+                .HasDefaultValue(3)
+                .HasColumnName("reading_window_end");
             entity.Property(e => e.ProjectId)
                 .HasMaxLength(50)
                 .HasColumnName("project_id");

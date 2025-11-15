@@ -48,7 +48,8 @@
         // SM14: Khai báo khách/ở tạm thành công
         public const string SM14_DECLARATION_SUCCESS = "Khai báo khách/ở tạm thành công.";
 
-        // SM15: Thanh toán thất bại (dùng chung cho lỗi thanh toán và lỗi hệ thống)
+        // SM
+        // : Thanh toán thất bại (dùng chung cho lỗi thanh toán và lỗi hệ thống)
         public const string SM15_PAYMENT_FAILED = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
 
         // SM16: Mã trùng lặp (với {fieldName} - dùng chung cho BuildingCode, ProjectCode, SubscriptionCode, RoleName, Phone, Email, StaffCode)

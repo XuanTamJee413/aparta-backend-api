@@ -1,20 +1,20 @@
-﻿using ApartaAPI.DTOs;
-using ApartaAPI.DTOs.ApartmentMembers;
+﻿using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.Subscriptions;
+using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-using ApartaAPI.DTOs.Vehicles;
-using ApartaAPI.DTOs.Apartments;
 
 namespace ApartaAPI.Profiles
 {
@@ -162,9 +162,23 @@ namespace ApartaAPI.Profiles
                         ? resident.Name 
                         : src.Apartment.Users.FirstOrDefault()?.Name;
                 });
+            
+            CreateMap<PriceQuotation, InvoiceItem>()
+                .ForMember(dest => dest.InvoiceItemId, opt => opt.Ignore())
+                .ForMember(dest => dest.InvoiceId, opt => opt.Ignore())
+                .ForMember(dest => dest.FeeType, opt => opt.MapFrom(src => src.FeeType))
+                .ForMember(dest => dest.Description, opt => opt.Ignore())
+                .ForMember(dest => dest.Quantity, opt => opt.Ignore())
+                .ForMember(dest => dest.UnitPrice, opt => opt.Ignore())
+                .ForMember(dest => dest.Total, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.Invoice, opt => opt.Ignore());
 
             // MeterReading mappings
             CreateMap<MeterReading, MeterReadingDto>();
+            CreateMap<MeterReadingCreateDto, MeterReading>();
+
         }
     }
 }

@@ -19,7 +19,9 @@
         int? NumApartments,
         DateTime? CreatedAt,
         DateTime? UpdatedAt,
-        bool IsActive // Assuming IsActive exists or will be added to the Building model
+        bool IsActive, // Assuming IsActive exists or will be added to the Building model
+        int ReadingWindowStart, // Cửa sổ ghi số - ngày bắt đầu
+        int ReadingWindowEnd // Cửa sổ ghi số - ngày kết thúc
     );
 
     // Create input
@@ -37,6 +39,8 @@
         string? Name,
         int? NumApartments,
         int? NumResidents,
-        bool? IsActive // Added for soft delete/deactivation
+        bool? IsActive, // Added for soft delete/deactivation
+        int? ReadingWindowStart, // Cửa sổ ghi số - ngày bắt đầu (optional)
+        int? ReadingWindowEnd // Cửa sổ ghi số - ngày kết thúc (optional)
     );
 }

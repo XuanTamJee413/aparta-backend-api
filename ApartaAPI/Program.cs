@@ -57,6 +57,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 			builder.Services.AddHostedService<SubscriptionExpiryService>();
+			builder.Services.AddHostedService<MonthlyBillingJob>();
 			builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
@@ -66,6 +67,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<INewsService, NewsService>();
 			builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
 			builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+			builder.Services.AddScoped<IPaymentService, PaymentService>();
 			builder.Services.AddScoped<IVehicleService, VehicleService>();
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();

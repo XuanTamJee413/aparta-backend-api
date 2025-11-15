@@ -1,4 +1,4 @@
-namespace ApartaAPI.DTOs;
+namespace ApartaAPI.DTOs.Invoices;
 
 public class InvoiceDto
 {
@@ -75,3 +75,4 @@ public class InvoiceDetailDto
     public string? ResidentName { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new List<InvoiceItemDto>();
 }
+

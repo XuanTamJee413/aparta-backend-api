@@ -45,10 +45,10 @@ namespace ApartaAPI.Services
             // 2. Lấy buildingId từ Apartment
             var buildingId = apartment.BuildingId;
 
-            // 3. Tìm PriceQuotation với buildingId và calculation_method = "PER_UNIT_METER"
+            // 3. Tìm PriceQuotation với buildingId và calculation_method = "PER_UNIT_METER" hoặc "TIERED"
             var priceQuotations = await _priceQuotationRepository.FindAsync(pq =>
                 pq.BuildingId == buildingId &&
-                pq.CalculationMethod == "PER_UNIT_METER");
+                (pq.CalculationMethod == "PER_UNIT_METER" || pq.CalculationMethod == "TIERED"));
 
             // 4. Lấy distinct fee_type
             var feeTypes = priceQuotations
@@ -121,6 +121,27 @@ namespace ApartaAPI.Services
                 return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
             }
 
+            // Chặn theo cửa sổ ghi số: mỗi tòa nhà có cấu hình khoảng ngày được phép ghi
+            var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == apartment.BuildingId);
+            if (building == null)
+            {
+                return ApiResponse.Fail("Không tìm thấy thông tin tòa nhà để xác định cửa sổ ghi chỉ số.");
+            }
+
+            var windowStart = building.ReadingWindowStart;
+            var windowEnd = building.ReadingWindowEnd;
+            var today = DateTime.Now.Day;
+
+            if (today < windowStart || today > windowEnd)
+            {
+                // Ghép danh sách ngày hợp lệ theo định dạng dễ hiểu cho nhân viên
+                var allowedDays = windowStart == windowEnd
+                    ? windowStart.ToString(CultureInfo.InvariantCulture)
+                    : string.Join(", ", Enumerable.Range(windowStart, windowEnd - windowStart + 1));
+                var message = $"Lỗi: Chỉ được phép ghi chỉ số vào ngày {allowedDays} hàng tháng.";
+                return ApiResponse.Fail(message);
+            }
+
             if (string.IsNullOrEmpty(userId))
             {
                 return ApiResponse.Fail(ApiResponse.SM29_USER_NOT_FOUND);
@@ -167,19 +188,15 @@ namespace ApartaAPI.Services
                     }
                 }
 
-                var meterReading = new MeterReading
-                {
-                    MeterReadingId = Guid.NewGuid().ToString("N"),
-                    ApartmentId = apartmentId,
-                    FeeType = readingDto.FeeType,
-                    ReadingValue = readingDto.ReadingValue,
-                    ReadingDate = readingDto.ReadingDate, 
-                    BillingPeriod = billingPeriod, 
-                    RecordedBy = userId,
-                    InvoiceItemId = null, // Để NULL
-                    CreatedAt = now,
-                    UpdatedAt = null
-                };
+                // Sử dụng AutoMapper để tạo MeterReading từ DTO
+                var meterReading = _mapper.Map<MeterReading>(readingDto);
+                meterReading.MeterReadingId = Guid.NewGuid().ToString("N");
+                meterReading.ApartmentId = apartmentId;
+                meterReading.BillingPeriod = billingPeriod;
+                meterReading.RecordedBy = userId;
+                meterReading.InvoiceItemId = null; // Để NULL
+                meterReading.CreatedAt = now;
+                meterReading.UpdatedAt = null;
 
                 meterReadings.Add(meterReading);
             }

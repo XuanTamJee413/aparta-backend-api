@@ -1,12 +1,16 @@
 using ApartaAPI.Data;
-using ApartaAPI.DTOs;
+using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 
 namespace ApartaAPI.Services;
 
@@ -14,36 +18,30 @@ public class InvoiceService : IInvoiceService
 {
     private readonly ApartaDbContext _context;
     private readonly IRepository<Invoice> _invoiceRepo;
-    private readonly IRepository<Payment> _paymentRepo;
     private readonly IRepository<User> _userRepo;
     private readonly IRepository<MeterReading> _meterReadingRepo;
     private readonly IRepository<PriceQuotation> _priceQuotationRepo;
     private readonly IRepository<InvoiceItem> _invoiceItemRepo;
     private readonly IMapper _mapper;
-    private readonly PayOSService _payOSService;
     private readonly IConfiguration _configuration;
 
     public InvoiceService(
         ApartaDbContext context,
         IRepository<Invoice> invoiceRepo,
-        IRepository<Payment> paymentRepo,
         IRepository<User> userRepo,
         IRepository<MeterReading> meterReadingRepo,
         IRepository<PriceQuotation> priceQuotationRepo,
         IRepository<InvoiceItem> invoiceItemRepo,
         IMapper mapper,
-        PayOSService payOSService,
         IConfiguration configuration)
     {
         _context = context;
         _invoiceRepo = invoiceRepo;
-        _paymentRepo = paymentRepo;
         _userRepo = userRepo;
         _meterReadingRepo = meterReadingRepo;
         _priceQuotationRepo = priceQuotationRepo;
         _invoiceItemRepo = invoiceItemRepo;
         _mapper = mapper;
-        _payOSService = payOSService;
         _configuration = configuration;
     }
 
@@ -211,126 +209,6 @@ public class InvoiceService : IInvoiceService
     }
 
     /**
-    * Tạo link thanh toán cho hóa đơn
-    */
-    public async Task<string?> CreatePaymentLinkAsync(string invoiceId, string baseUrl)
-    {
-        // Get invoice
-        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
-        if (invoice == null)
-        {
-            Console.WriteLine($"Invoice not found: {invoiceId}");
-            return null;
-        }
-
-        if (invoice.Status != "PENDING")
-        {
-            Console.WriteLine($"Invoice status is not PENDING: {invoiceId}, Status: {invoice.Status}");
-            throw new Exception($"Chỉ có thể thanh toán hóa đơn có trạng thái PENDING. Hóa đơn này có trạng thái: {invoice.Status}");
-        }
-
-        // Check minimum amount (PayOS might require minimum amount)
-        if (invoice.Price <= 0)
-        {
-            Console.WriteLine($"Invoice amount is invalid: {invoiceId}, Price: {invoice.Price}");
-            return null;
-        }
-
-        var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
-        var cancelUrl = $"{baseUrl}/api/payos/payment/cancel";
-        var returnUrl = $"{baseUrl}/api/payos/payment/success?invoiceId={invoiceId}";
-        
-        Console.WriteLine($"Creating PayOS payment for invoice {invoiceId}, Amount: {invoice.Price}");
-        
-        var paymentResult = await _payOSService.CreatePaymentAsync(
-            invoiceId,
-            invoice.Price,
-            invoice.Description ?? $"Thanh toán hóa đơn {invoiceId}",
-            cancelUrl,
-            returnUrl
-        );
-
-        if (!paymentResult.IsSuccess || paymentResult.Data == null)
-        {
-            var errorMsg = paymentResult.ErrorMessage ?? "PayOS payment creation failed";
-            Console.WriteLine($"PayOS payment creation failed for invoice {invoiceId}: {errorMsg}");
-            throw new Exception(errorMsg);
-        }
-
-        // Create payment record with orderCode for webhook lookup
-        // PaymentCode stores orderCode (long) as string for lookup in webhook
-        var payment = new Payment
-        {
-            PaymentId = Guid.NewGuid().ToString(),
-            InvoiceId = invoiceId,
-            Amount = invoice.Price,
-            PaymentMethod = "PAYOS",
-            PaymentDate = DateOnly.FromDateTime(DateTime.Now),
-            Status = "PENDING",
-            PaymentCode = paymentResult.Data.orderCode.ToString(), // Store orderCode for webhook lookup
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
-
-        await _paymentRepo.AddAsync(payment);
-        
-        Console.WriteLine($"Payment record created: InvoiceId={invoiceId}, OrderCode={paymentResult.Data.orderCode}, PaymentCode={payment.PaymentCode}");
-
-        Console.WriteLine($"Payment link created successfully for invoice {invoiceId}: {paymentResult.Data.checkoutUrl}");
-        return paymentResult.Data.checkoutUrl;
-    }
-
-    /**
-    * Xử lý webhook thanh toán
-    */
-    public async Task<bool> ProcessPaymentWebhookAsync(string? invoiceId, string orderCode)
-    {
-        try
-        {
-            // Find payment record by orderCode (stored in PaymentCode)
-            // This is the most reliable way since description format changed
-            var payment = await _context.Payments
-                .FirstOrDefaultAsync(p => p.PaymentCode == orderCode);
-            
-            if (payment == null)
-            {
-                Console.WriteLine($"Payment record not found for orderCode={orderCode}");
-                return false;
-            }
-
-            // Get invoice from payment record
-            var invoice = await _invoiceRepo.GetByIdAsync(payment.InvoiceId);
-            if (invoice == null)
-            {
-                Console.WriteLine($"Invoice not found for InvoiceId={payment.InvoiceId}");
-                return false;
-            }
-
-            // Update invoice status
-            invoice.Status = "PAID";
-            invoice.UpdatedAt = DateTime.Now;
-            await _invoiceRepo.UpdateAsync(invoice);
-
-            // Update payment record status
-            payment.Status = "COMPLETED";
-            payment.UpdatedAt = DateTime.Now;
-            await _paymentRepo.UpdateAsync(payment);
-
-            Console.WriteLine($"Successfully updated invoice {invoice.InvoiceId} to PAID status for orderCode={orderCode}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error processing payment webhook: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-            }
-            return false;
-        }
-    }
-
-    /**
     * Tạo hóa đơn cho tòa nhà
     */
     public async Task<(bool Success, string Message, int ProcessedCount)> GenerateInvoicesAsync(GenerateInvoicesRequest request, string userId)
@@ -338,176 +216,260 @@ public class InvoiceService : IInvoiceService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Xác định billingPeriod (nếu null thì lấy tháng hiện tại)
-            var billingPeriod = request.BillingPeriod;
-            if (string.IsNullOrWhiteSpace(billingPeriod))
+            // Xác định kỳ tính toán (mặc định là tháng hiện tại nếu không truyền)
+            var billingPeriod = string.IsNullOrWhiteSpace(request.BillingPeriod)
+                ? DateTime.Now.ToString("yyyy-MM")
+                : request.BillingPeriod;
+
+            // Nạp thông tin tòa nhà để kiểm tra trạng thái và dùng cấu hình chung
+            var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == request.BuildingId);
+            if (building == null)
             {
-                billingPeriod = DateTime.Now.ToString("yyyy-MM");
+                await transaction.RollbackAsync();
+                return (false, ApiResponse.SM01_NO_RESULTS, 0);
             }
 
-            // Tải Chỉ số Cần tính (Meter_Reading)
-            var readingsToProcess = await _context.MeterReadings
-                .Include(mr => mr.Apartment)
-                .Where(mr => 
-                    mr.Apartment.BuildingId == request.BuildingId &&
-                    mr.BillingPeriod == billingPeriod &&
-                    mr.InvoiceItemId == null)//Chỉ lấy những meter reading chưa được tạo thanh toán
+            if (!building.IsActive)
+            {
+                await transaction.RollbackAsync();
+                return (false, ApiResponse.SM26_BUILDING_NOT_ACTIVE, 0);
+            }
+
+            // Xác định staffId: nếu userId là "SYSTEM_JOB" thì set null, ngược lại kiểm tra user có tồn tại không
+            string? staffId = null;
+            if (!string.IsNullOrEmpty(userId) && userId != "SYSTEM_JOB")
+            {
+                var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
+                if (userExists)
+                {
+                    staffId = userId;
+                }
+                // Nếu user không tồn tại, staffId sẽ là null (cho phép tạo hóa đơn mà không có staff)
+            }
+
+            // issueDate = ngày chạy job hiện tại, dueDate = +5 ngày theo yêu cầu
+            var issueDate = DateOnly.FromDateTime(DateTime.Today);
+            var dueDate = issueDate.AddDays(5);
+
+            // Lấy danh sách căn hộ đang thuê để tạo hóa đơn
+            var apartments = await _context.Apartments
+                .Include(a => a.ApartmentMembers)
+                .Where(a => a.BuildingId == request.BuildingId && a.Status == "Đã thuê")
                 .ToListAsync();
 
-            // Lọc các MeterReading có fee_type thuộc calculation_method == "PER_UNIT_METER"
-            var priceQuotations = await _priceQuotationRepo.FindAsync(pq =>
-                pq.BuildingId == request.BuildingId &&
-                pq.CalculationMethod == "PER_UNIT_METER");
-
-            //lọc giá theo price quotation
-            var validFeeTypes = priceQuotations.Select(pq => pq.FeeType).Distinct().ToList();
-            readingsToProcess = readingsToProcess
-                .Where(mr => validFeeTypes.Contains(mr.FeeType))
-                .ToList();
-
-            if (!readingsToProcess.Any())
+            if (!apartments.Any())
             {
                 await transaction.RollbackAsync();
                 return (true, ApiResponse.SM20_NO_CHANGES, 0);
             }
 
-            // Tải Bảng giá (Price_Quotation)
-            var priceLookup = priceQuotations
-                .GroupBy(pq => pq.FeeType)
-                .ToDictionary(g => g.Key, g => g.First().UnitPrice);
+            var apartmentIds = apartments.Select(a => a.ApartmentId).ToList();
 
-            // Phân nhóm theo apartment_id để xử lý từng căn hộ
-            var apartmentGroups = readingsToProcess
-                .GroupBy(mr => mr.ApartmentId)
-                .ToList();
+            // Lấy toàn bộ bảng giá của tòa nhà (bao gồm mọi phương thức tính)
+            var priceQuotations = await _context.PriceQuotations
+                .Where(pq => pq.BuildingId == request.BuildingId)
+                .ToListAsync();
+
+            if (!priceQuotations.Any())
+            {
+                await transaction.RollbackAsync();
+                return (true, ApiResponse.SM20_NO_CHANGES, 0);
+            }
+
+            // Chuẩn bị các hóa đơn PENDING đã có sẵn cùng kỳ để tái sử dụng
+            var existingInvoices = await _context.Invoices
+                .Where(i =>
+                    apartmentIds.Contains(i.ApartmentId) &&
+                    i.Status == "PENDING" &&
+                    i.Description != null &&
+                    i.Description.Contains($"BillingPeriod: {billingPeriod}"))
+                .Include(i => i.InvoiceItems)
+                .ToListAsync();
+
+            // Gom nhóm theo căn hộ để tra cứu nhanh hóa đơn hiện tại
+            var invoiceLookup = existingInvoices
+                .GroupBy(i => i.ApartmentId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(inv => inv.CreatedAt ?? DateTime.MinValue).First());
+
+            // Lấy các chỉ số đồng hồ chưa được khóa trong kỳ hiện tại
+            var currentReadings = await _context.MeterReadings
+                .Where(mr =>
+                    apartmentIds.Contains(mr.ApartmentId) &&
+                    mr.BillingPeriod == billingPeriod &&
+                    mr.InvoiceItemId == null)
+                .ToListAsync();
+
+            // Lập bảng tra giúp lấy chỉ số mới nhất theo (Căn hộ, Loại phí)
+            var readingLookup = currentReadings
+                .GroupBy(mr => (mr.ApartmentId, mr.FeeType))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(r => r.UpdatedAt ?? r.CreatedAt ?? DateTime.MinValue).First());
 
             int processedCount = 0;
 
-            //Vòng lặp (Theo Căn hộ)
-            foreach (var apartmentGroup in apartmentGroups)
+            foreach (var apartment in apartments)
             {
-                var apartmentId = apartmentGroup.Key;
-                var readingsForThisApartment = apartmentGroup.ToList();
-
-                // Tìm Hóa đơn "Pending" cho căn hộ và billingPeriod
-                var existingInvoice = await _context.Invoices
-                    .FirstOrDefaultAsync(i => 
-                        i.ApartmentId == apartmentId &&
-                        i.Status == "PENDING" && //Chỉ lấy hóa đơn chưa thanh toán
-                        i.Description != null &&
-                        i.Description.Contains($"BillingPeriod: {billingPeriod}"));
-
-                Invoice invoiceToUse;
-                decimal runningTotal;
-
-                if (existingInvoice == null)
+                if (!invoiceLookup.TryGetValue(apartment.ApartmentId, out var invoice))
                 {
-                    // 2. Parse chuỗi "yyyy-MM" thành ngày 1 của tháng đó
-                    DateTime firstDayOfBillingMonth;
-                    try
-                    {
-                        firstDayOfBillingMonth = DateTime.ParseExact(
-                            $"{billingPeriod}-01",
-                            "yyyy-MM-dd",
-                            System.Globalization.CultureInfo.InvariantCulture
-                        );
-                    }
-                    catch (FormatException)
-                    {
-                        return (false, ApiResponse.SM25_INVALID_INPUT, 0);
-                    }
-
-                    // 3. Tính ngày 1 của tháng TIẾP THEO (Yêu cầu của bạn)
-                    DateTime firstDayOfNextMonth = firstDayOfBillingMonth.AddMonths(1);
-
-                    // 4. Chuyển đổi sang DateOnly (Vì Bảng Invoice của bạn dùng DateOnly)
-                    var issueDate = DateOnly.FromDateTime(firstDayOfNextMonth);
-                    var dueDate = issueDate.AddDays(14); 
-
-                    invoiceToUse = new Invoice
+                    // Chưa có hóa đơn cùng kỳ -> tạo hóa đơn mới
+                    invoice = new Invoice
                     {
                         InvoiceId = Guid.NewGuid().ToString("N"),
-                        ApartmentId = apartmentId,
-                        StaffId = userId, // Lưu userId của người đăng nhập thực hiện API
-                        FeeType = "METER_BILLING", // Loại phí tổng hợp
-                        Price = 0, // Sẽ được cập nhật sau
+                        ApartmentId = apartment.ApartmentId,
+                        StaffId = staffId,
+                        FeeType = "MONTHLY_BILLING",
+                        Price = 0,
                         Status = "PENDING",
                         Description = $"BillingPeriod: {billingPeriod}",
                         StartDate = issueDate,
                         EndDate = dueDate,
                         CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = null
+                        UpdatedAt = DateTime.UtcNow
                     };
-                    await _invoiceRepo.AddAsync(invoiceToUse);
-                    runningTotal = 0;
+
+                    _context.Invoices.Add(invoice);
+                    invoiceLookup[apartment.ApartmentId] = invoice;
                 }
                 else
                 {
-                    // Dùng Lại Invoice
-                    invoiceToUse = existingInvoice;
-                    runningTotal = existingInvoice.Price;
+                    // Đã có hóa đơn thì cập nhật thông tin chung (ngày, người xử lý)
+                    invoice.FeeType = "MONTHLY_BILLING";
+                    invoice.StaffId = staffId;
+                    invoice.StartDate = issueDate;
+                    invoice.EndDate = dueDate;
+                    invoice.UpdatedAt = DateTime.UtcNow;
                 }
 
-                // Vòng lặp  (Theo Chỉ số)
-                foreach (var currentReading in readingsForThisApartment)
+                // Khởi đầu tổng tiền bằng các invoice item đã tồn tại (nếu có)
+                decimal runningTotal = invoice.InvoiceItems.Sum(ii => ii.Total);
+
+                foreach (var rule in priceQuotations)
                 {
-                    // Tính Tiêu thụ (quantity)
-                    // Tìm Chỉ số CŨ
-                    var previousReading = await _meterReadingRepo.FindAsync(mr =>
-                        mr.ApartmentId == currentReading.ApartmentId &&
-                        mr.FeeType == currentReading.FeeType &&
-                        mr.BillingPeriod != null &&
-                        mr.BillingPeriod.CompareTo(billingPeriod) < 0);
+                    var description = $"{rule.FeeType} - {billingPeriod}";
 
-                    var latestPreviousReading = previousReading
-                        .Where(mr => !string.IsNullOrEmpty(mr.BillingPeriod))
-                        .OrderByDescending(mr => mr.BillingPeriod)
-                        .FirstOrDefault();
-
-                    decimal oldValue = latestPreviousReading?.ReadingValue ?? 0;
-                    decimal quantity = currentReading.ReadingValue - oldValue;
-
-                    // Tính Tiền
-                    if (!priceLookup.TryGetValue(currentReading.FeeType, out var unitPrice))
+                    // Tránh tạo trùng invoice item cho cùng loại phí trong cùng kỳ
+                    if (invoice.InvoiceItems.Any(ii => ii.FeeType == rule.FeeType && ii.Description == description))
                     {
-                        // Nếu không tìm thấy giá, bỏ qua chỉ số này và tiếp tục với chỉ số tiếp theo
                         continue;
                     }
 
-                    decimal lineTotal = quantity * unitPrice;
+                    decimal quantityValue = 0;
+                    decimal lineTotal = 0;
+                    MeterReading? matchedReading = null;
 
-                    // Tạo Invoice_Item để lưu trữ chi tiết thanh toán
-                    var invoiceItem = new InvoiceItem
+                    switch (rule.CalculationMethod)
                     {
-                        InvoiceItemId = Guid.NewGuid().ToString("N"),
-                        InvoiceId = invoiceToUse.InvoiceId,
-                        FeeType = currentReading.FeeType,
-                        Description = $"{currentReading.FeeType} - {billingPeriod}",
-                        Quantity = (int)Math.Round(quantity, 0), // Convert to int
-                        UnitPrice = unitPrice,
-                        Total = lineTotal,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = null
-                    };
+                        case "FIXED":
+                            quantityValue = 1;
+                            lineTotal = rule.UnitPrice;
+                            break;
 
-                    await _invoiceItemRepo.AddAsync(invoiceItem);
+                        case "PER_AREA":
+                            quantityValue = (decimal)(apartment.Area ?? 0);
+                            lineTotal = quantityValue * rule.UnitPrice;
+                            break;
 
-                    // Khóa Chỉ số để tránh trùng lặp
-                    currentReading.InvoiceItemId = invoiceItem.InvoiceItemId;
-                    await _meterReadingRepo.UpdateAsync(currentReading);
+                        case "PER_PERSON":
+                            quantityValue = apartment.ApartmentMembers.Count;
+                            lineTotal = quantityValue * rule.UnitPrice;
+                            break;
 
-                    // Cộng dồn Tổng tiền để tính toán tổng tiền thanh toán
+                        case "PER_ITEM":
+                            quantityValue = 1;
+                            lineTotal = quantityValue * rule.UnitPrice;
+                            break;
+
+                        case "PER_UNIT_METER":
+                        case "TIERED":
+                            // Tìm chỉ số hiện tại (chưa khóa) cho loại phí này
+                            if (!readingLookup.TryGetValue((apartment.ApartmentId, rule.FeeType), out matchedReading))
+                            {
+                                // Không có chỉ số thì bỏ qua (không tạo invoice item)
+                                // Lý do: Không thể tính tiền nếu không có chỉ số đồng hồ
+                                continue;
+                            }
+
+                            // Tìm chỉ số kỳ trước để tính lượng tiêu thụ
+                            var previousReading = await _context.MeterReadings
+                                .Where(mr =>
+                                    mr.ApartmentId == apartment.ApartmentId &&
+                                    mr.FeeType == rule.FeeType &&
+                                    mr.BillingPeriod != null &&
+                                    mr.BillingPeriod.CompareTo(billingPeriod) < 0)
+                                .OrderByDescending(mr => mr.BillingPeriod)
+                                .FirstOrDefaultAsync();
+
+                            var previousValue = previousReading?.ReadingValue ?? 0;
+                            quantityValue = matchedReading.ReadingValue - previousValue;
+                            
+                            // Đảm bảo lượng tiêu thụ không âm
+                            if (quantityValue < 0)
+                            {
+                                quantityValue = 0;
+                            }
+
+                            // Tính tiền theo phương thức
+                            if (string.Equals(rule.CalculationMethod, "TIERED", StringComparison.OrdinalIgnoreCase))
+                            {
+                                lineTotal = CalculateTieredPrice(quantityValue, rule.Note);
+                                if (lineTotal <= 0)
+                                {
+                                    // Nếu dữ liệu bậc lỗi, fallback đơn giá mặc định
+                                    lineTotal = quantityValue * rule.UnitPrice;
+                                }
+                            }
+                            else
+                            {
+                                lineTotal = quantityValue * rule.UnitPrice;
+                            }
+                            break;
+
+                        default:
+                            quantityValue = 1;
+                            lineTotal = rule.UnitPrice;
+                            break;
+                    }
+
+                    // Chỉ bỏ qua nếu:
+                    // 1. Không phát sinh tiền (lineTotal <= 0)
+                    // 2. KHÔNG có chỉ số đồng hồ cần khóa (matchedReading == null)
+                    // 3. KHÔNG phải là loại phí bắt buộc (FIXED, PER_AREA, etc.)
+                    if (lineTotal <= 0 && matchedReading == null)
+                    {
+                        // Không phát sinh tiền và không có chỉ số để khóa -> bỏ qua
+                        continue;
+                    }
+
+                    // Ghi nhận chi tiết hóa đơn - sử dụng AutoMapper với custom mapping
+                    var invoiceItem = _mapper.Map<InvoiceItem>(rule);
+                    invoiceItem.InvoiceItemId = Guid.NewGuid().ToString("N");
+                    invoiceItem.InvoiceId = invoice.InvoiceId;
+                    invoiceItem.Description = description;
+                    invoiceItem.Quantity = Convert.ToInt32(Math.Round(quantityValue, MidpointRounding.AwayFromZero)); //làm tròn 
+                    invoiceItem.UnitPrice = DetermineUnitPrice(rule, quantityValue, lineTotal);
+                    invoiceItem.Total = lineTotal;
+                    invoiceItem.CreatedAt = DateTime.UtcNow;
+                    invoiceItem.UpdatedAt = null;
+
+                    _context.InvoiceItems.Add(invoiceItem);
+                    invoice.InvoiceItems.Add(invoiceItem);
+
+                    if (matchedReading != null)
+                    {
+                        // Khóa chỉ số sau khi đã gắn vào invoice item
+                        matchedReading.InvoiceItemId = invoiceItem.InvoiceItemId;
+                        _context.MeterReadings.Update(matchedReading);
+                    }
+
                     runningTotal += lineTotal;
                     processedCount++;
                 }
 
-                // Cập nhật Hóa đơn Tổng
-                invoiceToUse.Price = runningTotal;
-                invoiceToUse.UpdatedAt = DateTime.UtcNow;
-                await _invoiceRepo.UpdateAsync(invoiceToUse);
+                invoice.Price = runningTotal;
+                invoice.UpdatedAt = DateTime.UtcNow;
             }
 
-            // Lưu tất cả thay đổi vào cơ sở dữ liệu để lưu trữ trong DB
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -517,8 +479,90 @@ public class InvoiceService : IInvoiceService
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[ERROR] InnerException: {ex.InnerException.Message}");
+            }
             return (false, ApiResponse.SM40_SYSTEM_ERROR, 0);
         }
     }
+
+    private static decimal DetermineUnitPrice(PriceQuotation rule, decimal quantityValue, decimal lineTotal)
+    {
+        if (string.Equals(rule.CalculationMethod, "TIERED", StringComparison.OrdinalIgnoreCase))
+        {
+            if (quantityValue <= 0)
+            {
+                return 0;
+            }
+
+            return Math.Round(lineTotal / quantityValue, 2, MidpointRounding.AwayFromZero);
+        }
+
+        return rule.UnitPrice;
+    }
+
+    private decimal CalculateTieredPrice(decimal quantity, string? tiersJson)
+    {
+        if (quantity <= 0 || string.IsNullOrWhiteSpace(tiersJson))
+        {
+            return 0;
+        }
+
+        try
+        {
+            var tiers = JsonSerializer.Deserialize<List<TierDefinitionDto>>(tiersJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (tiers == null || tiers.Count == 0)
+            {
+                return 0;
+            }
+
+            decimal total = 0;
+            decimal consumed = 0;
+            var orderedTiers = tiers.OrderBy(t => t.FromValue).ToList();
+
+            foreach (var tier in orderedTiers)
+            {
+                var lowerBound = Math.Max(tier.FromValue, consumed);
+                if (quantity <= lowerBound)
+                {
+                    continue;
+                }
+
+                var upperBound = tier.ToValue ?? decimal.MaxValue;
+                var applicableUpper = Math.Min(quantity, upperBound);
+                if (applicableUpper <= lowerBound)
+                {
+                    continue;
+                }
+
+                var tierQuantity = applicableUpper - lowerBound;
+                total += tierQuantity * tier.UnitPrice;
+                consumed = applicableUpper;
+
+                if (consumed >= quantity)
+                {
+                    break;
+                }
+            }
+
+            if (consumed < quantity && orderedTiers.Count > 0)
+            {
+                var lastTier = orderedTiers.Last();
+                total += (quantity - consumed) * lastTier.UnitPrice;
+            }
+
+            return total;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
 }
 

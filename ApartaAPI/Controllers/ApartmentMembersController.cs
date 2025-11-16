@@ -39,18 +39,31 @@ namespace ApartaAPI.Controllers
         [Authorize(Policy = "CanCreateMember")]
         public async Task<ActionResult<ApartmentMemberDto>> PostApartmentMember([FromBody] ApartmentMemberCreateDto request)
         {
-            var created = await _service.CreateAsync(request);
-            
-            return CreatedAtAction(nameof(GetApartmentMember), new { id = created.ApartmentMemberId }, created);
+            try
+            {
+                var created = await _service.CreateAsync(request);
+                return CreatedAtAction(nameof(GetApartmentMember), new { id = created.ApartmentMemberId }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Policy = "CanUpdateMember")]
         public async Task<IActionResult> PutApartmentMember(string id, [FromBody] ApartmentMemberUpdateDto request)
         {
-            var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
-            return Ok(); 
+            try
+            {
+                var updated = await _service.UpdateAsync(id, request);
+                if (!updated) return NotFound();
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]

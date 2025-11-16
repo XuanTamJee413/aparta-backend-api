@@ -16,6 +16,11 @@ using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
 
+using ApartaAPI.DTOs.Vehicles;
+using ApartaAPI.DTOs.Apartments;
+using ApartaAPI.DTOs.Contracts;
+
+
 namespace ApartaAPI.Profiles
 {
     public class MappingProfile : Profile
@@ -177,7 +182,15 @@ namespace ApartaAPI.Profiles
 
             // MeterReading mappings
             CreateMap<MeterReading, MeterReadingDto>();
+
             CreateMap<MeterReadingCreateDto, MeterReading>();
+
+
+
+            CreateMap<Contract, ContractDto>();
+            CreateMap<ContractCreateDto, Contract>();
+            CreateMap<ContractUpdateDto, Contract>()
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
         }
     }

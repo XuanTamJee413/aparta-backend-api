@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.PayOS;
+using ApartaAPI.DTOs.Common;
 using System;
 
 namespace ApartaAPI.Controllers;
@@ -11,15 +13,41 @@ namespace ApartaAPI.Controllers;
 [Route("api/[controller]")]
 public class PayosController : ControllerBase
 {
-    private readonly IInvoiceService _invoiceService;
+    private readonly IPaymentService _paymentService;
     private readonly PayOSService _payOSService;
     private readonly IConfiguration _configuration;
 
-    public PayosController(IInvoiceService invoiceService, PayOSService payOSService, IConfiguration configuration)
+    public PayosController(IPaymentService paymentService, PayOSService payOSService, IConfiguration configuration)
     {
-        _invoiceService = invoiceService;
+        _paymentService = paymentService;
         _payOSService = payOSService;
         _configuration = configuration;
+    }
+
+    // tạo liên kết thanh toán cho hóa đơn
+    [HttpPost("payment/create/{invoiceId}")]
+    [Authorize(Policy = "CanCreateInvoicePayment")]
+    public async Task<ActionResult<ApiResponse<string>>> CreatePayment(string invoiceId)
+    {
+        try
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var checkoutUrl = await _paymentService.CreatePaymentLinkAsync(invoiceId, baseUrl);
+
+            if (string.IsNullOrEmpty(checkoutUrl))
+            {
+                return BadRequest(ApiResponse<string>.Fail(ApiResponse.SM39_PAYMENT_LINK_FAILED));
+            }
+
+            return Ok(ApiResponse<string>.Success(
+                checkoutUrl,
+                ApiResponse.SM37_PAYMENT_LINK_SUCCESS
+            ));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
+        }
     }
 
     [HttpGet("payment/success")]
@@ -37,7 +65,7 @@ public class PayosController : ControllerBase
 
             Console.WriteLine($"Payment success callback: invoiceId={invoiceId}, orderCode={orderCode}");
 
-            var success = await _invoiceService.ProcessPaymentWebhookAsync(null, orderCode);
+            var success = await _paymentService.ProcessPaymentWebhookAsync(null, orderCode);
 
             if (!success)
             {
@@ -83,7 +111,7 @@ public class PayosController : ControllerBase
             Console.WriteLine($"Manual payment update triggered: orderCode={request.OrderCode}");
 
             // Process payment update (same logic as webhook)
-            var success = await _invoiceService.ProcessPaymentWebhookAsync(null, request.OrderCode);
+            var success = await _paymentService.ProcessPaymentWebhookAsync(null, request.OrderCode);
 
             if (!success)
             {
@@ -142,7 +170,7 @@ public class PayosController : ControllerBase
                 
                 // Process payment and update invoice status
                 // ProcessPaymentWebhookAsync will find invoiceId from Payment table using orderCode
-                var success = await _invoiceService.ProcessPaymentWebhookAsync(null, orderCode);
+                var success = await _paymentService.ProcessPaymentWebhookAsync(null, orderCode);
                 
                 if (!success)
                 {

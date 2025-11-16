@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ApartaAPI.DTOs;
+using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
 using System.Security.Claims;
@@ -11,11 +11,11 @@ namespace ApartaAPI.Controllers;
 [Route("api/[controller]")]
 public class InvoiceController : ControllerBase
 {
-    private readonly IInvoiceService _service;
+    private readonly IInvoiceService _invoiceService;
 
-    public InvoiceController(IInvoiceService service)
+    public InvoiceController(IInvoiceService invoiceService)
     {
-        _service = service;
+        _invoiceService = invoiceService;
     }
 
     //lấy danh sách hóa đơn của chính mình
@@ -33,7 +33,7 @@ public class InvoiceController : ControllerBase
                 return Unauthorized(ApiResponse<List<InvoiceDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
-            var invoices = await _service.GetUserInvoicesAsync(userId);
+            var invoices = await _invoiceService.GetUserInvoicesAsync(userId);
 
             return Ok(ApiResponse<List<InvoiceDto>>.Success(
                 invoices,
@@ -64,7 +64,7 @@ public class InvoiceController : ControllerBase
                 return Unauthorized(ApiResponse<List<ApartmentInvoicesDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
-            var groupedInvoices = await _service.GetInvoicesGroupedByApartmentAsync(buildingId, userId, status, apartmentCode);
+            var groupedInvoices = await _invoiceService.GetInvoicesGroupedByApartmentAsync(buildingId, userId, status, apartmentCode);
 
             return Ok(ApiResponse<List<ApartmentInvoicesDto>>.Success(
                 groupedInvoices,
@@ -97,7 +97,7 @@ public class InvoiceController : ControllerBase
                 return Unauthorized(ApiResponse<InvoiceDetailDto>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
-            var invoiceDetail = await _service.GetInvoiceDetailAsync(invoiceId, userId);
+            var invoiceDetail = await _invoiceService.GetInvoiceDetailAsync(invoiceId, userId);
 
             if (invoiceDetail == null)
             {
@@ -115,30 +115,6 @@ public class InvoiceController : ControllerBase
         }
     }
 
-    // tạo liên kết thanh toán cho hóa đơn
-    [HttpPost("{invoiceId}/pay")]
-    [Authorize(Policy = "CanCreateInvoicePayment")]
-    public async Task<ActionResult<ApiResponse<string>>> CreatePayment(string invoiceId)
-    {
-        try
-        {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var checkoutUrl = await _service.CreatePaymentLinkAsync(invoiceId, baseUrl);
 
-            if (string.IsNullOrEmpty(checkoutUrl))
-            {
-                return BadRequest(ApiResponse<string>.Fail(ApiResponse.SM39_PAYMENT_LINK_FAILED));
-            }
-
-            return Ok(ApiResponse<string>.Success(
-                checkoutUrl,
-                ApiResponse.SM37_PAYMENT_LINK_SUCCESS
-            ));
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
-        }
-    }
 }
 

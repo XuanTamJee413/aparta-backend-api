@@ -1,4 +1,5 @@
 ﻿using ApartaAPI.DTOs.Auth;
+using ApartaAPI.DTOs.User;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -13,12 +14,15 @@ namespace ApartaAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
+		private readonly IUserService _userService;
 
-        public UserController(IAuthService authService, IMapper mapper)
+
+		public UserController(IAuthService authService, IMapper mapper, IUserService userService)
         {
             _authService = authService;
             _mapper = mapper;
-        }
+			_userService = userService;
+		}
 
         [HttpPost("update-profile")]
         public async Task<ActionResult<UserInfoResponse>> UpdateProfile([FromBody] ProfileUpdateDto request)
@@ -56,5 +60,12 @@ namespace ApartaAPI.Controllers
 
             return Ok(response);
         }
-    }
+
+		[HttpGet("maintenance-staff")]
+		public async Task<ActionResult<IEnumerable<StaffDto>>> GetMaintenanceStaff()
+		{
+			var staffs = await _userService.GetMaintenanceStaffsAsync();
+			return Ok(staffs);
+		}
+	}
 }

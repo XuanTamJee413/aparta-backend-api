@@ -1,6 +1,7 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
+using ApartaAPI.Models;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -69,6 +70,8 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IVehicleService, VehicleService>();
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
+			builder.Services.AddScoped<ITaskService, TaskService> ();
+			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddSingleton<PayOSService>();
 			
 			// Custom Repositories

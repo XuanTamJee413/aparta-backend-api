@@ -11,30 +11,53 @@ namespace ApartaAPI.Services
     public class ApartmentMemberService : IApartmentMemberService
     {
         private readonly IRepository<ApartmentMember> _repository;
+        private readonly IRepository<Apartment> _apartmentRepository;
         private readonly IMapper _mapper;
 
-        public ApartmentMemberService(IRepository<ApartmentMember> repository, IMapper mapper)
+        public ApartmentMemberService(
+            IRepository<ApartmentMember> repository,
+            IRepository<Apartment> apartmentRepository,
+            IMapper mapper)
         {
             _repository = repository;
+            _apartmentRepository = apartmentRepository;
             _mapper = mapper;
         }
 
         public async Task<ApiResponse<IEnumerable<ApartmentMemberDto>>> GetAllAsync(ApartmentMemberQueryParameters query)
         {
-            
-
-            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+            var rawSearch = string.IsNullOrWhiteSpace(query.SearchTerm)
                 ? null
-                : query.SearchTerm.Trim().ToLowerInvariant();
+                : query.SearchTerm.Trim();
 
+            var searchTerm = rawSearch?.ToLowerInvariant();
+
+            List<string>? apartmentIdsByCode = null;
+            if (searchTerm != null)
+            {
+                var matchedApartments = await _apartmentRepository.FindAsync(a =>
+                    a.Code != null && a.Code.ToLower().Contains(searchTerm));
+
+                apartmentIdsByCode = matchedApartments
+                    .Where(a => a != null && a.ApartmentId != null)
+                    .Select(a => a.ApartmentId)
+                    .ToList();
+            }
 
             Expression<Func<ApartmentMember, bool>> predicate = m =>
                 (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value) &&
 
-                (searchTerm == null ||
-                    (m.Name != null && m.Name.ToLower().Contains(searchTerm)) ||
-                    (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm)) ||
-                    (m.IdNumber != null && m.IdNumber.ToLower().Contains(searchTerm)));
+                (
+                    searchTerm == null
+                    ||
+                    (m.Name != null && m.Name.ToLower().Contains(searchTerm))
+                    ||
+                    (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm))
+                    ||
+                    (m.IdNumber != null && m.IdNumber.ToLower().Contains(searchTerm))
+                    ||
+                    (apartmentIdsByCode != null && apartmentIdsByCode.Contains(m.ApartmentId))
+                );
 
             var entities = await _repository.FindAsync(predicate);
 
@@ -104,7 +127,10 @@ namespace ApartaAPI.Services
 
             if (!string.IsNullOrWhiteSpace(dto.IdNumber))
             {
-                var existingMember = await _repository.FirstOrDefaultAsync(m => m.IdNumber == dto.IdNumber);
+                var existingMember = await _repository.FirstOrDefaultAsync(
+                    m => m.IdNumber == dto.IdNumber && m.ApartmentMemberId != id
+                );
+
                 if (existingMember != null)
                 {
                     throw new InvalidOperationException($"ID Number '{dto.IdNumber}' đã tồn tại.");

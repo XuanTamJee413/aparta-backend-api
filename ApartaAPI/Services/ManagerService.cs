@@ -12,15 +12,18 @@ namespace ApartaAPI.Services
     {
         private readonly IRepository<User> _userRepository;
         private readonly IRepository<Role> _roleRepository;
+        private readonly IRepository<StaffBuildingAssignment> _staffBuildingAssignmentRepository;
         private readonly ApartaDbContext _context;
 
         public ManagerService(
             IRepository<User> userRepository, 
             IRepository<Role> roleRepository,
+            IRepository<StaffBuildingAssignment> staffBuildingAssignmentRepository,
             ApartaDbContext context)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _staffBuildingAssignmentRepository = staffBuildingAssignmentRepository;
             _context = context;
         }
 
@@ -39,13 +42,19 @@ namespace ApartaAPI.Services
             var managerRoleId = managerRole.RoleId;
             var roleName = managerRole.RoleName;
 
-            var managers = await _userRepository.FindAsync(u =>
-                u.RoleId == managerRoleId && // Dùng ID đã lấy
-                !u.IsDeleted &&
-                (searchTerm == null ||
-                    (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
-                    (u.StaffCode != null && u.StaffCode.ToLower().Contains(searchTerm)))
-            );
+            // Sử dụng context để Include StaffBuildingAssignments và Building
+            var managersQuery = _context.Users
+                .Include(u => u.StaffBuildingAssignments)
+                    .ThenInclude(sba => sba.Building)
+                .Where(u =>
+                    u.RoleId == managerRoleId &&
+                    !u.IsDeleted &&
+                    (searchTerm == null ||
+                        (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
+                        (u.StaffCode != null && u.StaffCode.ToLower().Contains(searchTerm)))
+                );
+
+            var managers = await managersQuery.ToListAsync();
 
             if (!managers.Any())
             {
@@ -68,7 +77,16 @@ namespace ApartaAPI.Services
                 Role = roleName, // Dùng tên Role đã lấy
                 Status = m.Status,
                 LastLoginAt = m.LastLoginAt,
-                PermissionGroup = null
+                PermissionGroup = null,
+                AssignedBuildings = m.StaffBuildingAssignments
+                    .Where(sba => sba.IsActive)
+                    .Select(sba => new BuildingSummaryDto
+                    {
+                        BuildingId = sba.BuildingId,
+                        BuildingName = sba.Building.Name,
+                        BuildingCode = sba.Building.BuildingCode,
+                        IsActive = sba.IsActive
+                    }).ToList()
             }).ToList();
 
             return ApiResponse<IEnumerable<ManagerDto>>.Success(managerDtos);
@@ -128,7 +146,34 @@ namespace ApartaAPI.Services
             };
 
             await _userRepository.AddAsync(newUser);
-            await _userRepository.SaveChangesAsync();
+
+            // Xử lý BuildingIds - Tạo StaffBuildingAssignment cho mỗi BuildingId
+            if (dto.BuildingIds != null && dto.BuildingIds.Any())
+            {
+                foreach (var buildingId in dto.BuildingIds)
+                {
+                    var assignment = new StaffBuildingAssignment
+                    {
+                        UserId = newUser.UserId,
+                        BuildingId = buildingId,
+                        AssignmentStartDate = DateOnly.FromDateTime(now),
+                        AssignmentEndDate = null,
+                        ScopeOfWork = null,
+                        IsActive = true
+                    };
+
+                    await _staffBuildingAssignmentRepository.AddAsync(assignment);
+                }
+            }
+
+            // Lưu tất cả thay đổi (User và StaffBuildingAssignments)
+            await _context.SaveChangesAsync();
+
+            // Lấy lại manager với thông tin building assignments
+            var createdManager = await _context.Users
+                .Include(u => u.StaffBuildingAssignments)
+                    .ThenInclude(sba => sba.Building)
+                .FirstOrDefaultAsync(u => u.UserId == newUser.UserId);
 
             var resultDto = new ManagerDto
             {
@@ -141,7 +186,16 @@ namespace ApartaAPI.Services
                 Role = role.RoleName,
                 Status = newUser.Status,
                 LastLoginAt = newUser.LastLoginAt,
-                PermissionGroup = null
+                PermissionGroup = null,
+                AssignedBuildings = createdManager?.StaffBuildingAssignments
+                    .Where(sba => sba.IsActive)
+                    .Select(sba => new BuildingSummaryDto
+                    {
+                        BuildingId = sba.BuildingId,
+                        BuildingName = sba.Building.Name,
+                        BuildingCode = sba.Building.BuildingCode,
+                        IsActive = sba.IsActive
+                    }).ToList() ?? new List<BuildingSummaryDto>()
             };
 
             return ApiResponse<ManagerDto>.SuccessWithCode(resultDto, ApiResponse.SM04_CREATE_SUCCESS, "Manager");
@@ -149,7 +203,11 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto)
         {
-            var manager = await _userRepository.FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
+            // Bước 1: Tải manager với StaffBuildingAssignments
+            var manager = await _context.Users
+                .Include(u => u.StaffBuildingAssignments)
+                .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
+
             if (manager == null)
             {
                 return ApiResponse<ManagerDto>.Fail(ApiResponse.SM01_NO_RESULTS);
@@ -176,6 +234,46 @@ namespace ApartaAPI.Services
                     return ApiResponse<ManagerDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "StaffCode"); 
             }
 
+            // Bước 2 & 3 & 4: Đồng bộ hóa BuildingIds
+            if (dto.BuildingIds != null)
+            {
+                var newBuildingIds = dto.BuildingIds;
+                var currentAssignments = manager.StaffBuildingAssignments.ToList();
+                var currentBuildingIds = currentAssignments.Select(sba => sba.BuildingId).ToList();
+
+                // Bước 3: Xóa các assignment không còn trong danh sách mới
+                var assignmentsToRemove = currentAssignments
+                    .Where(sba => !newBuildingIds.Contains(sba.BuildingId))
+                    .ToList();
+
+                foreach (var assignment in assignmentsToRemove)
+                {
+                    _context.StaffBuildingAssignments.Remove(assignment);
+                }
+
+                // Bước 4: Thêm các assignment mới
+                var buildingIdsToAdd = newBuildingIds
+                    .Where(bid => !currentBuildingIds.Contains(bid))
+                    .ToList();
+
+                var now = DateTime.UtcNow;
+                foreach (var buildingId in buildingIdsToAdd)
+                {
+                    var newAssignment = new StaffBuildingAssignment
+                    {
+                        UserId = userId,
+                        BuildingId = buildingId,
+                        AssignmentStartDate = DateOnly.FromDateTime(now),
+                        AssignmentEndDate = null,
+                        ScopeOfWork = null,
+                        IsActive = true
+                    };
+
+                    await _context.StaffBuildingAssignments.AddAsync(newAssignment);
+                }
+            }
+
+            // Bước 5: Cập nhật thông tin manager
             if (!string.IsNullOrWhiteSpace(dto.Name)) manager.Name = dto.Name;
 
             if (!string.IsNullOrWhiteSpace(dto.Phone)) manager.Phone = dto.Phone;
@@ -213,8 +311,14 @@ namespace ApartaAPI.Services
 
             manager.UpdatedAt = DateTime.UtcNow;
 
-            await _userRepository.UpdateAsync(manager);
-            await _userRepository.SaveChangesAsync();
+            // Bước 6: Lưu tất cả thay đổi
+            await _context.SaveChangesAsync();
+
+            // Lấy lại manager với thông tin đầy đủ
+            var updatedManager = await _context.Users
+                .Include(u => u.StaffBuildingAssignments)
+                    .ThenInclude(sba => sba.Building)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
 
             var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == manager.RoleId);
 
@@ -229,7 +333,16 @@ namespace ApartaAPI.Services
                 Role = role?.RoleName ?? "management",
                 Status = manager.Status,
                 LastLoginAt = manager.LastLoginAt,
-                PermissionGroup = null
+                PermissionGroup = null,
+                AssignedBuildings = updatedManager?.StaffBuildingAssignments
+                    .Where(sba => sba.IsActive)
+                    .Select(sba => new BuildingSummaryDto
+                    {
+                        BuildingId = sba.BuildingId,
+                        BuildingName = sba.Building.Name,
+                        BuildingCode = sba.Building.BuildingCode,
+                        IsActive = sba.IsActive
+                    }).ToList() ?? new List<BuildingSummaryDto>()
             };
 
             return ApiResponse<ManagerDto>.Success(resultDto, ApiResponse.SM03_UPDATE_SUCCESS);

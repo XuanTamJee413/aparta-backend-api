@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Text;
+using QuestPDF.Infrastructure;
 
 namespace ApartaAPI
 {
@@ -23,7 +24,8 @@ namespace ApartaAPI
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+            QuestPDF.Settings.License = LicenseType.Community;
+            var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 			builder.Services.AddCors(options =>
 			{
@@ -70,7 +72,8 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 			builder.Services.AddScoped<IContractService, ContractService>();
-			builder.Services.AddSingleton<PayOSService>();
+            builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
+            builder.Services.AddSingleton<PayOSService>();
 			
 			// Custom Repositories
 			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();

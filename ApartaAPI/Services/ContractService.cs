@@ -145,8 +145,47 @@ namespace ApartaAPI.Services
 
         public async Task<ContractDto?> GetByIdAsync(string id)
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            return _mapper.Map<ContractDto?>(entity);
+            var contract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
+            if (contract == null)
+                return null;
+
+            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+
+            var ownerMembers = await _apartmentMemberRepository.FindAsync(
+                m => m.ApartmentId == contract.ApartmentId
+                     && m.IsOwner == true
+                     && m.Status == "Đang Thuê"
+            );
+            var owner = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
+                .OrderByDescending(m => m.CreatedAt)
+                .FirstOrDefault();
+
+            var users = await _userRepository.FindAsync(
+                u => u.ApartmentId == contract.ApartmentId && !u.IsDeleted
+            );
+            var user = (users ?? Enumerable.Empty<User>())
+                .OrderByDescending(u => u.CreatedAt)
+                .FirstOrDefault();
+
+            var displayName = owner?.Name ?? user?.Name;
+            var displayPhone = owner?.PhoneNumber ?? user?.Phone;
+            var displayEmail = user?.Email;
+
+            var dto = new ContractDto
+            {
+                ContractId = contract.ContractId,
+                ApartmentId = contract.ApartmentId,
+                ApartmentCode = apartment?.Code,
+                OwnerName = displayName,
+                OwnerPhoneNumber = displayPhone,
+                OwnerEmail = displayEmail,
+                Image = contract.Image,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                CreatedAt = contract.CreatedAt
+            };
+
+            return dto;
         }
 
 

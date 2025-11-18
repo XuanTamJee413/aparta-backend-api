@@ -7,6 +7,14 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         string? SearchTerm  //feild nhập dể search 
     );
 
+    public class BuildingSummaryDto
+    {
+        public string BuildingId { get; set; } = null!;
+        public string BuildingName { get; set; } = null!;
+        public string BuildingCode { get; set; } = null!;
+        public bool IsActive { get; set; }
+    }
+
     public class ManagerDto
     {
         public string? UserId { get; set; }
@@ -19,6 +27,7 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? Status { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public string? PermissionGroup { get; set; }
+        public List<BuildingSummaryDto> AssignedBuildings { get; set; } = new List<BuildingSummaryDto>();
     }
 
     public sealed record CreateManagerDto
@@ -44,6 +53,8 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? StaffCode { get; init; }
 
         public string? AvatarUrl { get; init; }
+
+        public List<string> BuildingIds { get; init; } = new List<string>();
     }
 
     public sealed record UpdateManagerDto
@@ -74,5 +85,7 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? AvatarUrl { get; init; }
 
         public string? Status { get; init; } // active, inactive
+
+        public List<string>? BuildingIds { get; init; }
     }
 }

@@ -64,9 +64,17 @@ namespace ApartaAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteContract(string id)
         {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return Ok();
+            try
+            {
+                var deleted = await _service.DeleteAsync(id);
+                if (!deleted) return NotFound();
+
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("{id}/pdf")]

@@ -284,43 +284,70 @@ namespace ApartaAPI.Services
         }
 
 
-        
+
         public async Task<bool> DeleteAsync(string id)
         {
             var contract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            if (contract == null) return false;
+            if (contract == null)
+                return false;
 
-            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (!contract.EndDate.HasValue || contract.EndDate.Value > today)
+            {
+                throw new InvalidOperationException("Hợp đồng chưa hết hạn, không được phép xóa.");
+            }
+
+
+            var apartment = await _apartmentRepository
+                .FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+
+            if (apartment.Status == "Đã Đóng") return false;
+
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
-                m => m.ApartmentId == contract.ApartmentId && m.IsOwner == true && m.Status == "Đang Thuê"
+                m => m.ApartmentId == contract.ApartmentId
+                     && m.IsOwner == true
+                     && m.Status == "Đang Thuê"
             );
 
-            try
-            {
-                await _contractRepository.RemoveAsync(contract);
+            var now = DateTime.UtcNow;
 
-                if (apartment != null)
-                {
-                    apartment.Status = "Chưa Thuê";
-                    apartment.UpdatedAt = DateTime.UtcNow;
-                }
+
+            if (apartment != null)
+            {
+                var originalCode = apartment.Code;
+
+                apartment.Status = "Đã Đóng";
+                apartment.Code = $"{originalCode}-HIS-{now:yyyyMMdd}";
+                apartment.UpdatedAt = now;
 
                 if (ownerMembers != null)
                 {
                     foreach (var member in ownerMembers)
                     {
-                        member.Status = "Đã rời đi"; 
-                        member.IsOwner = false; 
-                        member.UpdatedAt = DateTime.UtcNow;
+                        member.Status = "Đã rời đi";
+                        member.IsOwner = false;
+                        member.UpdatedAt = now;
                     }
                 }
 
-                return await _contractRepository.SaveChangesAsync();
+                var newApartment = new Apartment
+                {
+                    ApartmentId = Guid.NewGuid().ToString("N"),
+                    BuildingId = apartment.BuildingId,
+                    Code = originalCode,      
+                    Type = apartment.Type,
+                    Status = "Chưa Thuê",
+                    Area = apartment.Area,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                await _apartmentRepository.AddAsync(newApartment);
             }
-            catch (Exception)
-            {
-                return false;
-            }
+
+            await _contractRepository.SaveChangesAsync(); 
+            return true;
         }
+
     }
 }

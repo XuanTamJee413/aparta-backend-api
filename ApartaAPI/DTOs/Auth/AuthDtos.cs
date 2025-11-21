@@ -44,6 +44,19 @@
         DateTime? LastLoginAt
     );
 
+    // Forgot password request
+    public sealed record ForgotPasswordDto(
+        string Email
+    );
+
+    // Reset password request
+    public sealed record ResetPasswordDto(
+        string Token,
+        string Email,
+        string NewPassword,
+        string ConfirmPassword
+    );
+
     public sealed record ProfileUpdateDto(
         string? Name,
         string? Email,

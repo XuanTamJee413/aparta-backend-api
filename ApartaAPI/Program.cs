@@ -49,6 +49,7 @@ namespace ApartaAPI
 
 			// Configuration bindings
 			builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+			builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -81,6 +82,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 			builder.Services.AddScoped<IProfileService, ProfileService>();
+			builder.Services.AddTransient<IMailService, MailService>();
 			builder.Services.AddSingleton<PayOSService>();
 			
 			// Custom Repositories

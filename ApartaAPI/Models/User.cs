@@ -33,6 +33,10 @@ public partial class User
 
     public bool IsDeleted { get; set; }
 
+    public string? PasswordResetToken { get; set; }
+
+    public DateTime? ResetTokenExpires { get; set; }
+
     public virtual Apartment? Apartment { get; set; }
 
     public virtual ICollection<Interaction> InteractionResidents { get; set; } = new List<Interaction>();

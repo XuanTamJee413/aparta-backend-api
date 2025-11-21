@@ -2,6 +2,7 @@
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
 using ApartaAPI.Models;
+using ApartaAPI.Helpers;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -46,6 +47,9 @@ namespace ApartaAPI
 			// AutoMapper
 			builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
+			// Configuration bindings
+			builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 			
@@ -75,6 +79,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IContractService, ContractService>();
 			builder.Services.AddScoped<ITaskService, TaskService> ();
 			builder.Services.AddScoped<IUserService, UserService>();
+			builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 			builder.Services.AddSingleton<PayOSService>();
 			
 			// Custom Repositories

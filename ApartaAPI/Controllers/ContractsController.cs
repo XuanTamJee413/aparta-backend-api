@@ -10,10 +10,11 @@ namespace ApartaAPI.Controllers
     public class ContractsController : ControllerBase
     {
         private readonly IContractService _service;
-
-        public ContractsController(IContractService service)
+        private readonly IContractPdfService _pdfService;
+        public ContractsController(IContractService service, IContractPdfService pdfService)
         {
             _service = service;
+            _pdfService = pdfService;
         }
 
         [HttpGet]
@@ -63,9 +64,31 @@ namespace ApartaAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteContract(string id)
         {
-            var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound();
-            return Ok();
+            try
+            {
+                var deleted = await _service.DeleteAsync(id);
+                if (!deleted) return NotFound();
+
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> DownloadContractPdf(string id)
+        {
+            var contract = await _service.GetByIdAsync(id);
+            if (contract == null)
+                return NotFound(new { message = "Không tìm thấy hợp đồng." });
+
+            var pdfBytes = _pdfService.GenerateContractPdf(contract);
+            var fileName = $"hop-dong-{contract.ApartmentCode ?? contract.ApartmentId}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
     }
 }

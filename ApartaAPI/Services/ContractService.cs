@@ -145,8 +145,47 @@ namespace ApartaAPI.Services
 
         public async Task<ContractDto?> GetByIdAsync(string id)
         {
-            var entity = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            return _mapper.Map<ContractDto?>(entity);
+            var contract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
+            if (contract == null)
+                return null;
+
+            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+
+            var ownerMembers = await _apartmentMemberRepository.FindAsync(
+                m => m.ApartmentId == contract.ApartmentId
+                     && m.IsOwner == true
+                     && m.Status == "Đang Thuê"
+            );
+            var owner = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
+                .OrderByDescending(m => m.CreatedAt)
+                .FirstOrDefault();
+
+            var users = await _userRepository.FindAsync(
+                u => u.ApartmentId == contract.ApartmentId && !u.IsDeleted
+            );
+            var user = (users ?? Enumerable.Empty<User>())
+                .OrderByDescending(u => u.CreatedAt)
+                .FirstOrDefault();
+
+            var displayName = owner?.Name ?? user?.Name;
+            var displayPhone = owner?.PhoneNumber ?? user?.Phone;
+            var displayEmail = user?.Email;
+
+            var dto = new ContractDto
+            {
+                ContractId = contract.ContractId,
+                ApartmentId = contract.ApartmentId,
+                ApartmentCode = apartment?.Code,
+                OwnerName = displayName,
+                OwnerPhoneNumber = displayPhone,
+                OwnerEmail = displayEmail,
+                Image = contract.Image,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                CreatedAt = contract.CreatedAt
+            };
+
+            return dto;
         }
 
 
@@ -235,9 +274,26 @@ namespace ApartaAPI.Services
         public async Task<bool> UpdateAsync(string id, ContractUpdateDto dto)
         {
             var entity = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            if (entity == null) return false;
+            if (entity == null)
+                return false;
 
-            _mapper.Map(dto, entity);
+            if (dto.EndDate.HasValue)
+            {
+                if (entity.StartDate.HasValue && dto.EndDate.Value < entity.StartDate.Value)
+                {
+                    throw new InvalidOperationException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu hợp đồng.");
+                }
+
+                entity.EndDate = dto.EndDate;
+            }
+           
+            if (dto.Image != null)
+            {
+                entity.Image = string.IsNullOrWhiteSpace(dto.Image)
+                    ? null
+                    : dto.Image;
+            }
+
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _contractRepository.UpdateAsync(entity);
@@ -245,43 +301,70 @@ namespace ApartaAPI.Services
         }
 
 
-        
+
         public async Task<bool> DeleteAsync(string id)
         {
             var contract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            if (contract == null) return false;
+            if (contract == null)
+                return false;
 
-            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (!contract.EndDate.HasValue || contract.EndDate.Value > today)
+            {
+                throw new InvalidOperationException("Hợp đồng chưa hết hạn, không được phép xóa.");
+            }
+
+
+            var apartment = await _apartmentRepository
+                .FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
+
+            if (apartment.Status == "Đã Đóng") return false;
+
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
-                m => m.ApartmentId == contract.ApartmentId && m.IsOwner == true && m.Status == "Đang Thuê"
+                m => m.ApartmentId == contract.ApartmentId
+                     && m.IsOwner == true
+                     && m.Status == "Đang Thuê"
             );
 
-            try
-            {
-                await _contractRepository.RemoveAsync(contract);
+            var now = DateTime.UtcNow;
 
-                if (apartment != null)
-                {
-                    apartment.Status = "Chưa Thuê";
-                    apartment.UpdatedAt = DateTime.UtcNow;
-                }
+
+            if (apartment != null)
+            {
+                var originalCode = apartment.Code;
+
+                apartment.Status = "Đã Đóng";
+                apartment.Code = $"{originalCode}-HIS-{now:yyyyMMdd}";
+                apartment.UpdatedAt = now;
 
                 if (ownerMembers != null)
                 {
                     foreach (var member in ownerMembers)
                     {
-                        member.Status = "Đã rời đi"; 
-                        member.IsOwner = false; 
-                        member.UpdatedAt = DateTime.UtcNow;
+                        member.Status = "Đã rời đi";
+                        member.IsOwner = false;
+                        member.UpdatedAt = now;
                     }
                 }
 
-                return await _contractRepository.SaveChangesAsync();
+                var newApartment = new Apartment
+                {
+                    ApartmentId = Guid.NewGuid().ToString("N"),
+                    BuildingId = apartment.BuildingId,
+                    Code = originalCode,      
+                    Type = apartment.Type,
+                    Status = "Chưa Thuê",
+                    Area = apartment.Area,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                await _apartmentRepository.AddAsync(newApartment);
             }
-            catch (Exception)
-            {
-                return false;
-            }
+
+            await _contractRepository.SaveChangesAsync(); 
+            return true;
         }
+
     }
 }

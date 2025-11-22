@@ -57,7 +57,7 @@ namespace ApartaAPI.Controllers
             try
             {
                 var updated = await _service.UpdateAsync(id, request);
-                if (!updated) return NotFound();
+               // if (!updated) return NotFound();
                 return Ok();
             }
             catch (InvalidOperationException ex)

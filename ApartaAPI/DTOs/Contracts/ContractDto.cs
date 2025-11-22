@@ -45,7 +45,7 @@ namespace ApartaAPI.DTOs.Contracts
 
     public sealed record ContractUpdateDto(
         string? Image,
-        DateOnly? StartDate,
+       // DateOnly? StartDate,
         DateOnly? EndDate
     );
 }

@@ -39,7 +39,12 @@ namespace ApartaAPI
 			});
 
 			// Add services to the container.
-			builder.Services.AddControllers();
+			builder.Services.AddControllers()
+				.AddJsonOptions(options =>
+				{
+					options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+					options.JsonSerializerOptions.WriteIndented = true;
+				});
 
 			builder.Services.AddDbContext<ApartaDbContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

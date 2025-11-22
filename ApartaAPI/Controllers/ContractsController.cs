@@ -55,11 +55,24 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutContract(string id, [FromBody] ContractUpdateDto request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> PutContract(string id, [FromForm] ContractUpdateDto request)
         {
-            var updated = await _service.UpdateAsync(id, request);
-            return Ok();
+            try
+            {
+                var updated = await _service.UpdateAsync(id, request);
+                return Ok(new { message = "Cập nhật hợp đồng thành công." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi trong quá trình cập nhật hợp đồng." });
+            }
         }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteContract(string id)

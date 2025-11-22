@@ -43,9 +43,10 @@ namespace ApartaAPI.DTOs.Contracts
         string? OwnerNationality
     );
 
-    public sealed record ContractUpdateDto(
-        string? Image,
-       // DateOnly? StartDate,
-        DateOnly? EndDate
-    );
+    public sealed record ContractUpdateDto
+    {
+        public DateOnly? EndDate { get; set; }
+        public IFormFile? ImageFile { get; set; }  
+        public string? Image { get; set; }         
+    }
 }

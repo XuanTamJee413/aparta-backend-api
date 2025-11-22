@@ -14,19 +14,21 @@ namespace ApartaAPI.Services
         private readonly IRepository<Apartment> _apartmentRepository;
         private readonly IRepository<ApartmentMember> _apartmentMemberRepository; 
         private readonly IRepository<User> _userRepository;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
 
         public ContractService(
             IRepository<Contract> contractRepository,
             IRepository<Apartment> apartmentRepository,
             IRepository<ApartmentMember> apartmentMemberRepository, 
-            IRepository<User> userRepository,
+            IRepository<User> userRepository, ICloudinaryService cloudinaryService,
             IMapper mapper)
         {
             _contractRepository = contractRepository;
             _apartmentRepository = apartmentRepository;
             _apartmentMemberRepository = apartmentMemberRepository; 
             _userRepository = userRepository;
+            _cloudinaryService = cloudinaryService;
             _mapper = mapper;
         }
 
@@ -277,6 +279,7 @@ namespace ApartaAPI.Services
             if (entity == null)
                 return false;
 
+
             if (dto.EndDate.HasValue)
             {
                 if (entity.StartDate.HasValue && dto.EndDate.Value < entity.StartDate.Value)
@@ -286,8 +289,13 @@ namespace ApartaAPI.Services
 
                 entity.EndDate = dto.EndDate;
             }
-           
-            if (dto.Image != null)
+
+            if (dto.ImageFile != null && dto.ImageFile.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(dto.ImageFile, "contracts");
+                entity.Image = uploadResult.SecureUrl;
+            }
+            else if (dto.Image != null)
             {
                 entity.Image = string.IsNullOrWhiteSpace(dto.Image)
                     ? null

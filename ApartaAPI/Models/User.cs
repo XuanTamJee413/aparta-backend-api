@@ -37,6 +37,8 @@ public partial class User
 
     public DateTime? ResetTokenExpires { get; set; }
 
+    public bool IsFirstLogin { get; set; }
+
     public virtual Apartment? Apartment { get; set; }
 
     public virtual ICollection<Interaction> InteractionResidents { get; set; } = new List<Interaction>();

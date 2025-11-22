@@ -18,7 +18,8 @@
 
     // Login response
     public sealed record LoginResponse(
-        string Token
+        string Token,
+        bool IsFirstLogin
     );
 
     // Register response

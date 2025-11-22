@@ -274,9 +274,26 @@ namespace ApartaAPI.Services
         public async Task<bool> UpdateAsync(string id, ContractUpdateDto dto)
         {
             var entity = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
-            if (entity == null) return false;
+            if (entity == null)
+                return false;
 
-            _mapper.Map(dto, entity);
+            if (dto.EndDate.HasValue)
+            {
+                if (entity.StartDate.HasValue && dto.EndDate.Value < entity.StartDate.Value)
+                {
+                    throw new InvalidOperationException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu hợp đồng.");
+                }
+
+                entity.EndDate = dto.EndDate;
+            }
+           
+            if (dto.Image != null)
+            {
+                entity.Image = string.IsNullOrWhiteSpace(dto.Image)
+                    ? null
+                    : dto.Image;
+            }
+
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _contractRepository.UpdateAsync(entity);

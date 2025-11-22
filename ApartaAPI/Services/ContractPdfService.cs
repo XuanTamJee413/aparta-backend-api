@@ -36,10 +36,10 @@ namespace ApartaAPI.Services
                         col.Item().Text($"Ngày bắt đầu: {FormatDate(contract.StartDate)}");
                         col.Item().Text($"Ngày kết thúc: {FormatDate(contract.EndDate)}");
 
-                        if (!string.IsNullOrWhiteSpace(contract.Image))
-                        {
-                            col.Item().Text($"Tệp đính kèm: {contract.Image}");
-                        }
+                        //if (!string.IsNullOrWhiteSpace(contract.Image))
+                        //{
+                        //    col.Item().Text($"Tệp đính kèm: {contract.Image}");
+                        //}
 
                         col.Item().PaddingTop(20).Text("Điều khoản cơ bản:")
                             .SemiBold();

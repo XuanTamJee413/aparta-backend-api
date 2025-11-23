@@ -30,7 +30,7 @@ namespace ApartaAPI.Services
 
             Expression<Func<ApartmentMember, bool>> predicate = m =>
                 (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value) &&
-
+                (string.IsNullOrWhiteSpace(query.ApartmentId) || m.ApartmentId == query.ApartmentId) &&
                 (searchTerm == null ||
                     (m.Name != null && m.Name.ToLower().Contains(searchTerm)) ||
                     (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm)) ||

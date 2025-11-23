@@ -38,5 +38,20 @@ namespace ApartaAPI.Services
 
 			return maintenanceStaffs;
 		}
+
+		public async Task<User?> GetUserByApartmentIdAsync(string apartmentId)
+		{
+			if (string.IsNullOrWhiteSpace(apartmentId))
+			{
+				return null;
+			}
+
+			var user = await _userRepository.FirstOrDefaultAsync(u => 
+				u.ApartmentId == apartmentId && 
+				!u.IsDeleted && 
+				u.Status == "Active");
+
+			return user;
+		}
 	}
 }

@@ -72,6 +72,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IServiceBookingService, ServiceBookingService>();
 			builder.Services.AddScoped<IUtilityService, UtilityService>();
+			builder.Services.AddScoped<IUtilityBookingService, UtilityBookingService>();
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 			builder.Services.AddHostedService<SubscriptionExpiryService>();

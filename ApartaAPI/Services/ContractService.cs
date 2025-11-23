@@ -204,6 +204,17 @@ namespace ApartaAPI.Services
             {
                 throw new InvalidOperationException("Căn hộ này không có sẵn để cho thuê.");
             }
+            var ownerIdNumber = dto.OwnerIdNumber.Trim();
+
+            var existedMember = await _apartmentMemberRepository
+                .FirstOrDefaultAsync(m => m.IdNumber == ownerIdNumber);
+
+            if (existedMember != null)
+            {
+                throw new InvalidOperationException(
+                    "Số giấy tờ tùy thân (CMND/CCCD) này đã tồn tại. Vui lòng kiểm tra lại."
+                );
+            }
 
             apartment.Status = "Đã Thuê";
             apartment.UpdatedAt = now;

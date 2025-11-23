@@ -6,7 +6,8 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         bool? IsOwned,
         string? SearchTerm,
         string? SortBy,
-        string? SortOrder
+        string? SortOrder,
+        string? ApartmentId
     );
 
     public class ApartmentMemberDto

@@ -67,5 +67,20 @@ namespace ApartaAPI.Controllers
 			var staffs = await _userService.GetMaintenanceStaffsAsync();
 			return Ok(staffs);
 		}
+
+		[HttpGet("by-apartment/{apartmentId}")]
+		[Authorize(Policy = "CanReadUserByApartment")]
+		public async Task<ActionResult<UserInfoResponse>> GetUserByApartment(string apartmentId)
+		{
+			var user = await _userService.GetUserByApartmentIdAsync(apartmentId);
+			
+			if (user == null)
+			{
+				return NotFound(new { message = "Không tìm thấy người dùng cho căn hộ này" });
+			}
+
+			var response = _mapper.Map<UserInfoResponse>(user);
+			return Ok(response);
+		}
 	}
 }

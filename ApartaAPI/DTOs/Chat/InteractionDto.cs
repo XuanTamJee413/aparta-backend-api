@@ -2,6 +2,13 @@
 
 namespace ApartaAPI.DTOs.Chat
 {
+    public class PartnerDto
+    {
+        public string UserId { get; set; } = null!;
+        public string FullName { get; set; } = null!;
+        public string? AvatarUrl { get; set; }
+        public string Role { get; set; } = null!;
+    }
     public class InteractionListDto
     {
         public string InteractionId { get; set; } = null!;
@@ -34,5 +41,9 @@ namespace ApartaAPI.DTOs.Chat
         public string InteractionId { get; set; } = null!;
         public string PartnerId { get; set; } = null!;
         public string PartnerName { get; set; } = null!;
+    }
+    public class CreateAdHocInteractionDto
+    {
+        public string PartnerId { get; set; } = null!;
     }
 }

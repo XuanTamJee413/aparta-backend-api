@@ -6,8 +6,7 @@ namespace ApartaAPI.Services.Interfaces
     public interface IChatService
     {
         // Khởi tạo/Tìm Chat
-        Task<InitiateInteractionDto> InitiateOrGetInteractionAsync(string currentUserId);
-
+        Task<InitiateInteractionDto> CreateAdHocInteractionAsync(string currentUserId, string partnerId);
         // Danh sách Chat
         Task<IEnumerable<InteractionListDto>> GetInteractionListAsync(string currentUserId);
 
@@ -16,5 +15,8 @@ namespace ApartaAPI.Services.Interfaces
 
         // Gửi tin nhắn
         Task<(Message? Message, string? ReceiverId)> SendMessageAsync(string currentUserId, SendMessageDto messageDto);
+
+        // lấy danh sách partner đổ vô combobozx
+        Task<IEnumerable<PartnerDto>> SearchPotentialPartnersAsync(string currentUserId);
     }
 }

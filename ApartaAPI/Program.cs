@@ -20,6 +20,7 @@ using QuestPDF.Infrastructure;
 using System;
 using System.Text;
 using static ApartaAPI.Hubs.ChatHub;
+using Task = System.Threading.Tasks.Task;
 
 namespace ApartaAPI
 {
@@ -37,9 +38,10 @@ namespace ApartaAPI
 				options.AddPolicy(name: myAllowSpecificOrigins,
 					policy =>
 					{
-						policy.WithOrigins("http://localhost:4200")
+						policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
 							  .AllowAnyHeader()
-							  .AllowAnyMethod();
+							  .AllowAnyMethod()
+							  .AllowCredentials();
 					});
 			});
 
@@ -108,7 +110,10 @@ namespace ApartaAPI
             builder.Services.AddScoped<IMessageRepository, MessageRepository>();
             builder.Services.AddScoped<IChatService, ChatService>();
 
-            builder.Services.AddSignalR();
+            builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
             builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>(); // Đăng ký Provider
 
             builder.Services.AddEndpointsApiExplorer();
@@ -162,7 +167,23 @@ namespace ApartaAPI
 						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
 						ClockSkew = TimeSpan.Zero
 					};
-				});
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            // Nếu request đến /chathub và có token trong Query String
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                path.StartsWithSegments("/chathub"))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
 
 			builder.Services.AddAuthorizationPolicies();
 
@@ -178,11 +199,11 @@ namespace ApartaAPI
 
 			app.UseCors(myAllowSpecificOrigins);
 
-			app.UseAuthentication();
+            app.UseAuthentication();
 
 			app.UseAuthorization();
 
-            app.MapHub<ChatHub>("/chathub");
+            app.MapHub<ChatHub>("/chathub").RequireCors(myAllowSpecificOrigins);
 
             app.MapControllers();
 			app.Run();

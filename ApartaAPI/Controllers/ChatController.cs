@@ -1,7 +1,10 @@
 ﻿using ApartaAPI.DTOs.Chat;
+using ApartaAPI.Hubs;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ApartaAPI.Controllers
 {
@@ -10,35 +13,42 @@ namespace ApartaAPI.Controllers
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
-        // Khai báo SignalR Hub Context (Cần thiết cho Real-time)
-        // private readonly IHubContext<ChatHub> _hubContext; 
+         private readonly IHubContext<ChatHub> _hubContext; 
 
-        public ChatController(IChatService chatService /*, IHubContext<ChatHub> hubContext */)
+        public ChatController(IChatService chatService, IHubContext<ChatHub> hubContext)
         {
             _chatService = chatService;
-            // _hubContext = hubContext;
+            _hubContext = hubContext;
         }
 
         // ===================================================================
-        // 1. KHỞI TẠO HOẶC TÌM CUỘC HỘI THOẠI (Resident)
-        // POST: api/Chat/initiate-interaction
+        // 1. TẠO HOẶC TÌM CUỘC HỘI THOẠI AD-HOC (SỬ DỤNG CHO COMBOBOX)
+        // POST: api/Chat/create-interaction
         // ===================================================================
-        [HttpPost("initiate-interaction")]
-        public async Task<ActionResult<InitiateInteractionDto>> InitiateInteraction()
+        [HttpPost("create-interaction")]
+        public async Task<ActionResult<InitiateInteractionDto>> CreateAdHocInteraction([FromBody] CreateAdHocInteractionDto dto)
         {
             try
             {
-                // Lấy UserID từ Claims/Token
                 var currentUserId = User.FindFirst("id")?.Value;
                 if (currentUserId == null) return Unauthorized();
 
-                var result = await _chatService.InitiateOrGetInteractionAsync(currentUserId);
+                // Gọi Service mới (đã được sửa trong ChatService.cs)
+                var result = await _chatService.CreateAdHocInteractionAsync(currentUserId, dto.PartnerId);
+
                 return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
-                // Xử lý lỗi: Không tìm thấy Staff, không gán căn hộ, vv.
-                return BadRequest(new { Message = ex.Message });
+                return StatusCode(500, new { Message = "Lỗi server: " + ex.Message });
             }
         }
 
@@ -110,15 +120,30 @@ namespace ApartaAPI.Controllers
                 IsRead = message.IsRead
             };
 
-            // **SIGNALR:** Gửi thông báo ngay lập tức đến người nhận
-            // Cần thêm logic SignalR để gửi message và cập nhật UnreadCount cho người nhận.
+            // 1. Gửi tin nhắn mới đến người nhận
+            await _hubContext.Clients.User(receiverId).SendAsync("ReceiveMessage", responseDto);
 
-            // Ví dụ: await _hubContext.Clients.User(receiverId).SendAsync("ReceiveMessage", responseDto);
-            // và: await _hubContext.Clients.User(receiverId).SendAsync("UpdateUnreadCount");
+            // 2. Gửi thông báo cập nhật danh sách chat (UnreadCount) cho cả hai bên
+            await _hubContext.Clients.User(currentUserId).SendAsync("UpdateChatList"); // Cập nhật cho người gửi (để thấy tin nhắn mới nhất)
+            await _hubContext.Clients.User(receiverId).SendAsync("UpdateChatList"); // Cập nhật cho người nhận (để thấy UnreadCount)
 
             return CreatedAtAction(nameof(GetMessages),
                 new { interactionId = messageDto.InteractionId },
                 responseDto);
+        }
+
+        [HttpGet("search-partners")]
+        [ProducesResponseType(typeof(IEnumerable<PartnerDto>), StatusCodes.Status200OK)]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<PartnerDto>>> SearchPartners()
+        {
+            var currentUserId = User.FindFirst("id")?.Value;
+            if (currentUserId == null) return Unauthorized();
+
+            // Gọi Service để tìm kiếm đối tác dựa trên Role và Building ID của người dùng hiện tại
+            var partners = await _chatService.SearchPotentialPartnersAsync(currentUserId);
+
+            return Ok(partners);
         }
     }
 }

@@ -24,61 +24,74 @@ namespace ApartaAPI.Services
         }
 
         // ===================================================================
-        // LOGIC 1: KHỞI TẠO HOẶC TÌM KIẾM CUỘC HỘI THOẠI
+        // LOGIC 1: TẠO HOẶC TÌM KIẾM CUỘC HỘI THOẠI (AD-HOC/THAY THẾ)
+        // Đây là logic được sử dụng khi Frontend chọn một Partner cụ thể.
         // ===================================================================
-        public async Task<InitiateInteractionDto> InitiateOrGetInteractionAsync(string currentUserId)
+        public async Task<InitiateInteractionDto> CreateAdHocInteractionAsync(string currentUserId, string partnerId)
         {
-            // 1. Giả định User hiện tại là Resident (ResidentId)
-            var residentUser = await _context.Users
-                .Include(u => u.Apartment)
-                .FirstOrDefaultAsync(u => u.UserId == currentUserId);
-
-            if (residentUser?.ApartmentId == null || residentUser.Apartment == null)
+            if (currentUserId == partnerId)
             {
-                // Xử lý khi User không phải Resident hoặc không gán với Apartment
-                // Nếu là Staff, cần tìm StaffID tương ứng với ResidentID
-                // -> Để đơn giản, giả sử chỉ Resident khởi tạo chat với Staff
-                throw new Exception("Người dùng không liên kết với căn hộ.");
+                throw new InvalidOperationException("Không thể tạo cuộc hội thoại với chính mình.");
             }
 
-            var apartment = residentUser.Apartment;
-            var buildingId = apartment.BuildingId;
-
-            // 2. Tìm Staff phụ trách Building
-            var assignment = await _context.StaffBuildingAssignments
-                .Where(sba => sba.BuildingId == buildingId && sba.IsActive)
-                .OrderBy(sba => sba.User.Role.RoleName) // Ưu tiên Staff có Role cao hơn (ví dụ: Admin)
-                .Select(sba => sba.UserId)
-                .FirstOrDefaultAsync();
-
-            if (assignment == null)
+            // 1. Kiểm tra Interaction đã tồn tại chưa
+            var existingInteraction = await _interactionRepo.GetInteractionByParticipantsAsync(currentUserId, partnerId);
+            if (existingInteraction != null)
             {
-                throw new Exception("Không tìm thấy Staff phụ trách cho tòa nhà này.");
-            }
-
-            var staffId = assignment;
-
-            // 3. Kiểm tra Interaction đã tồn tại chưa
-            var interaction = await _interactionRepo.GetInteractionByParticipantsAsync(currentUserId, staffId);
-
-            if (interaction == null)
-            {
-                // 4. Tạo Interaction mới
-                interaction = new Interaction
+                var partner = existingInteraction.ResidentId == currentUserId ? existingInteraction.Staff : existingInteraction.Resident;
+                return new InitiateInteractionDto
                 {
-                    ResidentId = residentUser.UserId,
-                    StaffId = staffId
+                    InteractionId = existingInteraction.InteractionId,
+                    PartnerId = partner.UserId,
+                    PartnerName = partner.Name
                 };
-                interaction = await _interactionRepo.AddAsync(interaction);
             }
 
-            var partnerUser = await _context.Users.FindAsync(staffId);
+            // 2. Lấy thông tin cả hai bên (đảm bảo tồn tại và có Role)
+            var sender = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == currentUserId);
+            var receiver = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == partnerId);
+
+            if (sender == null || receiver == null)
+            {
+                throw new ArgumentException("Một trong các người dùng không tồn tại.");
+            }
+
+            // 3. Xác định ai là Resident và Staff/Admin (Bảo mật: Chỉ cho phép Resident chat với Staff)
+            string residentId, staffId;
+            var senderRole = sender.Role.RoleName.ToLower();
+            var receiverRole = receiver.Role.RoleName.ToLower();
+
+            bool isSenderStaff = senderRole.Contains("staff") || senderRole.Contains("manager") || senderRole == "admin";
+            bool isReceiverStaff = receiverRole.Contains("staff") || receiverRole.Contains("manager") || receiverRole == "admin";
+
+            if (senderRole == "resident" && isReceiverStaff)
+            {
+                residentId = sender.UserId;
+                staffId = receiver.UserId;
+            }
+            else if (receiverRole == "resident" && isSenderStaff)
+            {
+                residentId = receiver.UserId;
+                staffId = sender.UserId;
+            }
+            else
+            {
+                throw new InvalidOperationException("Chỉ có thể tạo cuộc hội thoại giữa Resident và Staff/Admin.");
+            }
+
+            // 4. Tạo Interaction mới
+            var newInteraction = new Interaction
+            {
+                ResidentId = residentId,
+                StaffId = staffId
+            };
+            var created = await _interactionRepo.AddAsync(newInteraction);
 
             return new InitiateInteractionDto
             {
-                InteractionId = interaction.InteractionId,
-                PartnerId = staffId,
-                PartnerName = partnerUser?.Name ?? "Staff (Không rõ tên)"
+                InteractionId = created.InteractionId,
+                PartnerId = partnerId,
+                PartnerName = receiver.Name
             };
         }
 
@@ -179,6 +192,86 @@ namespace ApartaAPI.Services
                 : interaction.ResidentId;
 
             return (addedMessage, receiverId);
+        }
+
+        // ===================================================================
+        // LOGIC 5: TÌM KIẾM ĐỐI TÁC TIỀM NĂNG CHO COMBOBOX
+        // ===================================================================
+        public async Task<IEnumerable<PartnerDto>> SearchPotentialPartnersAsync(string currentUserId)
+        {
+            // 1. Lấy thông tin cơ bản của User đang đăng nhập
+            var currentUser = await _context.Users
+                .Include(u => u.Role)
+                .Include(u => u.Apartment).ThenInclude(a => a!.Building)
+                .Include(u => u.StaffBuildingAssignments).ThenInclude(sba => sba.Building)
+                .FirstOrDefaultAsync(u => u.UserId == currentUserId);
+
+            if (currentUser == null)
+            {
+                return Enumerable.Empty<PartnerDto>();
+            }
+
+            var userRoleName = currentUser.Role.RoleName.ToLower();
+
+            // 2. Xác định Building ID liên quan đến người dùng hiện tại
+            List<string> buildingIds = new List<string>();
+
+            if (userRoleName == "resident")
+            {
+                // Resident (Giả định gán vào Apartment) -> Lấy Building ID của Apartment đó
+                if (currentUser.Apartment?.BuildingId != null)
+                {
+                    buildingIds.Add(currentUser.Apartment.BuildingId);
+                }
+            }
+            else if (userRoleName.Contains("staff") || userRoleName == "admin")
+            {
+                // Staff/Admin -> Lấy tất cả Building ID mà họ được gán
+                buildingIds = currentUser.StaffBuildingAssignments
+                    .Where(sba => sba.IsActive)
+                    .Select(sba => sba.BuildingId)
+                    .ToList();
+            }
+
+            if (!buildingIds.Any())
+            {
+                // Nếu không có Building ID nào được tìm thấy (ví dụ: Staff chưa được gán)
+                return Enumerable.Empty<PartnerDto>();
+            }
+
+            // 3. Truy vấn các đối tác tiềm năng dựa trên Building ID(s)
+            IQueryable<User> partnersQuery;
+
+            if (userRoleName == "resident")
+            {
+                // Resident cần tìm: Tất cả Staff được gán cho Building đó
+                partnersQuery = _context.Users
+                    .Where(u => u.StaffBuildingAssignments.Any(sba => buildingIds.Contains(sba.BuildingId) && sba.IsActive)
+                                && u.UserId != currentUserId);
+            }
+            else // Staff / Admin cần tìm: Tất cả Residents trong các Building họ quản lý
+            {
+                // Tìm tất cả Users là Resident và có Apartment thuộc Building quản lý
+                partnersQuery = _context.Users
+                    .Where(u => u.Apartment != null && buildingIds.Contains(u.Apartment.BuildingId)
+                                && u.Role.RoleName.ToLower() == "resident"
+                                && u.UserId != currentUserId);
+            }
+
+            // 4. Thực thi truy vấn và ánh xạ sang DTO
+            var partners = await partnersQuery
+                .Select(u => new PartnerDto
+                {
+                    UserId = u.UserId,
+                    FullName = u.Name,
+                    AvatarUrl = u.AvatarUrl,
+                    Role = u.Role.RoleName
+                })
+                .Distinct() // Loại bỏ trùng lặp nếu có
+                .OrderBy(p => p.FullName)
+                .ToListAsync();
+
+            return partners;
         }
     }
 }

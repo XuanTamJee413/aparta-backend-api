@@ -1,8 +1,9 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
-using ApartaAPI.Models;
 using ApartaAPI.Helpers;
+using ApartaAPI.Hubs;
+using ApartaAPI.Models;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -10,13 +11,15 @@ using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System;
 using System.Text;
-using QuestPDF.Infrastructure;
+using static ApartaAPI.Hubs.ChatHub;
 
 namespace ApartaAPI
 {
@@ -101,8 +104,14 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
+            builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+            builder.Services.AddScoped<IChatService, ChatService>();
 
-			builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSignalR();
+            builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>(); // Đăng ký Provider
+
+            builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options =>
 			{
 				// 1. Định nghĩa Security Scheme (Cách Swagger biết về Authentication)
@@ -159,7 +168,7 @@ namespace ApartaAPI
 
 			var app = builder.Build();
 
-			if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
 				app.UseSwaggerUI();
@@ -173,7 +182,9 @@ namespace ApartaAPI
 
 			app.UseAuthorization();
 
-			app.MapControllers();
+            app.MapHub<ChatHub>("/chathub");
+
+            app.MapControllers();
 			app.Run();
 		}
 	}

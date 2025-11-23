@@ -216,6 +216,23 @@ namespace ApartaAPI.Services
 			return await _bookingRepository.SaveChangesAsync();
 		}
 
+		public async Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(string utilityId, DateTime date)
+		{
+			// Lấy tất cả booking của Utility đó
+			// Trạng thái: Chỉ lấy Pending, Approved (Confirmed), Completed. Bỏ qua Cancelled/Rejected.
+			var bookings = await _bookingRepository.GetAllAsync();
+
+			return bookings
+				.Where(b =>
+					b.UtilityId == utilityId &&
+					(b.Status == "Pending" || b.Status == "Approved" || b.Status == "Completed") &&
+					b.BookingDate.Date == date.Date // So sánh cùng ngày
+				)
+				.Select(b => new BookedSlotDto(b.BookingDate, b.BookedAt ?? b.BookingDate.AddHours(1))) // Giả sử nếu null thì +1h
+				.OrderBy(b => b.Start)
+				.ToList();
+		}
+
 		private UtilityBookingDto MapToDto(UtilityBooking b)
 		{
 			return new UtilityBookingDto(

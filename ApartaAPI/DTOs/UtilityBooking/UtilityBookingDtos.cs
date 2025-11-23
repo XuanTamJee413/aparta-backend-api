@@ -35,6 +35,11 @@ namespace ApartaAPI.DTOs.UtilityBooking
 			string? StaffNote
 		);
 
+		public sealed record BookedSlotDto(
+			DateTime Start,
+			DateTime End
+		);
+
 		//// Param lọc (Tái sử dụng ServiceQueryParameters hoặc tạo mới nếu muốn)
 		//// Ở đây tôi dùng lại cấu trúc giống ServiceQueryParameters
 		//public sealed record UtilityBookingQueryParameters : QueryParameters

@@ -110,5 +110,15 @@ namespace ApartaAPI.Controllers
 			catch (UnauthorizedAccessException) { return Forbid(); }
 			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
 		}
+
+		// GET: api/utilitybookings/slots?utilityId=...&date=...
+		[HttpGet("slots")]
+		public async Task<ActionResult<IEnumerable<BookedSlotDto>>> GetBookedSlots(
+			[FromQuery] string utilityId,
+			[FromQuery] DateTime date)
+		{
+			var slots = await _bookingService.GetBookedSlotsAsync(utilityId, date);
+			return Ok(slots);
+		}
 	}
 }

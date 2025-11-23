@@ -23,5 +23,7 @@ namespace ApartaAPI.Services.Interfaces
 		Task<UtilityBookingDto?> UpdateBookingStatusAsync(string bookingId, UtilityBookingUpdateDto updateDto);
 
 		Task<bool> CancelBookingByResidentAsync(string bookingId, string residentId);
+
+		Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(string utilityId, DateTime date);
 	}
 }

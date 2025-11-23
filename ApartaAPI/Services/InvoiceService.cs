@@ -24,6 +24,7 @@ public class InvoiceService : IInvoiceService
     private readonly IRepository<InvoiceItem> _invoiceItemRepo;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
+    private readonly ICloudinaryService? _cloudinaryService;
 
     public InvoiceService(
         ApartaDbContext context,
@@ -33,7 +34,8 @@ public class InvoiceService : IInvoiceService
         IRepository<PriceQuotation> priceQuotationRepo,
         IRepository<InvoiceItem> invoiceItemRepo,
         IMapper mapper,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ICloudinaryService? cloudinaryService = null)
     {
         _context = context;
         _invoiceRepo = invoiceRepo;
@@ -43,6 +45,7 @@ public class InvoiceService : IInvoiceService
         _invoiceItemRepo = invoiceItemRepo;
         _mapper = mapper;
         _configuration = configuration;
+        _cloudinaryService = cloudinaryService;
     }
 
     /**
@@ -78,7 +81,7 @@ public class InvoiceService : IInvoiceService
     /**
     * Lấy danh sách hóa đơn của tòa nhà
     */
-    public async Task<List<InvoiceDto>> GetInvoicesAsync(string buildingId, string userId, string? status = null, string? apartmentCode = null)
+    public async Task<List<InvoiceDto>> GetInvoicesAsync(string buildingId, string userId, string? status = null, string? apartmentCode = null, string? feeType = null)
     {
         // 1) Authorization: ensure user has access to the project's building
         var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
@@ -130,6 +133,12 @@ public class InvoiceService : IInvoiceService
         {
             var code = apartmentCode.Trim().ToLower();
             joinedQuery = joinedQuery.Where(x => x.Apartment.Code.ToLower().Contains(code));
+        }
+
+        // Filter by fee type (optional)
+        if (!string.IsNullOrWhiteSpace(feeType))
+        {
+            joinedQuery = joinedQuery.Where(x => x.Invoice.FeeType == feeType);
         }
 
         // Lấy danh sách Invoice IDs sau khi filter
@@ -561,6 +570,175 @@ public class InvoiceService : IInvoiceService
         catch
         {
             return 0;
+        }
+    }
+
+    /**
+     * Tạo hóa đơn một lần (One-Time Invoice)
+     * Note: Image URLs should be prepared in controller and passed via imageUrls parameter
+     */
+    public async Task<(bool Success, string Message, InvoiceDto? Invoice)> CreateOneTimeInvoiceAsync(OneTimeInvoiceCreateDto dto, string userId, List<string>? imageUrls = null)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Validate apartment exists
+            var apartment = await _context.Apartments
+                .FirstOrDefaultAsync(a => a.ApartmentId == dto.ApartmentId);
+            
+            if (apartment == null)
+            {
+                await transaction.RollbackAsync();
+                return (false, ApiResponse.SM01_NO_RESULTS, null);
+            }
+
+            // Validate PriceQuotationId if provided
+            if (!string.IsNullOrWhiteSpace(dto.PriceQuotationId))
+            {
+                var quotation = await _priceQuotationRepo.FirstOrDefaultAsync(
+                    pq => pq.PriceQuotationId == dto.PriceQuotationId);
+                if (quotation == null)
+                {
+                    await transaction.RollbackAsync();
+                    return (false, "Price quotation not found.", null);
+                }
+            }
+
+            // Get staff ID
+            string? staffId = null;
+            if (!string.IsNullOrEmpty(userId) && userId != "SYSTEM_JOB")
+            {
+                var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
+                if (userExists)
+                {
+                    staffId = userId;
+                }
+            }
+
+            // Prepare description as JSON
+            var descriptionObj = new
+            {
+                itemDescription = dto.ItemDescription,
+                note = dto.Note,
+                evidenceUrls = imageUrls ?? new List<string>()
+            };
+            var masterDescription = System.Text.Json.JsonSerializer.Serialize(descriptionObj);
+
+            // Create Invoice (Parent)
+            var invoice = new Invoice
+            {
+                InvoiceId = Guid.NewGuid().ToString("N"),
+                ApartmentId = dto.ApartmentId,
+                StaffId = staffId,
+                FeeType = "ONE_TIME",
+                Price = dto.Amount,
+                Status = "PENDING",
+                Description = masterDescription, // Will be updated with image URLs in controller
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(3)),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Invoices.Add(invoice);
+
+            // Create InvoiceItem (Child) - Only 1 item
+            var invoiceItem = new InvoiceItem
+            {
+                InvoiceItemId = Guid.NewGuid().ToString("N"),
+                InvoiceId = invoice.InvoiceId,
+                FeeType = "ONE_TIME",
+                Description = dto.ItemDescription,
+                Quantity = 1,
+                UnitPrice = dto.Amount,
+                Total = dto.Amount,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = null
+            };
+
+            _context.InvoiceItems.Add(invoiceItem);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Map to DTO
+            var invoiceDto = _mapper.Map<InvoiceDto>(invoice);
+            invoiceDto.ApartmentCode = apartment.Code;
+
+            return (true, "One-time invoice created successfully.", invoiceDto);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return (false, ApiResponse.SM40_SYSTEM_ERROR, null);
+        }
+    }
+
+    /**
+     * Đánh dấu hóa đơn đã thanh toán
+     */
+    public async Task<(bool Success, string Message)> MarkInvoiceAsPaidAsync(string invoiceId, string userId)
+    {
+        try
+        {
+            var invoice = await _invoiceRepo.FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+            if (invoice == null)
+            {
+                return (false, ApiResponse.SM01_NO_RESULTS);
+            }
+
+            invoice.Status = "PAID";
+            invoice.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return (true, "Invoice marked as paid successfully.");
+        }
+        catch (Exception)
+        {
+            return (false, ApiResponse.SM40_SYSTEM_ERROR);
+        }
+    }
+
+    /**
+     * Xóa hóa đơn (chỉ được xóa nếu Status == "PENDING")
+     */
+    public async Task<(bool Success, string Message)> DeleteInvoiceAsync(string invoiceId, string userId)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.InvoiceItems)
+                .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+            
+            if (invoice == null)
+            {
+                await transaction.RollbackAsync();
+                return (false, ApiResponse.SM01_NO_RESULTS);
+            }
+
+            if (invoice.Status != "PENDING")
+            {
+                await transaction.RollbackAsync();
+                return (false, "Only pending invoices can be deleted.");
+            }
+
+            // Delete invoice items first
+            _context.InvoiceItems.RemoveRange(invoice.InvoiceItems);
+            
+            // Delete invoice
+            _context.Invoices.Remove(invoice);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return (true, "Invoice deleted successfully.");
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            return (false, ApiResponse.SM40_SYSTEM_ERROR);
         }
     }
 

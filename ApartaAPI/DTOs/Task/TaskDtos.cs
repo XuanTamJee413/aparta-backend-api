@@ -6,8 +6,8 @@ namespace ApartaAPI.DTOs.Tasks
 {
     // 1. DTO để tạo Task mới
     public sealed record TaskCreateDto(
-        string? ServiceBookingId, // Có thể null nếu tạo task lẻ
-        [Required] string Type,   // Ví dụ: "Repair", "Cleaning", "Inspection"
+        string? ServiceBookingId, 
+        [Required] string Type,   
         [Required] string Description,
         DateTime? StartDate,
         DateTime? EndDate
@@ -16,13 +16,13 @@ namespace ApartaAPI.DTOs.Tasks
     // 2. DTO để phân công (Assign)
     public sealed record TaskAssignmentCreateDto(
         [Required] string TaskId,
-        [Required] string AssigneeUserId // ID của Maintenance Staff
+        [Required] string AssigneeUserId 
     );
 
     // 3. DTO để cập nhật trạng thái (cho Maintenance Staff)
     public sealed record TaskUpdateStatusDto(
-        [Required] string Status, // "In Progress", "Completed", "Cancelled"
-        string? Note // Ghi chú khi hoàn thành
+        [Required] string Status,
+        string? Note 
     );
 
     // 4. DTO hiển thị Task (Output)
@@ -30,14 +30,13 @@ namespace ApartaAPI.DTOs.Tasks
         string TaskId,
         string? ServiceBookingId,
         string OperationStaffId,
-        string OperationStaffName, // Tên người tạo
+        string OperationStaffName, 
         string Type,
         string Description,
         string Status,
         DateTime? StartDate,
         DateTime? EndDate,
         DateTime? CreatedAt,
-        // Thông tin người được giao việc (Lấy từ TaskAssignment mới nhất)
         string? AssigneeUserId, 
         string? AssigneeName,
         DateTime? AssignedDate

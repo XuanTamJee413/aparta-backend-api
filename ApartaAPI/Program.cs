@@ -53,18 +53,21 @@ namespace ApartaAPI
 
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-			
-			// Services
-			builder.Services.AddScoped<IProjectService, ProjectService>();
+
+            // Background Jobs
+			builder.Services.AddHostedService<SubscriptionExpiryService>();
+			builder.Services.AddHostedService<MonthlyBillingJob>();
+            builder.Services.AddHostedService<StaffAssignmentExpirationService>();
+
+            // Services
+            builder.Services.AddScoped<IProjectService, ProjectService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IServiceBookingService, ServiceBookingService>();
 			builder.Services.AddScoped<IUtilityService, UtilityService>();
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-			builder.Services.AddHostedService<SubscriptionExpiryService>();
-			builder.Services.AddHostedService<MonthlyBillingJob>();
-			builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
@@ -84,11 +87,13 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IProfileService, ProfileService>();
 			builder.Services.AddTransient<IMailService, MailService>();
 			builder.Services.AddSingleton<PayOSService>();
-			
-			// Custom Repositories
-			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+            builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
+
+            // Custom Repositories
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options =>

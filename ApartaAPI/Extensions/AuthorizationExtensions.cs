@@ -212,12 +212,30 @@ namespace ApartaAPI.Extensions
                     ctx.User.HasClaim("permission", "invoice.resident.read")
                 ));
 
-                //Policy cho Billing 
+                // Policy cho Billing 
                 options.AddPolicy("CanGenerateBilling", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
                     ctx.User.HasClaim("permission", "billing.generate")
                 ));
 
+                // Policy cho StaffAssignment  
+                options.AddPolicy("CanReadStaffAssignment", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "staffassignment.read")
+                ));
+
+                options.AddPolicy("CanCreateStaffAssignment", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "staffassignment.create")
+                ));
+
+                options.AddPolicy("CanUpdateStaffAssignment", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "staffassignment.update")
+                ));
             });
 
             return services;

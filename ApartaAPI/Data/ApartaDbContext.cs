@@ -84,6 +84,10 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<Visitor> Visitors { get; set; }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("server=ApartaDB.mssql.somee.com;database=ApartaDB;uid=adminAparta;pwd=12345678;TrustServerCertificate=true");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Apartment>(entity =>
@@ -241,15 +245,15 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.NumResidents)
                 .HasDefaultValue(0)
                 .HasColumnName("num_residents");
-            entity.Property(e => e.ReadingWindowStart)
-                .HasDefaultValue(1)
-                .HasColumnName("reading_window_start");
-            entity.Property(e => e.ReadingWindowEnd)
-                .HasDefaultValue(3)
-                .HasColumnName("reading_window_end");
             entity.Property(e => e.ProjectId)
                 .HasMaxLength(50)
                 .HasColumnName("project_id");
+            entity.Property(e => e.ReadingWindowEnd)
+                .HasDefaultValue(3)
+                .HasColumnName("reading_window_end");
+            entity.Property(e => e.ReadingWindowStart)
+                .HasDefaultValue(1)
+                .HasColumnName("reading_window_start");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
@@ -1024,33 +1028,54 @@ public partial class ApartaDbContext : DbContext
 
         modelBuilder.Entity<StaffBuildingAssignment>(entity =>
         {
-            entity.HasKey(e => new { e.UserId, e.BuildingId }).HasName("PK__STAFF_BU__5077CCF885BB5D62");
+            entity.HasKey(e => e.AssignmentId).HasName("PK__STAFF_BU__DA8918146AE379A2");
 
             entity.ToTable("STAFF_BUILDING_ASSIGNMENT");
 
-            entity.Property(e => e.UserId)
+            entity.Property(e => e.AssignmentId)
                 .HasMaxLength(50)
-                .HasColumnName("user_id");
-            entity.Property(e => e.BuildingId)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("assignment_id");
+            entity.Property(e => e.AssignedBy)
                 .HasMaxLength(50)
-                .HasColumnName("building_id");
+                .HasColumnName("assigned_by");
             entity.Property(e => e.AssignmentEndDate).HasColumnName("assignment_end_date");
             entity.Property(e => e.AssignmentStartDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("assignment_start_date");
+            entity.Property(e => e.BuildingId)
+                .HasMaxLength(50)
+                .HasColumnName("building_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_at");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");
+            entity.Property(e => e.Position)
+                .HasMaxLength(100)
+                .HasColumnName("position");
             entity.Property(e => e.ScopeOfWork)
                 .HasMaxLength(255)
                 .HasColumnName("scope_of_work");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UserId)
+                .HasMaxLength(50)
+                .HasColumnName("user_id");
+
+            entity.HasOne(d => d.AssignedByNavigation).WithMany(p => p.StaffBuildingAssignmentAssignedByNavigations)
+                .HasForeignKey(d => d.AssignedBy)
+                .HasConstraintName("FK_StaffAssign_Admin");
 
             entity.HasOne(d => d.Building).WithMany(p => p.StaffBuildingAssignments)
                 .HasForeignKey(d => d.BuildingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StaffAssign_Building");
 
-            entity.HasOne(d => d.User).WithMany(p => p.StaffBuildingAssignments)
+            entity.HasOne(d => d.User).WithMany(p => p.StaffBuildingAssignmentUsers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StaffAssign_User");

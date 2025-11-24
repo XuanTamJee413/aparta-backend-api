@@ -37,6 +37,8 @@ public partial class User
 
     public DateTime? ResetTokenExpires { get; set; }
 
+    public bool IsFirstLogin { get; set; }
+
     public virtual Apartment? Apartment { get; set; }
 
     public virtual ICollection<Interaction> InteractionResidents { get; set; } = new List<Interaction>();
@@ -61,7 +63,9 @@ public partial class User
 
     public virtual ICollection<ServiceBooking> ServiceBookings { get; set; } = new List<ServiceBooking>();
 
-    public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignments { get; set; } = new List<StaffBuildingAssignment>();
+    public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignmentAssignedByNavigations { get; set; } = new List<StaffBuildingAssignment>();
+
+    public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignmentUsers { get; set; } = new List<StaffBuildingAssignment>();
 
     public virtual ICollection<TaskAssignment> TaskAssignmentAssigneeUsers { get; set; } = new List<TaskAssignment>();
 

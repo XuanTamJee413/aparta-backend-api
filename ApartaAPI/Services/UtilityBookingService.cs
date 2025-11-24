@@ -28,14 +28,12 @@ namespace ApartaAPI.Services
 
 		public async Task<UtilityBookingDto> CreateBookingAsync(UtilityBookingCreateDto createDto, string residentId)
 		{
-			// 1. Kiểm tra Utility có tồn tại và Active không
 			var utility = await _utilityRepository.FirstOrDefaultAsync(u => u.UtilityId == createDto.UtilityId);
 			if (utility == null || utility.Status != "Available")
 			{
 				throw new InvalidOperationException("Tiện ích không tồn tại hoặc đang bảo trì.");
 			}
 
-			// 2. Kiểm tra logic thời gian cơ bản
 			if (createDto.BookingDate >= createDto.BookedAt)
 			{
 				throw new ArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
@@ -45,8 +43,7 @@ namespace ApartaAPI.Services
 				throw new ArgumentException("Không thể đặt lịch trong quá khứ.");
 			}
 
-			// 3. Validate PeriodTime (Tổng thời gian không được quá quy định)
-			// Giả sử PeriodTime là số giờ (double)
+			// Validate PeriodTime 
 			if (utility.PeriodTime.HasValue)
 			{
 				var duration = (createDto.BookedAt - createDto.BookingDate).TotalHours;
@@ -56,14 +53,24 @@ namespace ApartaAPI.Services
 				}
 			}
 
-			// 4. Validate Overlap (Kiểm tra trùng lịch)
-			// Logic trùng: (StartA < EndB) AND (EndA > StartB)
-			// Chúng ta cần kiểm tra DB xem có booking nào đã Confirm/Pending mà trùng giờ không
-			var allBookings = await _bookingRepository.GetAllAsync(); // Tối ưu: Nên dùng _repo.Find(condition)
+			var openTime = new TimeSpan(6, 0, 0); 
+			var closeTime = new TimeSpan(22, 0, 0); 
+
+			if (createDto.BookingDate.TimeOfDay < openTime)
+			{
+				throw new ArgumentException("Dịch vụ chỉ mở cửa từ 6:00 sáng.");
+			}
+
+			if (createDto.BookedAt.TimeOfDay > closeTime)
+			{
+				throw new ArgumentException("Dịch vụ đóng cửa lúc 22:00 (10h tối). Vui lòng chọn giờ kết thúc sớm hơn.");
+			}
+
+			var allBookings = await _bookingRepository.GetAllAsync(); 
 
 			var isOverlapping = allBookings.Any(b =>
 				b.UtilityId == createDto.UtilityId &&
-				b.Status != "Cancelled" && b.Status != "Rejected" && // Bỏ qua các đơn đã hủy
+				b.Status != "Cancelled" && b.Status != "Rejected" && 
 				createDto.BookingDate < b.BookedAt &&
 				createDto.BookedAt > b.BookingDate
 			);
@@ -73,7 +80,6 @@ namespace ApartaAPI.Services
 				throw new InvalidOperationException("Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.");
 			}
 
-			// 5. Tạo Booking
 			var resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == residentId);
 			if (resident == null) throw new InvalidOperationException("Cư dân không xác định.");
 
@@ -82,8 +88,8 @@ namespace ApartaAPI.Services
 				UtilityBookingId = Guid.NewGuid().ToString(),
 				UtilityId = createDto.UtilityId,
 				ResidentId = residentId,
-				BookingDate = createDto.BookingDate, // Bắt đầu
-				BookedAt = createDto.BookedAt,       // Kết thúc
+				BookingDate = createDto.BookingDate, 
+				BookedAt = createDto.BookedAt,      
 				Status = "Pending",
 				ResidentNote = createDto.ResidentNote,
 				CreatedAt = DateTime.UtcNow,
@@ -93,7 +99,6 @@ namespace ApartaAPI.Services
 			await _bookingRepository.AddAsync(newBooking);
 			await _bookingRepository.SaveChangesAsync();
 
-			// Map data để trả về
 			newBooking.Utility = utility;
 			newBooking.Resident = resident;
 
@@ -120,7 +125,7 @@ namespace ApartaAPI.Services
 				query = query.Where(b => b.Status.Equals(parameters.Status.Trim(), StringComparison.OrdinalIgnoreCase));
 			}
 
-			// Search Term (Theo tên tiện ích)
+			// Search Term 
 			if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
 			{
 				string term = parameters.SearchTerm.Trim().ToLower();
@@ -142,7 +147,7 @@ namespace ApartaAPI.Services
 		{
 			var allBookings = await _bookingRepository.GetAllAsync();
 			var allUtilities = await _utilityRepository.GetAllAsync();
-			var allUsers = await _userRepository.GetAllAsync(); // Chỉ để lấy tên nếu cần
+			var allUsers = await _userRepository.GetAllAsync(); 
 
 			return allBookings
 				.Where(b => b.ResidentId == residentId)
@@ -177,7 +182,6 @@ namespace ApartaAPI.Services
 			await _bookingRepository.UpdateAsync(booking);
 			await _bookingRepository.SaveChangesAsync();
 
-			// Re-fetch info for DTO
 			booking.Utility = await _utilityRepository.FirstOrDefaultAsync(u => u.UtilityId == booking.UtilityId);
 			booking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == booking.ResidentId);
 
@@ -196,14 +200,11 @@ namespace ApartaAPI.Services
 				throw new UnauthorizedAccessException("Bạn không có quyền hủy đơn này.");
 			}
 
-			// 2. Kiểm tra thời gian (Khóa nếu đã quá hạn)
-			// Nếu thời gian bắt đầu < thời gian hiện tại => Đã quá hạn
 			if (booking.BookingDate < DateTime.UtcNow)
 			{
 				throw new InvalidOperationException("Đã quá thời gian bắt đầu, không thể hủy.");
 			}
 
-			// 3. Chỉ cho phép hủy nếu chưa bị Reject hoặc đã Cancel rồi
 			if (booking.Status == "Rejected" || booking.Status == "Cancelled")
 			{
 				throw new InvalidOperationException("Đơn này đã bị hủy hoặc từ chối trước đó.");
@@ -218,17 +219,16 @@ namespace ApartaAPI.Services
 
 		public async Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(string utilityId, DateTime date)
 		{
-			// Lấy tất cả booking của Utility đó
-			// Trạng thái: Chỉ lấy Pending, Approved (Confirmed), Completed. Bỏ qua Cancelled/Rejected.
+			
 			var bookings = await _bookingRepository.GetAllAsync();
 
 			return bookings
 				.Where(b =>
 					b.UtilityId == utilityId &&
 					(b.Status == "Pending" || b.Status == "Approved" || b.Status == "Completed") &&
-					b.BookingDate.Date == date.Date // So sánh cùng ngày
+					b.BookingDate.Date == date.Date
 				)
-				.Select(b => new BookedSlotDto(b.BookingDate, b.BookedAt ?? b.BookingDate.AddHours(1))) // Giả sử nếu null thì +1h
+				.Select(b => new BookedSlotDto(b.BookingDate, b.BookedAt ?? b.BookingDate.AddHours(1))) 
 				.OrderBy(b => b.Start)
 				.ToList();
 		}

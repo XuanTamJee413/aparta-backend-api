@@ -29,17 +29,14 @@ namespace ApartaAPI.Services
 			_roleRepository = roleRepository;
 		}
 
-		// 1. Lấy tất cả Task (Dành cho Operation Staff)
 		public async Task<PagedList<TaskDto>> GetAllTasksAsync(TaskQueryParameters parameters)
 		{
 			var tasks = await _taskRepository.GetAllAsync();
 			var assignments = await _assignmentRepository.GetAllAsync();
 			var users = await _userRepository.GetAllAsync();
 
-			// Join dữ liệu để lấy thông tin Assignee mới nhất
 			var query = tasks.Select(t => MapToDto(t, assignments, users)).AsQueryable();
 
-			// Lọc
 			if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
 			{
 				string search = parameters.SearchTerm.Trim().ToLower();
@@ -50,7 +47,6 @@ namespace ApartaAPI.Services
 				query = query.Where(t => t.Status == parameters.Status);
 			}
 
-			// Phân trang
 			var count = query.Count();
 			var items = query
 				.OrderByDescending(t => t.CreatedAt)
@@ -75,7 +71,8 @@ namespace ApartaAPI.Services
 				StartDate = createDto.StartDate,
 				EndDate = createDto.EndDate,
 				CreatedAt = DateTime.UtcNow,
-				UpdatedAt = DateTime.UtcNow
+				UpdatedAt = DateTime.UtcNow,
+				AssigneeNote = null
 			};
 
 			await _taskRepository.AddAsync(newTask);
@@ -87,7 +84,7 @@ namespace ApartaAPI.Services
 				newTask.TaskId, newTask.ServiceBookingId, newTask.OperationStaffId,
 				creator?.Name ?? "Unknown", newTask.Type, newTask.Description,
 				newTask.Status, newTask.StartDate, newTask.EndDate, newTask.CreatedAt,
-				null, null, null
+				null, null, null, null
 			);
 		}
 
@@ -97,22 +94,16 @@ namespace ApartaAPI.Services
 			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == assignmentDto.TaskId);
 			if (task == null) throw new ArgumentException("Task không tồn tại.");
 
-			// Lấy thông tin người được giao
 			var assignee = await _userRepository.FirstOrDefaultAsync(u => u.UserId == assignmentDto.AssigneeUserId);
 			if (assignee == null) throw new ArgumentException("Nhân viên không tồn tại.");
 
-			// --- SỬA LỖI TẠI ĐÂY ---
-			// Thay vì gọi assignee.Role.RoleName (bị null), hãy tìm Role trong bảng Role
 			var role = await _roleRepository.FirstOrDefaultAsync(r => r.RoleId == assignee.RoleId);
 
-			// Kiểm tra xem Role có tồn tại và có phải là 'maintenance_staff' không
-			// Lưu ý: Đảm bảo chuỗi "maintenance_staff" khớp chính xác với DB của bạn
 			if (role == null || role.RoleName != "maintenance_staff")
 			{
 				throw new ArgumentException("Người được giao việc phải là nhân viên bảo trì (maintenance_staff).");
 			}
 
-			// Tạo Assignment mới
 			var assignment = new TaskAssignment
 			{
 				TaskAssignmentId = Guid.NewGuid().ToString(),
@@ -126,7 +117,6 @@ namespace ApartaAPI.Services
 
 			await _assignmentRepository.AddAsync(assignment);
 
-			// Cập nhật trạng thái Task
 			task.Status = "Assigned";
 			task.UpdatedAt = DateTime.UtcNow;
 			await _taskRepository.UpdateAsync(task);
@@ -139,15 +129,14 @@ namespace ApartaAPI.Services
 		// 4. Lấy Task của tôi (Dành cho Maintenance Staff)
 		public async Task<PagedList<TaskDto>> GetMyTasksAsync(string assigneeId, TaskQueryParameters parameters)
 		{
-			// Logic: Tìm trong bảng Assignment những dòng có AssigneeUserId == assigneeId
 			var myAssignments = (await _assignmentRepository.GetAllAsync())
 								.Where(a => a.AssigneeUserId == assigneeId)
 								.Select(a => a.TaskId)
 								.Distinct();
 
 			var allTasks = await _taskRepository.GetAllAsync();
-			var users = await _userRepository.GetAllAsync(); // Để map tên
-			var allAssignments = await _assignmentRepository.GetAllAsync(); // Để map assignment info
+			var users = await _userRepository.GetAllAsync(); 
+			var allAssignments = await _assignmentRepository.GetAllAsync(); 
 
 			var myTasks = allTasks.Where(t => myAssignments.Contains(t.TaskId));
 
@@ -173,21 +162,21 @@ namespace ApartaAPI.Services
 		{
 			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == taskId);
 			if (task == null) return null;
-
 			task.Status = updateDto.Status;
-			// Nếu có note, bạn có thể lưu vào Description hoặc một trường Note riêng nếu có
+
 			if (!string.IsNullOrEmpty(updateDto.Note))
 			{
-				task.Description += $" [Update: {updateDto.Note}]";
+				task.AssigneeNote = updateDto.Note;
 			}
+
 			task.UpdatedAt = DateTime.UtcNow;
 
 			await _taskRepository.UpdateAsync(task);
 			await _taskRepository.SaveChangesAsync();
 
-			// Lấy data để return
 			var assignments = await _assignmentRepository.GetAllAsync();
 			var users = await _userRepository.GetAllAsync();
+
 			return MapToDto(task, assignments, users);
 		}
 
@@ -205,7 +194,6 @@ namespace ApartaAPI.Services
 		{
 			var creator = users.FirstOrDefault(u => u.UserId == task.OperationStaffId);
 
-			// Lấy assignment mới nhất cho task này
 			var latestAssignment = assignments
 				.Where(a => a.TaskId == task.TaskId)
 				.OrderByDescending(a => a.AssignedDate)
@@ -227,7 +215,8 @@ namespace ApartaAPI.Services
 				task.CreatedAt,
 				assigneeId,
 				assigneeName,
-				latestAssignment?.AssignedDate
+				latestAssignment?.AssignedDate,
+				task.AssigneeNote
 			);
 		}
 	}

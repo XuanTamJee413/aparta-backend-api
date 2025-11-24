@@ -39,7 +39,8 @@ namespace ApartaAPI.DTOs.Tasks
         DateTime? CreatedAt,
         string? AssigneeUserId, 
         string? AssigneeName,
-        DateTime? AssignedDate
-    );
+        DateTime? AssignedDate,
+		string? AssigneeNote
+	);
 
 }

@@ -32,7 +32,6 @@ namespace ApartaAPI.Controllers
 
 		// 1. Lấy danh sách Task (Dành cho Operation Staff quản lý)
 		[HttpGet]
-		// [Authorize(Roles = "admin,staff")] // Mở comment nếu cần phân quyền chặt
 		public async Task<ActionResult<PagedList<TaskDto>>> GetAllTasks([FromQuery] TaskQueryParameters parameters)
 		{
 			var result = await _taskService.GetAllTasksAsync(parameters);
@@ -52,7 +51,7 @@ namespace ApartaAPI.Controllers
 		[HttpPost]
 		public async Task<ActionResult<TaskDto>> CreateTask([FromBody] TaskCreateDto createDto)
 		{
-			var userId = GetCurrentUserId(); // Operation Staff ID
+			var userId = GetCurrentUserId();
 			var result = await _taskService.CreateTaskAsync(createDto, userId);
 			return CreatedAtAction(nameof(GetTaskById), new { id = result.TaskId }, result);
 		}
@@ -61,7 +60,7 @@ namespace ApartaAPI.Controllers
 		[HttpPost("assign")]
 		public async Task<IActionResult> AssignTask([FromBody] TaskAssignmentCreateDto assignmentDto)
 		{
-			var assignerId = GetCurrentUserId(); // Người giao việc
+			var assignerId = GetCurrentUserId();
 			try
 			{
 				var result = await _taskService.AssignTaskAsync(assignmentDto, assignerId);

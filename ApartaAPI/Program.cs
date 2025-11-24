@@ -1,8 +1,9 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
-using ApartaAPI.Models;
 using ApartaAPI.Helpers;
+using ApartaAPI.Hubs;
+using ApartaAPI.Models;
 using ApartaAPI.Profiles;
 using ApartaAPI.Repositories;
 using ApartaAPI.Repositories.Interfaces;
@@ -10,12 +11,16 @@ using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System;
 using System.Text;
+using static ApartaAPI.Hubs.ChatHub;
+using Task = System.Threading.Tasks.Task;
 
 namespace ApartaAPI
 {
@@ -25,21 +30,28 @@ namespace ApartaAPI
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+            QuestPDF.Settings.License = LicenseType.Community;
+            var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 			builder.Services.AddCors(options =>
 			{
 				options.AddPolicy(name: myAllowSpecificOrigins,
 					policy =>
 					{
-						policy.WithOrigins("http://localhost:4200")
+						policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
 							  .AllowAnyHeader()
-							  .AllowAnyMethod();
+							  .AllowAnyMethod()
+							  .AllowCredentials();
 					});
 			});
 
 			// Add services to the container.
-			builder.Services.AddControllers();
+			builder.Services.AddControllers()
+				.AddJsonOptions(options =>
+				{
+					options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+					options.JsonSerializerOptions.WriteIndented = true;
+				});
 
 			builder.Services.AddDbContext<ApartaDbContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -65,6 +77,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IServiceBookingService, ServiceBookingService>();
 			builder.Services.AddScoped<IUtilityService, UtilityService>();
+			builder.Services.AddScoped<IUtilityBookingService, UtilityBookingService>();
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
             builder.Services.AddScoped<IRoleService, RoleService>();
@@ -81,6 +94,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 			builder.Services.AddScoped<IContractService, ContractService>();
+
 			builder.Services.AddScoped<ITaskService, TaskService> ();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -91,11 +105,27 @@ namespace ApartaAPI
 
             // Custom Repositories
             builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+
+            builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
+            builder.Services.AddSingleton<PayOSService>();
+
+			
+			// Custom Repositories
+			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+            builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
+            builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+
+            builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
+            builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>(); // Đăng ký Provider
             builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 
-			builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options =>
 			{
 				// 1. Định nghĩa Security Scheme (Cách Swagger biết về Authentication)
@@ -146,13 +176,29 @@ namespace ApartaAPI
 						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
 						ClockSkew = TimeSpan.Zero
 					};
-				});
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            // Nếu request đến /chathub và có token trong Query String
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                path.StartsWithSegments("/chathub"))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
 
 			builder.Services.AddAuthorizationPolicies();
 
 			var app = builder.Build();
 
-			if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
 				app.UseSwaggerUI();
@@ -162,11 +208,13 @@ namespace ApartaAPI
 
 			app.UseCors(myAllowSpecificOrigins);
 
-			app.UseAuthentication();
+            app.UseAuthentication();
 
 			app.UseAuthorization();
 
-			app.MapControllers();
+            app.MapHub<ChatHub>("/chathub").RequireCors(myAllowSpecificOrigins);
+
+            app.MapControllers();
 			app.Run();
 		}
 	}

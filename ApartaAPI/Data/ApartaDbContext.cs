@@ -1358,8 +1358,14 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UtilityId)
                 .HasMaxLength(50)
                 .HasColumnName("utility_id");
+			entity.Property(e => e.ResidentNote)
+	            .HasMaxLength(255)
+	            .HasColumnName("resident_note");
+			entity.Property(e => e.StaffNote)
+				.HasMaxLength(255)
+				.HasColumnName("staff_note");
 
-            entity.HasOne(d => d.Resident).WithMany(p => p.UtilityBookings)
+			entity.HasOne(d => d.Resident).WithMany(p => p.UtilityBookings)
                 .HasForeignKey(d => d.ResidentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UtilityBooking_Resident");

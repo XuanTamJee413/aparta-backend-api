@@ -1,11 +1,12 @@
 ﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.Helpers;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using Microsoft.Extensions.Configuration;
 
 namespace ApartaAPI.Services
 {
@@ -15,17 +16,23 @@ namespace ApartaAPI.Services
         private readonly IRepository<Role> _roleRepository;
         private readonly IRepository<StaffBuildingAssignment> _staffBuildingAssignmentRepository;
         private readonly ApartaDbContext _context;
+        private readonly IMailService _mailService;
+        private readonly IConfiguration _configuration;
 
         public ManagerService(
             IRepository<User> userRepository, 
             IRepository<Role> roleRepository,
             IRepository<StaffBuildingAssignment> staffBuildingAssignmentRepository,
-            ApartaDbContext context)
+            ApartaDbContext context,
+            IMailService mailService,
+            IConfiguration configuration)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _staffBuildingAssignmentRepository = staffBuildingAssignmentRepository;
             _context = context;
+            _mailService = mailService;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync(ManagerSearch query)
@@ -143,6 +150,7 @@ namespace ApartaAPI.Services
                 AvatarUrl = dto.AvatarUrl,
                 Status = "active",
                 IsDeleted = false,
+                IsFirstLogin = true,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -173,6 +181,35 @@ namespace ApartaAPI.Services
 
             // Lưu tất cả thay đổi (User và StaffBuildingAssignments)
             await _context.SaveChangesAsync();
+
+            // Gửi email thông báo tài khoản và mật khẩu cho Manager
+            var managerEmail = newUser.Email;
+            if (!string.IsNullOrWhiteSpace(managerEmail))
+            {
+                try
+                {
+                    var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+                    var htmlMessage = EmailTemplateHelper.GetManagerWelcomeEmailTemplate(
+                        newUser.Name ?? "Manager",
+                        newUser.Phone,
+                        managerEmail,
+                        dto.Password,
+                        frontendUrl
+                    );
+
+                    await _mailService.SendEmailAsync(
+                        managerEmail,
+                        "Thông tin tài khoản Manager - Aparta System",
+                        htmlMessage
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nhưng không fail việc tạo manager
+                    // Trong production nên log vào file hoặc logging service
+                    Console.WriteLine($"Lỗi khi gửi email cho Manager: {ex.Message}");
+                }
+            }
 
             // Lấy lại manager với thông tin building assignments
             var createdManager = await _context.Users

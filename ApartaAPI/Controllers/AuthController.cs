@@ -7,6 +7,7 @@ using ApartaAPI.Services.Interfaces;
 using ApartaAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.Models;
 
 namespace ApartaAPI.Controllers
 {
@@ -53,7 +54,8 @@ namespace ApartaAPI.Controllers
             }
 
             var response = new LoginResponse(
-                Token: token
+                Token: token,
+                IsFirstLogin: user.IsFirstLogin
             );
 
             return Ok(response);
@@ -167,14 +169,15 @@ namespace ApartaAPI.Controllers
         }
 
         // POST: api/Auth/reset-password
+        // Hỗ trợ 2 trường hợp:
+        // 1. Forgot password: Cần Token và Email từ request
+        // 2. First login: Cần JWT token (Authorize), lấy UserId từ JWT, không cần Token và Email
         [HttpPost("reset-password")]
         public async Task<ActionResult<ApiResponse>> ResetPassword([FromBody] ResetPasswordDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.Token) || 
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.NewPassword))
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
             {
-                return BadRequest(ApiResponse.Fail("Token, Email và mật khẩu mới là bắt buộc."));
+                return BadRequest(ApiResponse.Fail("Mật khẩu mới là bắt buộc."));
             }
 
             if (request.NewPassword != request.ConfirmPassword)
@@ -187,36 +190,84 @@ namespace ApartaAPI.Controllers
                 return BadRequest(ApiResponse.Fail("Mật khẩu phải có ít nhất 6 ký tự."));
             }
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted);
+            User user;
+            bool isFirstLoginFlow = false;
 
-            if (user == null)
+            // Kiểm tra xem có JWT token không (First login flow)
+            var userId = User.FindFirst("id")?.Value ?? 
+                        User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(userId))
             {
-                return BadRequest(ApiResponse.Fail("Email không hợp lệ."));
+                // First login flow: Lấy user từ JWT token
+                var foundUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
+
+                if (foundUser == null)
+                {
+                    return BadRequest(ApiResponse.Fail("Người dùng không tồn tại."));
+                }
+
+                // Chỉ cho phép đổi mật khẩu nếu IsFirstLogin = true
+                if (!foundUser.IsFirstLogin)
+                {
+                    return BadRequest(ApiResponse.Fail("Bạn đã đổi mật khẩu rồi. Vui lòng sử dụng chức năng đổi mật khẩu thông thường."));
+                }
+
+                user = foundUser;
+                isFirstLoginFlow = true;
             }
-
-            // Kiểm tra token
-            if (string.IsNullOrWhiteSpace(user.PasswordResetToken) || 
-                user.PasswordResetToken != request.Token)
+            else
             {
-                return BadRequest(ApiResponse.Fail("Token không hợp lệ."));
-            }
+                // Forgot password flow: Cần Token và Email
+                if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.Email))
+                {
+                    return BadRequest(ApiResponse.Fail("Token và Email là bắt buộc cho chức năng quên mật khẩu."));
+                }
 
-            // Kiểm tra token hết hạn
-            if (user.ResetTokenExpires == null || user.ResetTokenExpires < DateTime.UtcNow)
-            {
-                return BadRequest(ApiResponse.Fail("Token đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới."));
+                var foundUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted);
+
+                if (foundUser == null)
+                {
+                    return BadRequest(ApiResponse.Fail("Email không hợp lệ."));
+                }
+
+                // Kiểm tra token reset password
+                if (string.IsNullOrWhiteSpace(foundUser.PasswordResetToken) || 
+                    foundUser.PasswordResetToken != request.Token)
+                {
+                    return BadRequest(ApiResponse.Fail("Token không hợp lệ."));
+                }
+
+                // Kiểm tra token hết hạn
+                if (foundUser.ResetTokenExpires == null || foundUser.ResetTokenExpires < DateTime.UtcNow)
+                {
+                    return BadRequest(ApiResponse.Fail("Token đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới."));
+                }
+
+                user = foundUser;
             }
 
             // Hash mật khẩu mới
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            user.PasswordResetToken = null;
-            user.ResetTokenExpires = null;
+            user.IsFirstLogin = false;
             user.UpdatedAt = DateTime.UtcNow;
+
+            // Chỉ xóa reset token nếu là forgot password flow
+            if (!isFirstLoginFlow)
+            {
+                user.PasswordResetToken = null;
+                user.ResetTokenExpires = null;
+            }
 
             await _context.SaveChangesAsync();
 
-            return Ok(ApiResponse.Success("Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới."));
+            var message = isFirstLoginFlow 
+                ? "Đổi mật khẩu thành công." 
+                : "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.";
+
+            return Ok(ApiResponse.Success(message));
         }
     }
 }

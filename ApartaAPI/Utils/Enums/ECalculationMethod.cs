@@ -31,12 +31,10 @@ namespace ApartaAPI.Utils.Enums
         [EnumMember(Value = "ONE_TIME")]
         ONE_TIME,
 
-        /*
         // --- Lũy tiến (TIERED) ---
         [EnumMetadata("Tính lũy tiến (Theo bậc)", "Áp dụng đơn giá khác nhau cho các bậc tiêu thụ khác nhau (ví dụ: tiền điện, nước).")]
         [EnumMember(Value = "TIERED")]
-        TIERED,
-        */
+        TIERED
     }
 
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]

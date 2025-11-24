@@ -163,6 +163,7 @@ namespace ApartaAPI.Extensions
                 // Policy cho ApartmentMember
                 options.AddPolicy("CanReadMember", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
                     ctx.User.HasClaim("permission", "apartmentmember.read")
                 ));
 
@@ -216,6 +217,13 @@ namespace ApartaAPI.Extensions
                 options.AddPolicy("CanGenerateBilling", policy => policy.RequireAssertion(ctx =>
                     ctx.User.IsInRole("admin") ||
                     ctx.User.HasClaim("permission", "billing.generate")
+                ));
+
+                // Policy cho User by Apartment
+                options.AddPolicy("CanReadUserByApartment", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "user.read.byapartment")
                 ));
 
                 // Policy cho StaffAssignment  

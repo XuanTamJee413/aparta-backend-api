@@ -1,6 +1,6 @@
 namespace ApartaAPI.DTOs.Profile
 {
-    public class UserProfileDto
+    public sealed record UserProfileDto
     {
         public string UserId { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
@@ -14,6 +14,17 @@ namespace ApartaAPI.DTOs.Profile
         
         // Thông tin thêm cho Manager
         public List<string> ManagedBuildingNames { get; set; } = new List<string>();
+
+        public List<UserAssignmentProfileDto> CurrentAssignments { get; set; } = new();
+    }
+
+    public sealed record UserAssignmentProfileDto
+    {
+        public string BuildingId { get; set; } = null!;
+        public string BuildingName { get; set; } = null!;
+        public string Position { get; set; } = null!;
+        public string? ScopeOfWork { get; set; } 
+        public DateOnly StartDate { get; set; }
     }
 }
 

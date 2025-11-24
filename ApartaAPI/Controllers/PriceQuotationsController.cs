@@ -179,10 +179,10 @@ namespace ApartaAPI.Controllers
             try
             {
                 var success = await _priceQuotationService.UpdateAsync(id, updateDto);
-                if (!success)
-                {
-                    return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
-                }
+                //if (!success)
+                //{
+                //    return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+                //}
                 return Ok(ApiResponse.SuccessWithCode(ApiResponse.SM03_UPDATE_SUCCESS));
             }
             catch (InvalidOperationException ex)

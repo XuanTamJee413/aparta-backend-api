@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Common;
+using ApartaAPI.Models;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +42,14 @@ namespace ApartaAPI.Controllers
                 return BadRequest(ApiResponse<ManagerDto>.Fail(errors));
             }
 
-            var response = await _managerService.CreateManagerAsync(request);
+            var adminId = User.FindFirst("id")?.Value;
+
+            if (adminId == null)
+            {
+                return Unauthorized();
+            }
+
+            var response = await _managerService.CreateManagerAsync(request, adminId);
             
             if (!response.Succeeded)
             {
@@ -64,7 +72,14 @@ namespace ApartaAPI.Controllers
                 return BadRequest(ApiResponse<ManagerDto>.Fail(errors));
             }
 
-            var response = await _managerService.UpdateManagerAsync(id, request);
+            var adminId = User.FindFirst("id")?.Value;
+
+            if (adminId == null)
+            {
+                return Unauthorized();
+            }
+
+            var response = await _managerService.UpdateManagerAsync(id, request, adminId);
 
             if (!response.Succeeded)
             {

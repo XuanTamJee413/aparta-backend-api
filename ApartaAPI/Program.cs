@@ -94,36 +94,29 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 			builder.Services.AddScoped<IContractService, ContractService>();
-
-			builder.Services.AddScoped<ITaskService, TaskService> ();
+			builder.Services.AddScoped<ITaskService, TaskService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 			builder.Services.AddScoped<IProfileService, ProfileService>();
+			builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
 			builder.Services.AddTransient<IMailService, MailService>();
 			builder.Services.AddSingleton<PayOSService>();
-            builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
 
             // Custom Repositories
             builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
-
-            builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
-            builder.Services.AddSingleton<PayOSService>();
-
-			
-			// Custom Repositories
-			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
             builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
             builder.Services.AddScoped<IMessageRepository, MessageRepository>();
-            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 
             builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
             {
                 options.EnableDetailedErrors = true;
             });
             builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>(); // Đăng ký Provider
-            builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 
             builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options =>

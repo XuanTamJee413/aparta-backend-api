@@ -45,6 +45,20 @@ namespace ApartaAPI.Controllers
             }
         }
 
+        [HttpPost("bulk")]
+        public async Task<ActionResult<IEnumerable<ApartmentDto>>> PostApartmentsBulk([FromBody] ApartmentBulkCreateDto request)
+        {
+            try
+            {
+                var created = await _service.CreateBulkAsync(request);
+                return Ok(created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> PutApartment(string id, [FromBody] ApartmentUpdateDto request)
         {
@@ -63,8 +77,7 @@ namespace ApartaAPI.Controllers
         public async Task<IActionResult> DeleteApartment(string id)
         {
             var deleted = await _service.DeleteAsync(id);
-            if (!deleted) return NotFound(); 
-            return Ok(); 
+            return Ok();
         }
     }
 }

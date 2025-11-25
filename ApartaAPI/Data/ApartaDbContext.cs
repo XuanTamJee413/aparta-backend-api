@@ -99,6 +99,7 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("apartment_id");
             entity.Property(e => e.Area).HasColumnName("area");
+            entity.Property(e => e.Floor).HasColumnName("floor");
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
                 .HasColumnName("building_id");

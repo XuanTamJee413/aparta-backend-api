@@ -32,7 +32,7 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
 
@@ -57,19 +57,36 @@ namespace ApartaAPI.Services
 
             if (roleName == "resident" && user.Apartment != null)
             {
-                // Thông tin căn hộ cho Resident
                 var buildingName = user.Apartment.Building?.Name ?? "N/A";
                 var apartmentCode = user.Apartment.Code ?? "N/A";
                 profileDto.ApartmentInfo = $"{apartmentCode} - {buildingName}";
             }
-            else if (roleName == "manager" || roleName.Contains("staff"))
+            // [SỬA] Logic lấy thông tin công tác cho Manager/Staff
+            else if (roleName != "admin")
             {
-                // Danh sách tòa nhà quản lý cho Manager
-                profileDto.ManagedBuildingNames = user.StaffBuildingAssignments
+                // Lấy danh sách phân công đang ACTIVE
+                var activeAssignments = user.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
-                    .Select(sba => sba.Building?.Name ?? string.Empty)
-                    .Where(name => !string.IsNullOrEmpty(name))
                     .ToList();
+
+                if (activeAssignments.Any())
+                {
+                    // 1. Map vào list chi tiết (Mới)
+                    profileDto.CurrentAssignments = activeAssignments.Select(sba => new UserAssignmentProfileDto
+                    {
+                        BuildingId = sba.BuildingId,
+                        BuildingName = sba.Building?.Name ?? "Unknown",
+                        Position = sba.Position ?? "Nhân viên",
+                        ScopeOfWork = sba.ScopeOfWork,
+                        StartDate = sba.AssignmentStartDate
+                    }).ToList();
+
+                    // 2. Map vào list tên tòa nhà (Cũ - để tương thích)
+                    profileDto.ManagedBuildingNames = activeAssignments
+                        .Select(sba => sba.Building?.Name ?? "")
+                        .Where(n => !string.IsNullOrEmpty(n))
+                        .ToList();
+                }
             }
 
             return ApiResponse<UserProfileDto>.Success(profileDto);
@@ -171,7 +188,7 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
 
@@ -215,7 +232,7 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
@@ -246,7 +263,7 @@ namespace ApartaAPI.Services
             }
             else if (roleName == "manager" || roleName.Contains("staff"))
             {
-                profileDto.ManagedBuildingNames = updatedUser.StaffBuildingAssignments
+                profileDto.ManagedBuildingNames = updatedUser.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
                     .Select(sba => sba.Building?.Name ?? string.Empty)
                     .Where(name => !string.IsNullOrEmpty(name))

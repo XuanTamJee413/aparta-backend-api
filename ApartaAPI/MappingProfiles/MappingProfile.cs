@@ -3,22 +3,20 @@ using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.Contracts;
 using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
 using ApartaAPI.DTOs.Roles;
+using ApartaAPI.DTOs.StaffAssignments;
 using ApartaAPI.DTOs.Subscriptions;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-
-using ApartaAPI.DTOs.Vehicles;
-using ApartaAPI.DTOs.Apartments;
-using ApartaAPI.DTOs.Contracts;
 
 
 namespace ApartaAPI.Profiles
@@ -69,6 +67,13 @@ namespace ApartaAPI.Profiles
             CreateMap<Role, RoleDto>();
             CreateMap<Permission, PermissionDto>()
                 .ForMember(dest => dest.GroupName, opt => opt.MapFrom(src => src.PermissionGroup.Name));
+
+            CreateMap<StaffBuildingAssignment, StaffAssignmentDto>()
+                .ForMember(dest => dest.StaffName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.StaffCode, opt => opt.MapFrom(src => src.User.StaffCode))
+                .ForMember(dest => dest.BuildingName, opt => opt.MapFrom(src => src.Building.Name))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.AssignmentStartDate))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.AssignmentEndDate));
 
             CreateMap<ApartmentMember, ApartmentMemberDto>();
             CreateMap<ApartmentMemberCreateDto, ApartmentMember>();

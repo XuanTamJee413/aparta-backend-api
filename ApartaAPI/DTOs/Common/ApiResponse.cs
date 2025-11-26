@@ -13,7 +13,7 @@
         public const string SM02_REQUIRED = "Trường này là bắt buộc.";
 
         // SM03: Cập nhật thành công (dùng chung cho update operations)
-        public const string SM03_UPDATE_SUCCESS = "Cập nhật thông tin thành công.";
+        public const string SM03_UPDATE_SUCCESS = "Cập nhật dữ liệu thành công.";
 
         // SM04: Tạo mới thành công (dùng chung cho create operations với {objectName})
         public const string SM04_CREATE_SUCCESS = "Tạo mới {objectName} thành công.";
@@ -130,6 +130,9 @@
         // SM41: Lấy thông tin chi tiết hóa đơn thành công
         public const string SM41_INVOICE_DETAIL_SUCCESS = "Lấy thông tin chi tiết hóa đơn thành công.";
 
+        public const string SM42_ASSIGNMENT_OVERLAP = "Nhân viên đang làm việc tại vị trí này, vui lòng kết thúc công việc cũ trước.";
+        public const string SM43_NOT_STAFF = "Người dùng này không phải là nhân viên.";
+
         public static string GetMessageFromCode(string code)
         {
             return code switch
@@ -175,6 +178,8 @@
                 SM39_PAYMENT_LINK_FAILED => SM39_PAYMENT_LINK_FAILED,
                 SM40_SYSTEM_ERROR => SM40_SYSTEM_ERROR,
                 SM41_INVOICE_DETAIL_SUCCESS => SM41_INVOICE_DETAIL_SUCCESS,
+                SM42_ASSIGNMENT_OVERLAP => SM42_ASSIGNMENT_OVERLAP,
+                SM43_NOT_STAFF => SM43_NOT_STAFF,
                 _ => code
             };
         }

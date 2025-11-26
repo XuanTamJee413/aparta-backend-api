@@ -13,15 +13,25 @@ public partial class Project
 
     public string Name { get; set; } = null!;
 
-    public int? NumApartments { get; set; }
-
-    public int? NumBuildings { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsActive { get; set; }
+
+    public string? Address { get; set; }
+
+    public string? Ward { get; set; }
+
+    public string? District { get; set; }
+
+    public string? City { get; set; }
+
+    public string? BankName { get; set; }
+
+    public string? BankAccountNumber { get; set; }
+
+    public string? BankAccountName { get; set; }
 
     public virtual User? Admin { get; set; }
 

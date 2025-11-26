@@ -125,6 +125,15 @@ namespace ApartaAPI.Services
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            {
+                var existingPhone = await _repository.FirstOrDefaultAsync(m => m.PhoneNumber == dto.PhoneNumber);
+                if (existingPhone != null)
+                {
+                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                }
+            }
+
             var now = DateTime.UtcNow;
 
             var entity = _mapper.Map<ApartmentMember>(dto);
@@ -171,12 +180,65 @@ namespace ApartaAPI.Services
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            {
+                var existingPhone = await _repository.FirstOrDefaultAsync(
+                    m => m.PhoneNumber == dto.PhoneNumber && m.ApartmentMemberId != id
+                );
+
+                if (existingPhone != null)
+                {
+                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                }
+            }
+
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(entity);
             return await _repository.SaveChangesAsync();
         }
+
+        public async Task<ApiResponse<string>> UpdateFaceImageAsync( string memberId,IFormFile file, CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return ApiResponse<string>.Fail(ApiResponse.SM25_INVALID_INPUT);
+            }
+
+            var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == memberId);
+            if (entity == null)
+            {
+                return ApiResponse<string>.Fail("Không tìm thấy thành viên hộ khẩu.");
+            }
+
+            try
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(
+                    file,
+                    folder: "aparta/apartment-members",
+                    cancellationToken: cancellationToken
+                );
+
+                if (string.IsNullOrWhiteSpace(uploadResult.SecureUrl))
+                {
+                    return ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+                }
+
+                entity.FaceImageUrl = uploadResult.SecureUrl;
+                entity.UpdatedAt = DateTime.UtcNow;
+
+                await _repository.UpdateAsync(entity);
+                await _repository.SaveChangesAsync();   
+
+                return ApiResponse<string>.Success( uploadResult.SecureUrl, "Cập nhật ảnh thành viên thành công." );
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<string>.Fail($"Lỗi khi upload ảnh: {ex.Message}");
+            }
+        }
+
 
         public async Task<bool> DeleteAsync(string id)
         {

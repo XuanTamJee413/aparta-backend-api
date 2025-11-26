@@ -9,6 +9,8 @@ namespace ApartaAPI.Services.Interfaces
         Task<ApartmentMemberDto?> GetByIdAsync(string id);
         Task<ApartmentMemberDto> CreateAsync(ApartmentMemberCreateDto dto,IFormFile? faceImageFile = null,CancellationToken cancellationToken = default);
         Task<bool> UpdateAsync(string id, ApartmentMemberUpdateDto dto);
+        Task<ApiResponse<string>> UpdateFaceImageAsync(string memberId, IFormFile file, CancellationToken cancellationToken = default);
+
         Task<bool> DeleteAsync(string id);
     }
 }

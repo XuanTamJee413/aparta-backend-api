@@ -200,10 +200,12 @@ namespace ApartaAPI.Services
             {
                 throw new KeyNotFoundException($"Không tìm thấy căn hộ với ID: {dto.ApartmentId}");
             }
-            if (apartment.Status?.ToLowerInvariant() != "chưa thuê")
+            if (apartment.Status == null ||
+                 apartment.Status.Trim().ToLowerInvariant() != "chưa thuê")
             {
                 throw new InvalidOperationException("Căn hộ này không có sẵn để cho thuê.");
             }
+
             var ownerIdNumber = dto.OwnerIdNumber.Trim();
 
             var existedMember = await _apartmentMemberRepository
@@ -214,6 +216,15 @@ namespace ApartaAPI.Services
                 throw new InvalidOperationException(
                     "Số giấy tờ tùy thân (CMND/CCCD) này đã tồn tại. Vui lòng kiểm tra lại."
                 );
+            }
+            var phoneNumber = dto.OwnerPhoneNumber.Trim();
+
+            var existedPhone = await _apartmentMemberRepository
+                .FirstOrDefaultAsync(m => m.PhoneNumber == phoneNumber);
+
+            if (existedPhone != null)
+            {
+                throw new InvalidOperationException("Số điện thoại này đã tồn tại!");
             }
 
             apartment.Status = "Đã Thuê";

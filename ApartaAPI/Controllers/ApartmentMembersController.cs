@@ -78,6 +78,37 @@ namespace ApartaAPI.Controllers
             }
         }
 
+        [HttpPut("{id}/avatar")]
+        [Authorize(Policy = "CanUpdateMember")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<string>>> UpdateMemberAvatar(
+            string id,
+            [FromForm] UpdateMemberAvatarRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid ||
+                request.FaceImageFile == null ||
+                request.FaceImageFile.Length == 0)
+            {
+                return BadRequest(ApiResponse<string>.Fail(ApiResponse.SM25_INVALID_INPUT));
+            }
+
+            var response = await _service.UpdateFaceImageAsync(id, request.FaceImageFile, cancellationToken);
+
+            if (!response.Succeeded)
+            {
+                if (response.Message == "Không tìm thấy thành viên hộ khẩu.")
+                    return NotFound(response);
+
+                if (response.Message == ApiResponse.SM40_SYSTEM_ERROR)
+                    return StatusCode(500, response);
+
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
         [HttpDelete("{id}")]
         [Authorize(Policy = "CanDeleteMember")]
         public async Task<IActionResult> DeleteApartmentMember(string id)

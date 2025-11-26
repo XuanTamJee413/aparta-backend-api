@@ -20,11 +20,12 @@ public partial class UtilityBooking
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
-	public string? ResidentNote { get; set; }
 
-	public string? StaffNote { get; set; }
+    public string? ResidentNote { get; set; }
 
-	public virtual User Resident { get; set; } = null!;
+    public string? StaffNote { get; set; }
+
+    public virtual User Resident { get; set; } = null!;
 
     public virtual Utility Utility { get; set; } = null!;
 }

@@ -138,8 +138,6 @@ namespace ApartaAPI.Services
                 entity.CreatedAt = now;
                 entity.UpdatedAt = now;
                 entity.IsActive = true;
-                entity.NumApartments = 0;
-                entity.NumResidents = 0;
 
                 await _repository.AddAsync(entity);
                 await _repository.SaveChangesAsync();

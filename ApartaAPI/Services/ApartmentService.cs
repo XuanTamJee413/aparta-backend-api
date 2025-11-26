@@ -31,7 +31,7 @@ namespace ApartaAPI.Services
             if (building == null)
                 throw new InvalidOperationException("Không tìm thấy tòa nhà.");
 
-            if (building.NumApartments <= 0)
+            if (building.TotalFloors <= 0)
                 throw new InvalidOperationException("Số tầng của tòa nhà không hợp lệ.");
 
             if (string.IsNullOrWhiteSpace(building.BuildingCode))
@@ -47,11 +47,11 @@ namespace ApartaAPI.Services
 
         private static void EnsureFloorInRange(int floor, Building building)
         {
-            if (floor < 1 || floor > building.NumApartments)
+            if (floor < 1 || floor > building.TotalFloors)
             {
                 var code = NormalizeBuildingCode(building.BuildingCode);
                 throw new InvalidOperationException(
-                    $"Tầng {floor} không hợp lệ. Tòa nhà {code} chỉ có từ tầng 1 đến tầng {building.NumApartments}."
+                    $"Tầng {floor} không hợp lệ. Tòa nhà {code} chỉ có từ tầng 1 đến tầng {building.TotalFloors}."
                 );
             }
         }
@@ -218,10 +218,10 @@ namespace ApartaAPI.Services
             if (dto.StartFloor <= 0 || dto.EndFloor < dto.StartFloor)
                 throw new InvalidOperationException("Khoảng tầng không hợp lệ.");
 
-            if (dto.StartFloor < 1 || dto.EndFloor > building.NumApartments)
+            if (dto.StartFloor < 1 || dto.EndFloor > building.TotalFloors)
             {
                 throw new InvalidOperationException(
-                    $"Khoảng tầng không hợp lệ. Tòa nhà {buildingCode} chỉ có từ tầng 1 đến tầng {building.NumApartments}."
+                    $"Khoảng tầng không hợp lệ. Tòa nhà {buildingCode} chỉ có từ tầng 1 đến tầng {building.TotalFloors}."
                 );
             }
 

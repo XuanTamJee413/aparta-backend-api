@@ -23,8 +23,6 @@ public partial class Apartment
 
     public DateTime? UpdatedAt { get; set; }
 
-    public int? Floor { get; set; }
-
     public virtual ICollection<ApartmentMember> ApartmentMembers { get; set; } = new List<ApartmentMember>();
 
     public virtual Building Building { get; set; } = null!;

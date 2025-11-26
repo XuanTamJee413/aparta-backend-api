@@ -4,6 +4,7 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
+using Microsoft.VisualBasic;
 using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
@@ -227,6 +228,13 @@ namespace ApartaAPI.Services
                 throw new InvalidOperationException("Số điện thoại này đã tồn tại!");
             }
 
+            var CheckEmail = dto.OwnerEmail.ToLowerInvariant().Trim();
+            var existedEmail = await _userRepository.FirstOrDefaultAsync(m => m.Email == CheckEmail);
+            if (existedEmail != null)
+            {
+                throw new InvalidOperationException("Email này đã tồn tại!");
+            }
+
             apartment.Status = "Đã Thuê";
             apartment.UpdatedAt = now;
 
@@ -237,6 +245,7 @@ namespace ApartaAPI.Services
             await _contractRepository.AddAsync(contract);
 
             var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.ApartmentId == dto.ApartmentId);
+
 
             if (existingUser != null)
             {
@@ -259,7 +268,7 @@ namespace ApartaAPI.Services
                     PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.", 
                     Status = "Active", 
                     IsDeleted = false,
-
+                    IsFirstLogin = false,
                     AvatarUrl = null,
                     StaffCode = Guid.NewGuid().ToString("N"),
                     LastLoginAt = null,

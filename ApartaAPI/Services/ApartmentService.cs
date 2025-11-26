@@ -14,11 +14,55 @@ namespace ApartaAPI.Services
         private readonly IRepository<Building> _buildingRepository;
         private readonly IMapper _mapper;
 
-        public ApartmentService(IRepository<Apartment> repository, IRepository<Building> buildingRepository, IMapper mapper)
+        public ApartmentService(
+            IRepository<Apartment> repository,
+            IRepository<Building> buildingRepository,
+            IMapper mapper)
         {
             _repository = repository;
             _buildingRepository = buildingRepository;
             _mapper = mapper;
+        }
+
+
+        private async Task<Building> GetBuildingAsync(string buildingId)
+        {
+            var building = await _buildingRepository.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
+            if (building == null)
+                throw new InvalidOperationException("Không tìm thấy tòa nhà.");
+
+            if (building.NumApartments <= 0)
+                throw new InvalidOperationException("Số tầng của tòa nhà không hợp lệ.");
+
+            if (string.IsNullOrWhiteSpace(building.BuildingCode))
+                throw new InvalidOperationException("Tòa nhà chưa có mã.");
+
+            return building;
+        }
+
+        private static string NormalizeBuildingCode(string buildingCode)
+        {
+            return buildingCode.Trim().ToUpperInvariant();
+        }
+
+        private static void EnsureFloorInRange(int floor, Building building)
+        {
+            if (floor < 1 || floor > building.NumApartments)
+            {
+                var code = NormalizeBuildingCode(building.BuildingCode);
+                throw new InvalidOperationException(
+                    $"Tầng {floor} không hợp lệ. Tòa nhà {code} chỉ có từ tầng 1 đến tầng {building.NumApartments}."
+                );
+            }
+        }
+
+        private static string GenerateApartmentCode(string buildingCode, int floor, int roomIndex)
+        {
+            if (floor <= 0) throw new ArgumentOutOfRangeException(nameof(floor));
+            if (roomIndex <= 0) throw new ArgumentOutOfRangeException(nameof(roomIndex));
+
+            var normalizedCode = NormalizeBuildingCode(buildingCode);
+            return $"{normalizedCode}-{floor}{roomIndex:D2}";
         }
 
 
@@ -45,7 +89,7 @@ namespace ApartaAPI.Services
                 (buildingIdFilter == null || a.BuildingId == buildingIdFilter) &&
                 (statusFilter == null || (a.Status != null && a.Status.ToLower() == statusFilter)) &&
                 (searchTerm == null ||
-                    (a.Code.ToLower().Contains(searchTerm)) ||
+                    (a.Code != null && a.Code.ToLower().Contains(searchTerm)) ||
                     (a.Type != null && a.Type.ToLower().Contains(searchTerm))
                 );
 
@@ -102,7 +146,7 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentDto?>(entity);
         }
 
-
+        
         public async Task<ApartmentDto> CreateAsync(ApartmentCreateDto dto)
         {
             if (dto.Floor is null || dto.Floor <= 0)
@@ -115,23 +159,27 @@ namespace ApartaAPI.Services
                 throw new InvalidOperationException("Mã căn hộ là bắt buộc.");
 
             var buildingId = dto.BuildingId.Trim();
-            var buildingCode = await GetBuildingCodeAsync(buildingId); 
+            var building = await GetBuildingAsync(buildingId);
+            var buildingCode = NormalizeBuildingCode(building.BuildingCode);
             var floor = dto.Floor.Value;
 
-            var rawCode = dto.Code.Trim().ToUpperInvariant();
+            EnsureFloorInRange(floor, building);
 
+            var rawCode = dto.Code.Trim().ToUpperInvariant();
             var prefix = $"{buildingCode}-{floor}";
+
             if (!rawCode.StartsWith(prefix, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
                     $"Mã căn hộ phải có dạng {buildingCode}-{floor}xx. " +
-                    $"Ví dụ: {buildingCode}-{floor}01, {buildingCode}{floor}02..."
+                    $"Ví dụ: {buildingCode}-{floor}01, {buildingCode}-{floor}02..."
                 );
             }
 
             var existingApartmentCode = await _repository.FirstOrDefaultAsync(
                  a => a.Code == rawCode && a.BuildingId == buildingId
              );
+
             if (existingApartmentCode != null)
             {
                 throw new InvalidOperationException($"Mã căn hộ '{rawCode}' đã tồn tại trong tòa nhà này.");
@@ -142,37 +190,49 @@ namespace ApartaAPI.Services
 
             entity.ApartmentId = Guid.NewGuid().ToString("N");
             entity.BuildingId = buildingId;
-            entity.Code = rawCode;   
+            entity.Code = rawCode;
             entity.Floor = floor;
+            entity.Status = "Chưa Thuê";
             entity.CreatedAt = now;
             entity.UpdatedAt = now;
-            entity.Status = "Chưa Thuê";
+
             await _repository.AddAsync(entity);
             await _repository.SaveChangesAsync();
 
             return _mapper.Map<ApartmentDto>(entity);
         }
 
-
+       
         public async Task<IEnumerable<ApartmentDto>> CreateBulkAsync(ApartmentBulkCreateDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.BuildingId))
                 throw new InvalidOperationException("Tòa nhà không hợp lệ.");
 
-            if (dto.StartFloor <= 0 || dto.EndFloor < dto.StartFloor)
-                throw new InvalidOperationException("Khoảng tầng không hợp lệ.");
-
             if (dto.Rooms == null || dto.Rooms.Count == 0)
                 throw new InvalidOperationException("Cần cấu hình ít nhất một phòng.");
 
             var buildingId = dto.BuildingId.Trim();
-            var buildingCode = await GetBuildingCodeAsync(buildingId); 
+            var building = await GetBuildingAsync(buildingId);
+            var buildingCode = NormalizeBuildingCode(building.BuildingCode);
+
+            if (dto.StartFloor <= 0 || dto.EndFloor < dto.StartFloor)
+                throw new InvalidOperationException("Khoảng tầng không hợp lệ.");
+
+            if (dto.StartFloor < 1 || dto.EndFloor > building.NumApartments)
+            {
+                throw new InvalidOperationException(
+                    $"Khoảng tầng không hợp lệ. Tòa nhà {buildingCode} chỉ có từ tầng 1 đến tầng {building.NumApartments}."
+                );
+            }
+
             var now = DateTime.UtcNow;
 
             var toCreate = new List<(int Floor, int RoomIndex, string Code, string? Type, double? Area)>();
 
             foreach (var floor in Enumerable.Range(dto.StartFloor, dto.EndFloor - dto.StartFloor + 1))
             {
+                EnsureFloorInRange(floor, building);
+
                 foreach (var room in dto.Rooms)
                 {
                     if (room.RoomIndex <= 0) continue;
@@ -185,11 +245,15 @@ namespace ApartaAPI.Services
             var codeSet = toCreate.Select(c => c.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var existing = await _repository.FindAsync(a =>
-                a.BuildingId == buildingId && codeSet.Contains(a.Code));
+                a.BuildingId == buildingId && a.Code != null && codeSet.Contains(a.Code));
 
             if (existing.Any())
             {
-                var duplicatedCodes = existing.Select(e => e.Code).Distinct();
+                var duplicatedCodes = existing
+                    .Where(e => e.Code != null)
+                    .Select(e => e.Code!)
+                    .Distinct();
+
                 throw new InvalidOperationException(
                     "Các mã căn hộ sau đã tồn tại trong tòa nhà này: " +
                     string.Join(", ", duplicatedCodes)
@@ -204,7 +268,7 @@ namespace ApartaAPI.Services
                 {
                     ApartmentId = Guid.NewGuid().ToString("N"),
                     BuildingId = buildingId,
-                    Code = item.Code,          
+                    Code = item.Code,
                     Type = item.Type,
                     Status = "Chưa Thuê",
                     Area = item.Area,
@@ -222,14 +286,6 @@ namespace ApartaAPI.Services
             return _mapper.Map<IEnumerable<ApartmentDto>>(createdEntities);
         }
 
-        private static string GenerateApartmentCode(string buildingCode, int floor, int roomIndex)
-        {
-            if (floor <= 0) throw new ArgumentOutOfRangeException(nameof(floor));
-            if (roomIndex <= 0) throw new ArgumentOutOfRangeException(nameof(roomIndex));
-
-            return $"{buildingCode}-{floor}{roomIndex:D2}";
-        }
-
         public async Task<bool> UpdateAsync(string id, ApartmentUpdateDto dto)
         {
             var entity = await _repository.FirstOrDefaultAsync(a => a.ApartmentId == id);
@@ -241,26 +297,28 @@ namespace ApartaAPI.Services
                 throw new InvalidOperationException("Không thể cập nhật căn hộ vì trạng thái hiện tại không cho phép.");
             }
 
+            var building = await GetBuildingAsync(entity.BuildingId);
+            var buildingCode = NormalizeBuildingCode(building.BuildingCode);
+
             if (dto.Floor.HasValue)
             {
-                if (dto.Floor.Value <= 0)
-                {
-                    throw new InvalidOperationException("Tầng phải lớn hơn 0.");
-                }
+                EnsureFloorInRange(dto.Floor.Value, building);
                 entity.Floor = dto.Floor.Value;
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Code))
             {
-                var newCode = dto.Code.Trim();
+                var newCode = dto.Code.Trim().ToUpperInvariant();
                 var floorForCode = dto.Floor ?? entity.Floor;
 
                 if (floorForCode.HasValue)
                 {
-                    var floorStr = floorForCode.Value.ToString();
-                    if (!newCode.StartsWith(floorStr, StringComparison.Ordinal))
+                    var prefix = $"{buildingCode}-{floorForCode.Value}";
+                    if (!newCode.StartsWith(prefix, StringComparison.Ordinal))
                     {
-                        throw new InvalidOperationException($"Mã căn hộ phải bắt đầu bằng '{floorStr}'.");
+                        throw new InvalidOperationException(
+                            $"Mã căn hộ phải có dạng {buildingCode}-{floorForCode.Value}xx."
+                        );
                     }
                 }
 
@@ -293,6 +351,10 @@ namespace ApartaAPI.Services
                 entity.Status = dto.Status;
             }
 
+            if (dto.Floor.HasValue && dto.Floor.Value != entity.Floor)
+            {
+            }
+
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(entity);
@@ -313,19 +375,6 @@ namespace ApartaAPI.Services
             {
                 return false;
             }
-        }
-
-        private async Task<string> GetBuildingCodeAsync(string buildingId)
-        {
-            var building = await _buildingRepository.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
-            if (building == null)
-                throw new InvalidOperationException("Không tìm thấy tòa nhà.");
-
-            var code = building.BuildingCode;
-            if (string.IsNullOrWhiteSpace(code))
-                throw new InvalidOperationException("Tòa nhà chưa có mã.");
-
-            return code.Trim().ToUpperInvariant();
         }
     }
 }

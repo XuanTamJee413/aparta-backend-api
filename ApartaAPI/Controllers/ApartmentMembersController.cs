@@ -2,7 +2,11 @@
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ApartaAPI.Controllers
 {
@@ -23,7 +27,7 @@ namespace ApartaAPI.Controllers
             [FromQuery] ApartmentMemberQueryParameters query)
         {
             var apiResponse = await _service.GetAllAsync(query);
-            return Ok(apiResponse); 
+            return Ok(apiResponse);
         }
 
         [HttpGet("{id}")]
@@ -37,12 +41,21 @@ namespace ApartaAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "CanCreateMember")]
-        public async Task<ActionResult<ApartmentMemberDto>> PostApartmentMember([FromBody] ApartmentMemberCreateDto request)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApartmentMemberDto>> PostApartmentMember(
+            [FromForm] ApartmentMemberCreateDto request,
+            IFormFile? faceImageFile,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var created = await _service.CreateAsync(request);
-                return CreatedAtAction(nameof(GetApartmentMember), new { id = created.ApartmentMemberId }, created);
+                var created = await _service.CreateAsync(request, faceImageFile, cancellationToken);
+
+                return CreatedAtAction(
+                    nameof(GetApartmentMember),
+                    new { id = created.ApartmentMemberId },
+                    created
+                );
             }
             catch (InvalidOperationException ex)
             {
@@ -57,7 +70,6 @@ namespace ApartaAPI.Controllers
             try
             {
                 var updated = await _service.UpdateAsync(id, request);
-               // if (!updated) return NotFound();
                 return Ok();
             }
             catch (InvalidOperationException ex)
@@ -72,7 +84,7 @@ namespace ApartaAPI.Controllers
         {
             var deleted = await _service.DeleteAsync(id);
             if (!deleted) return NotFound();
-            return Ok(); 
+            return Ok();
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace ApartaAPI.Helpers
+namespace ApartaAPI.Utils.Helper
 {
     public static class EmailTemplateHelper
     {
@@ -65,4 +65,5 @@ namespace ApartaAPI.Helpers
         }
     }
 }
+
 

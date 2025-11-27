@@ -1,7 +1,7 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
-using ApartaAPI.Helpers;
+using ApartaAPI.Utils.Helper;
 using ApartaAPI.Hubs;
 using ApartaAPI.Models;
 using ApartaAPI.Profiles;

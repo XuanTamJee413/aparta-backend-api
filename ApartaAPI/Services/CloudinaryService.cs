@@ -1,5 +1,5 @@
 using ApartaAPI.DTOs.Common;
-using ApartaAPI.Helpers;
+using ApartaAPI.Utils.Helper;
 using ApartaAPI.Services.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;

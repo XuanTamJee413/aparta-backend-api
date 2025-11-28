@@ -1,10 +1,9 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Contracts;
-using ApartaAPI.Models; 
+using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
-using Microsoft.VisualBasic;
 using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
@@ -13,7 +12,7 @@ namespace ApartaAPI.Services
     {
         private readonly IRepository<Contract> _contractRepository;
         private readonly IRepository<Apartment> _apartmentRepository;
-        private readonly IRepository<ApartmentMember> _apartmentMemberRepository; 
+        private readonly IRepository<ApartmentMember> _apartmentMemberRepository;
         private readonly IRepository<User> _userRepository;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
@@ -21,18 +20,18 @@ namespace ApartaAPI.Services
         public ContractService(
             IRepository<Contract> contractRepository,
             IRepository<Apartment> apartmentRepository,
-            IRepository<ApartmentMember> apartmentMemberRepository, 
-            IRepository<User> userRepository, ICloudinaryService cloudinaryService,
+            IRepository<ApartmentMember> apartmentMemberRepository,
+            IRepository<User> userRepository,
+            ICloudinaryService cloudinaryService,
             IMapper mapper)
         {
             _contractRepository = contractRepository;
             _apartmentRepository = apartmentRepository;
-            _apartmentMemberRepository = apartmentMemberRepository; 
+            _apartmentMemberRepository = apartmentMemberRepository;
             _userRepository = userRepository;
             _cloudinaryService = cloudinaryService;
             _mapper = mapper;
         }
-
 
         public async Task<ApiResponse<IEnumerable<ContractDto>>> GetAllAsync(ContractQueryParameters query)
         {
@@ -61,7 +60,7 @@ namespace ApartaAPI.Services
             {
                 return ApiResponse<IEnumerable<ContractDto>>.Success(
                     new List<ContractDto>(),
-                    "SM01"
+                    ApiResponse.SM01_NO_RESULTS
                 );
             }
 
@@ -143,6 +142,7 @@ namespace ApartaAPI.Services
                     CreatedAt = c.CreatedAt
                 };
             }).ToList();
+
             return ApiResponse<IEnumerable<ContractDto>>.Success(dtos);
         }
 
@@ -191,7 +191,6 @@ namespace ApartaAPI.Services
             return dto;
         }
 
-
         public async Task<ContractDto> CreateAsync(ContractCreateDto dto)
         {
             var now = DateTime.UtcNow;
@@ -201,6 +200,7 @@ namespace ApartaAPI.Services
             {
                 throw new KeyNotFoundException($"Không tìm thấy căn hộ với ID: {dto.ApartmentId}");
             }
+
             if (apartment.Status == null ||
                  apartment.Status.Trim().ToLowerInvariant() != "chưa thuê")
             {
@@ -214,10 +214,10 @@ namespace ApartaAPI.Services
 
             if (existedMember != null)
             {
-                throw new InvalidOperationException(
-                    "Số giấy tờ tùy thân (CMND/CCCD) này đã tồn tại. Vui lòng kiểm tra lại."
-                );
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số giấy tờ tùy thân (CMND/CCCD)");
+                throw new InvalidOperationException(error.Message);
             }
+
             var phoneNumber = dto.OwnerPhoneNumber.Trim();
 
             var existedPhone = await _apartmentMemberRepository
@@ -225,27 +225,28 @@ namespace ApartaAPI.Services
 
             if (existedPhone != null)
             {
-                throw new InvalidOperationException("Số điện thoại này đã tồn tại!");
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                throw new InvalidOperationException(error.Message);
             }
 
-            var CheckEmail = dto.OwnerEmail.ToLowerInvariant().Trim();
-            var existedEmail = await _userRepository.FirstOrDefaultAsync(m => m.Email == CheckEmail);
+            var checkEmail = dto.OwnerEmail.ToLowerInvariant().Trim();
+            var existedEmail = await _userRepository.FirstOrDefaultAsync(m => m.Email == checkEmail);
             if (existedEmail != null)
             {
-                throw new InvalidOperationException("Email này đã tồn tại!");
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "email");
+                throw new InvalidOperationException(error.Message);
             }
 
             apartment.Status = "Đã Thuê";
             apartment.UpdatedAt = now;
 
-            var contract = _mapper.Map<Contract>(dto); 
+            var contract = _mapper.Map<Contract>(dto);
             contract.ContractId = Guid.NewGuid().ToString("N");
             contract.CreatedAt = now;
             contract.UpdatedAt = now;
             await _contractRepository.AddAsync(contract);
 
             var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.ApartmentId == dto.ApartmentId);
-
 
             if (existingUser != null)
             {
@@ -259,14 +260,14 @@ namespace ApartaAPI.Services
                 var newUser = new User
                 {
                     UserId = Guid.NewGuid().ToString("N"),
-                    RoleId = "EC13BABB-416F-42EB-BFD4-0725493A63D0", 
+                    RoleId = "EC13BABB-416F-42EB-BFD4-0725493A63D0",
                     ApartmentId = dto.ApartmentId,
-                    Email = dto.OwnerEmail, 
+                    Email = dto.OwnerEmail,
                     Phone = dto.OwnerPhoneNumber,
                     Name = dto.OwnerName,
-                   
-                    PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.", 
-                    Status = "Active", 
+
+                    PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.",
+                    Status = "Active",
                     IsDeleted = false,
                     IsFirstLogin = false,
                     AvatarUrl = null,
@@ -298,18 +299,16 @@ namespace ApartaAPI.Services
             };
             await _apartmentMemberRepository.AddAsync(apartmentMember);
 
-            await _contractRepository.SaveChangesAsync(); 
+            await _contractRepository.SaveChangesAsync();
 
             return _mapper.Map<ContractDto>(contract);
         }
-
 
         public async Task<bool> UpdateAsync(string id, ContractUpdateDto dto)
         {
             var entity = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
             if (entity == null)
                 return false;
-
 
             if (dto.EndDate.HasValue)
             {
@@ -339,8 +338,6 @@ namespace ApartaAPI.Services
             return await _contractRepository.SaveChangesAsync();
         }
 
-
-
         public async Task<bool> DeleteAsync(string id)
         {
             var contract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractId == id);
@@ -352,7 +349,6 @@ namespace ApartaAPI.Services
             {
                 throw new InvalidOperationException("Hợp đồng chưa hết hạn, không được phép xóa.");
             }
-
 
             var apartment = await _apartmentRepository
                 .FirstOrDefaultAsync(a => a.ApartmentId == contract.ApartmentId);
@@ -366,7 +362,6 @@ namespace ApartaAPI.Services
             );
 
             var now = DateTime.UtcNow;
-
 
             if (apartment != null)
             {
@@ -390,10 +385,11 @@ namespace ApartaAPI.Services
                 {
                     ApartmentId = Guid.NewGuid().ToString("N"),
                     BuildingId = apartment.BuildingId,
-                    Code = originalCode,      
+                    Code = originalCode,
                     Type = apartment.Type,
                     Status = "Chưa Thuê",
                     Area = apartment.Area,
+                    Floor = apartment.Floor,
                     CreatedAt = now,
                     UpdatedAt = now
                 };
@@ -401,9 +397,8 @@ namespace ApartaAPI.Services
                 await _apartmentRepository.AddAsync(newApartment);
             }
 
-            await _contractRepository.SaveChangesAsync(); 
+            await _contractRepository.SaveChangesAsync();
             return true;
         }
-
     }
 }

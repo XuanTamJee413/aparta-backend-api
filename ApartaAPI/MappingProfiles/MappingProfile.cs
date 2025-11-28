@@ -1,24 +1,24 @@
 ﻿using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Apartments;
+using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.Contracts;
 using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.MeterReadings;
 using ApartaAPI.DTOs.News;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.DTOs.Projects;
+using ApartaAPI.DTOs.Proposals;
 using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.Subscriptions;
+using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 using AutoMapper;
-
-using ApartaAPI.DTOs.Vehicles;
-using ApartaAPI.DTOs.Apartments;
-using ApartaAPI.DTOs.Contracts;
 
 
 namespace ApartaAPI.Profiles
@@ -100,6 +100,19 @@ namespace ApartaAPI.Profiles
                     opt => opt.MapFrom(src => src.Building != null ? src.Building.BuildingCode : null)
                 );
             CreateMap<PriceQuotationCreateDto, PriceQuotation>();
+
+            // Proposal Mappings
+            CreateMap<Proposal, ProposalDto>()
+                .ForMember(dest => dest.ResidentName, opt => opt.MapFrom(src => src.Resident.Name))
+                .ForMember(dest => dest.OperationStaffName, opt => opt.MapFrom(src => src.OperationStaff != null ? src.OperationStaff.Name : "Chưa được gán"));
+
+            CreateMap<ProposalCreateDto, Proposal>()
+                .ForMember(dest => dest.ProposalId, opt => opt.Ignore())
+                .ForMember(dest => dest.ResidentId, opt => opt.Ignore())
+                .ForMember(dest => dest.OperationStaffId, opt => opt.Ignore())
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
 
             CreateMap<ProfileUpdateDto, User>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())

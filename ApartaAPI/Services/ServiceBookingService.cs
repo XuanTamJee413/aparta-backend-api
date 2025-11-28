@@ -2,11 +2,8 @@
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using static ApartaAPI.DTOs.ServiceBooking.ServiceBookingDtos;
+using Task = ApartaAPI.Models.Task;
 
 namespace ApartaAPI.Services
 {
@@ -15,15 +12,18 @@ namespace ApartaAPI.Services
 		private readonly IRepository<ServiceBooking> _bookingRepository;
 		private readonly IRepository<Service> _serviceRepository;
 		private readonly IRepository<User> _userRepository;
-
+		private readonly ITaskService _taskService;
 		public ServiceBookingService(
 			IRepository<ServiceBooking> bookingRepository,
 			IRepository<Service> serviceRepository,
-			IRepository<User> userRepository)
+			IRepository<User> userRepository,
+			ITaskService taskService)
+
 		{
 			_bookingRepository = bookingRepository;
 			_serviceRepository = serviceRepository;
 			_userRepository = userRepository;
+			_taskService = taskService;
 		}
 
 		public async Task<ServiceBookingDto> CreateBookingAsync(ServiceBookingCreateDto createDto, string residentId)
@@ -144,7 +144,7 @@ namespace ApartaAPI.Services
 		}
 
 		// 2. Cập nhật Booking (giống template)
-		public async Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto)
+		public async Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto, string operationStaffId)
 		{
 			var existingBooking = await _bookingRepository.FirstOrDefaultAsync(b => b.ServiceBookingId == bookingId);
 
@@ -153,11 +153,8 @@ namespace ApartaAPI.Services
 				return null;
 			}
 
-			// (Bạn có thể thêm validation logic ở đây nếu cần, ví dụ:
-			// if (updateDto.PaymentAmount.HasValue && updateDto.PaymentAmount.Value < 0)
-			// {
-			//    throw new ArgumentException("Giá thực tế không thể âm.");
-			// }
+			// Lưu trạng thái cũ để so sánh
+			string oldStatus = existingBooking.Status;
 
 			existingBooking.Status = updateDto.Status ?? existingBooking.Status;
 			existingBooking.PaymentAmount = updateDto.PaymentAmount ?? existingBooking.PaymentAmount;
@@ -167,7 +164,22 @@ namespace ApartaAPI.Services
 			await _bookingRepository.UpdateAsync(existingBooking);
 			await _bookingRepository.SaveChangesAsync();
 
-			// Load lại thông tin liên quan để trả về DTO đầy đủ
+			// --- LOGIC MỚI: TỰ ĐỘNG TẠO TASK ---
+			// Nếu trạng thái chuyển sang Approved/Confirmed VÀ trước đó chưa phải trạng thái này
+			if ((existingBooking.Status == "Approved" || existingBooking.Status == "Confirmed") && oldStatus != existingBooking.Status)
+			{
+				// Load thêm thông tin Service để làm Description cho rõ
+				var serviceInfo = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == existingBooking.ServiceId);
+				string serviceName = serviceInfo?.Name ?? "Dịch vụ";
+
+				string description = $"Thực hiện: {serviceName}. Ghi chú KH: {existingBooking.ResidentNote}";
+
+				// Gọi TaskService để tạo Task (Status = New)
+				// Hàm này bạn đã thêm ở bước trước trong ITaskService
+				await _taskService.CreateTaskFromBookingAsync(existingBooking.ServiceBookingId, description, operationStaffId);
+			}
+			// ------------------------------------
+
 			existingBooking.Service = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == existingBooking.ServiceId);
 			existingBooking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == existingBooking.ResidentId);
 

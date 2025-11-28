@@ -189,6 +189,37 @@ namespace ApartaAPI.Services
 			return MapToDto(task, assignments, users);
 		}
 
+		// Method MỚI: Tự động tạo Task khi duyệt Booking
+		public async Task<TaskDto> CreateTaskFromBookingAsync(string bookingId, string description, string operationStaffId)
+		{
+			var newTask = new ApartaAPI.Models.Task
+			{
+				TaskId = Guid.NewGuid().ToString(),
+				ServiceBookingId = bookingId,
+				OperationStaffId = operationStaffId,
+				Type = "ServiceRequest", // Mặc định loại này cho task từ booking
+				Description = description,
+				Status = "New", // Trạng thái ban đầu: Mới (Chưa phân công)
+				StartDate = null, // Chưa biết khi nào làm
+				EndDate = null,
+				CreatedAt = DateTime.UtcNow,
+				UpdatedAt = DateTime.UtcNow,
+				AssigneeNote = null
+			};
+
+			await _taskRepository.AddAsync(newTask);
+			await _taskRepository.SaveChangesAsync();
+
+			// ... (Map và return DTO như bình thường)
+			var creator = await _userRepository.FirstOrDefaultAsync(u => u.UserId == operationStaffId);
+			return new TaskDto(
+				newTask.TaskId, newTask.ServiceBookingId, newTask.OperationStaffId,
+				creator?.Name ?? "Unknown", newTask.Type, newTask.Description,
+				newTask.Status, newTask.StartDate, newTask.EndDate, newTask.CreatedAt,
+				null, null, null, null
+			);
+		}
+
 		// Helper Mapping
 		private TaskDto MapToDto(ApartaAPI.Models.Task task, IEnumerable<TaskAssignment> assignments, IEnumerable<User> users)
 		{

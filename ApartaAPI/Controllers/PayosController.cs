@@ -164,7 +164,7 @@ public class PayosController : ControllerBase
             {
                 // Find invoiceId from Payment record using orderCode
                 // We stored orderCode in Payment.PaymentCode when creating payment link
-                var orderCode = payload.data.orderCode.ToString();
+                var orderCode = payload.data.orderCode ?? string.Empty;
                 
                 Console.WriteLine($"Webhook received: orderCode={orderCode}, code={payload.data.code}");
                 

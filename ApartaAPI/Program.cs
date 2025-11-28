@@ -65,9 +65,14 @@ namespace ApartaAPI
 
 			// Repositories & Services
 			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-			
-			// Services
-			builder.Services.AddScoped<IProjectService, ProjectService>();
+
+            // Background Jobs
+			builder.Services.AddHostedService<SubscriptionExpiryService>();
+			builder.Services.AddHostedService<MonthlyBillingJob>();
+            builder.Services.AddHostedService<StaffAssignmentExpirationService>();
+
+            // Services
+            builder.Services.AddScoped<IProjectService, ProjectService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddScoped<IServiceService, ServiceService>();
 			builder.Services.AddScoped<IServiceBookingService, ServiceBookingService>();
@@ -75,9 +80,7 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IUtilityBookingService, UtilityBookingService>();
 			builder.Services.AddScoped<IBuildingService, BuildingService>();
 			builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-			builder.Services.AddHostedService<SubscriptionExpiryService>();
-			builder.Services.AddHostedService<MonthlyBillingJob>();
-			builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IApartmentMemberService, ApartmentMemberService>();
 			builder.Services.AddScoped<IVisitorService, VisitorService>();
 			builder.Services.AddScoped<IVisitLogService, VisitLogService>();
@@ -93,26 +96,24 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
 			builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 			builder.Services.AddScoped<IContractService, ContractService>();
-
-			builder.Services.AddScoped<ITaskService, TaskService> ();
+			builder.Services.AddScoped<ITaskService, TaskService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 			builder.Services.AddScoped<IProfileService, ProfileService>();
+			builder.Services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
+			builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
 			builder.Services.AddTransient<IMailService, MailService>();
 			builder.Services.AddSingleton<PayOSService>();
 
-            builder.Services.AddScoped<IContractPdfService, ContractPdfService>();
-            builder.Services.AddSingleton<PayOSService>();
-
-			
-			// Custom Repositories
-			builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
+            // Custom Repositories
+            builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
 			builder.Services.AddScoped<IProposalRepository, ProposalRepository>();
             builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
             builder.Services.AddScoped<IMessageRepository, MessageRepository>();
-            builder.Services.AddScoped<IChatService, ChatService>();
+            builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
 
             builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
             {

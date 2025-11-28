@@ -67,4 +67,10 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? Nationality { get; set; }
         public string? Status { get; set; }
     }
+
+    public class UpdateMemberAvatarRequest
+    {
+        [Required]
+        public IFormFile FaceImageFile { get; set; } = null!;
+    }
 }

@@ -34,8 +34,17 @@ namespace ApartaAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<VehicleDto>> PostVehicle([FromBody] VehicleCreateDto request)
         {
-            var created = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetVehicle), new { id = created.VehicleId }, created);
+            try
+            {
+                var created = await _service.CreateAsync(request);
+
+                return CreatedAtAction(nameof(GetVehicle),new { id = created.VehicleId },created);
+            }
+            catch (InvalidOperationException ex)
+            {
+               
+                return Conflict(new {message = ex.Message});
+            }
         }
 
         [HttpPut("{id}")]

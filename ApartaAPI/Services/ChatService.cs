@@ -203,7 +203,7 @@ namespace ApartaAPI.Services
             var currentUser = await _context.Users
                 .Include(u => u.Role)
                 .Include(u => u.Apartment).ThenInclude(a => a!.Building)
-                .Include(u => u.StaffBuildingAssignments).ThenInclude(sba => sba.Building)
+                .Include(u => u.StaffBuildingAssignmentUsers).ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == currentUserId);
 
             if (currentUser == null)
@@ -227,7 +227,7 @@ namespace ApartaAPI.Services
             else if (userRoleName.Contains("staff") || userRoleName == "admin")
             {
                 // Staff/Admin -> Lấy tất cả Building ID mà họ được gán
-                buildingIds = currentUser.StaffBuildingAssignments
+                buildingIds = currentUser.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
                     .Select(sba => sba.BuildingId)
                     .ToList();
@@ -246,7 +246,7 @@ namespace ApartaAPI.Services
             {
                 // Resident cần tìm: Tất cả Staff được gán cho Building đó
                 partnersQuery = _context.Users
-                    .Where(u => u.StaffBuildingAssignments.Any(sba => buildingIds.Contains(sba.BuildingId) && sba.IsActive)
+                    .Where(u => u.StaffBuildingAssignmentUsers.Any(sba => buildingIds.Contains(sba.BuildingId) && sba.IsActive)
                                 && u.UserId != currentUserId);
             }
             else // Staff / Admin cần tìm: Tất cả Residents trong các Building họ quản lý

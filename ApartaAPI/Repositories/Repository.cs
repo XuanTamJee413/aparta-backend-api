@@ -49,13 +49,13 @@ namespace ApartaAPI.Repositories
             return await Task.FromResult(entity);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(string id)
         {
             var entity = await GetByIdAsync(id);
             if (entity == null) return false;
 
             _dbSet.Remove(entity);
-            return true;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)

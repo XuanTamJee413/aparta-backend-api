@@ -13,10 +13,6 @@ public partial class Building
 
     public string Name { get; set; } = null!;
 
-    public int? NumResidents { get; set; }
-
-    public int? NumApartments { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -26,6 +22,18 @@ public partial class Building
     public int ReadingWindowStart { get; set; }
 
     public int ReadingWindowEnd { get; set; }
+
+    public int TotalFloors { get; set; }
+
+    public int TotalBasements { get; set; }
+
+    public double? TotalArea { get; set; }
+
+    public DateOnly? HandoverDate { get; set; }
+
+    public string? ReceptionPhone { get; set; }
+
+    public string? Description { get; set; }
 
     public virtual ICollection<Apartment> Apartments { get; set; } = new List<Apartment>();
 

@@ -52,14 +52,15 @@ namespace ApartaAPI.Services
 
             // Sử dụng context để Include StaffBuildingAssignments và Building
             var managersQuery = _context.Users
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .Where(u =>
                     u.RoleId == managerRoleId &&
                     !u.IsDeleted &&
                     (searchTerm == null ||
                         (u.Name != null && u.Name.ToLower().Contains(searchTerm)) ||
-                        (u.StaffCode != null && u.StaffCode.ToLower().Contains(searchTerm)))
+                        (u.StaffCode != null && u.StaffCode.ToLower().Contains(searchTerm)) ||
+                        (u.Email != null && u.Email.ToLower().Contains(searchTerm)))
                 );
 
             var managers = await managersQuery.ToListAsync();
@@ -86,7 +87,7 @@ namespace ApartaAPI.Services
                 Status = m.Status,
                 LastLoginAt = m.LastLoginAt,
                 PermissionGroup = null,
-                AssignedBuildings = m.StaffBuildingAssignments
+                AssignedBuildings = m.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
                     .Select(sba => new BuildingSummaryDto
                     {
@@ -100,7 +101,7 @@ namespace ApartaAPI.Services
             return ApiResponse<IEnumerable<ManagerDto>>.Success(managerDtos);
         }
 
-        public async Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto)
+        public async Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto, string assignedBy)
         {
             var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.Phone == dto.Phone);
             //EF2: Existing phone number
@@ -167,10 +168,13 @@ namespace ApartaAPI.Services
                         BuildingId = buildingId,
                         AssignmentStartDate = DateOnly.FromDateTime(now),
                         AssignmentEndDate = null,
-                        ScopeOfWork = null,
-                        IsActive = true
+                        ScopeOfWork = "Quản lý tòa nhà",
+                        Position = "Manager",
+                        AssignedBy = assignedBy,
+                        IsActive = true,
+                        CreatedAt = now,
+                        UpdatedAt = now
                     };
-
                     await _staffBuildingAssignmentRepository.AddAsync(assignment);
                 }
             }
@@ -209,7 +213,7 @@ namespace ApartaAPI.Services
 
             // Lấy lại manager với thông tin building assignments
             var createdManager = await _context.Users
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == newUser.UserId);
 
@@ -225,7 +229,7 @@ namespace ApartaAPI.Services
                 Status = newUser.Status,
                 LastLoginAt = newUser.LastLoginAt,
                 PermissionGroup = null,
-                AssignedBuildings = createdManager?.StaffBuildingAssignments
+                AssignedBuildings = createdManager?.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
                     .Select(sba => new BuildingSummaryDto
                     {
@@ -239,11 +243,11 @@ namespace ApartaAPI.Services
             return ApiResponse<ManagerDto>.SuccessWithCode(resultDto, ApiResponse.SM04_CREATE_SUCCESS, "Manager");
         }
 
-        public async Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto)
+        public async Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto, string assignedBy)
         {
             // Bước 1: Tải manager với StaffBuildingAssignments
             var manager = await _context.Users
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                 .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
 
             if (manager == null)
@@ -276,7 +280,7 @@ namespace ApartaAPI.Services
             if (dto.BuildingIds != null)
             {
                 var newBuildingIds = dto.BuildingIds;
-                var currentAssignments = manager.StaffBuildingAssignments.ToList();
+                var currentAssignments = manager.StaffBuildingAssignmentUsers.ToList();
                 var currentBuildingIds = currentAssignments.Select(sba => sba.BuildingId).ToList();
 
                 // Bước 3: Xóa các assignment không còn trong danh sách mới
@@ -303,8 +307,12 @@ namespace ApartaAPI.Services
                         BuildingId = buildingId,
                         AssignmentStartDate = DateOnly.FromDateTime(now),
                         AssignmentEndDate = null,
-                        ScopeOfWork = null,
-                        IsActive = true
+                        ScopeOfWork = "Quản lý tòa nhà",
+                        Position = "Manager",
+                        AssignedBy = assignedBy,
+                        IsActive = true,
+                        CreatedAt = now,
+                        UpdatedAt = now
                     };
 
                     await _context.StaffBuildingAssignments.AddAsync(newAssignment);
@@ -354,7 +362,7 @@ namespace ApartaAPI.Services
 
             // Lấy lại manager với thông tin đầy đủ
             var updatedManager = await _context.Users
-                .Include(u => u.StaffBuildingAssignments)
+                .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
@@ -372,7 +380,7 @@ namespace ApartaAPI.Services
                 Status = manager.Status,
                 LastLoginAt = manager.LastLoginAt,
                 PermissionGroup = null,
-                AssignedBuildings = updatedManager?.StaffBuildingAssignments
+                AssignedBuildings = updatedManager?.StaffBuildingAssignmentUsers
                     .Where(sba => sba.IsActive)
                     .Select(sba => new BuildingSummaryDto
                     {

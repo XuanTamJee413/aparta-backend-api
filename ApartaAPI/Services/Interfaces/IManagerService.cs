@@ -6,7 +6,7 @@ namespace ApartaAPI.Services.Interfaces
     public interface IManagerService
     {
         Task<ApiResponse<IEnumerable<ManagerDto>>> GetAllManagersAsync(ManagerSearch search);
-        Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto);
-        Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto);
+        Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto, string assignedBy);
+        Task<ApiResponse<ManagerDto>> UpdateManagerAsync(string userId, UpdateManagerDto dto, string assignedBy);
     }
 }

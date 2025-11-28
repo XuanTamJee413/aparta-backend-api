@@ -94,10 +94,18 @@ namespace ApartaAPI.Services
             var now = DateTime.UtcNow;
             var entity = _mapper.Map<Vehicle>(dto);
 
+            var existingVehicleNumber = await _repository.FirstOrDefaultAsync(
+              a => a.VehicleNumber == entity.VehicleNumber);
+             
+            if (existingVehicleNumber != null)
+            {
+                throw new InvalidOperationException("Biển số xe đã tồn tại.");
+            }
+
             entity.VehicleId = Guid.NewGuid().ToString("N");
             entity.CreatedAt = now;
             entity.UpdatedAt = now;
-
+            entity.Status = "Chờ duyệt";
             await _repository.AddAsync(entity);
             await _repository.SaveChangesAsync();
 
@@ -108,7 +116,7 @@ namespace ApartaAPI.Services
         {
             var entity = await _repository.FirstOrDefaultAsync(v => v.VehicleId == id);
             if (entity == null) return false;
-
+           
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
 

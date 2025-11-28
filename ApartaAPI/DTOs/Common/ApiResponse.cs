@@ -133,7 +133,46 @@
         public const string SM42_ASSIGNMENT_OVERLAP = "Nhân viên đang làm việc tại vị trí này, vui lòng kết thúc công việc cũ trước.";
         public const string SM43_NOT_STAFF = "Người dùng này không phải là nhân viên.";
 
-        public static string GetMessageFromCode(string code)
+		// SM44: Dịch vụ không tồn tại
+		public const string SM44_SERVICE_NOT_FOUND = "Dịch vụ không tồn tại hoặc không khả dụng.";
+
+		// SM45: Thời gian kết thúc không hợp lệ
+		public const string SM45_END_TIME_INVALID = "Thời gian kết thúc phải sau thời gian bắt đầu.";
+
+		// SM46: Thời gian quá khứ
+		public const string SM46_PAST_TIME_INVALID = "Không thể đặt lịch trong quá khứ.";
+
+		// SM47: Thời gian tối đa (với {hours})
+		public const string SM47_MAX_DURATION_EXCEEDED = "Thời gian đặt tối đa cho tiện ích này là {hours} giờ.";
+
+		// SM48: Trùng lịch
+		public const string SM48_SLOT_OVERLAP = "Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.";
+
+		// SM49: Giờ mở cửa
+		public const string SM49_OPENING_HOURS_INVALID = "Dịch vụ chỉ mở cửa từ 6:00 sáng.";
+
+		// SM50: Giờ đóng cửa
+		public const string SM50_CLOSING_HOURS_INVALID = "Dịch vụ đóng cửa lúc 22:00. Vui lòng chọn giờ kết thúc sớm hơn.";
+
+		// SM51: Giới hạn đơn Pending
+		public const string SM51_PENDING_LIMIT_EXCEEDED = "Bạn đang có đơn chờ duyệt vào ngày này. Vui lòng đợi xử lý.";
+
+		// SM52: Giới hạn số lần đặt trong ngày
+		public const string SM52_DAILY_BOOKING_LIMIT = "Bạn chỉ được đặt tối đa 3 lần trong một ngày.";
+
+		// SM53: Không có quyền hủy
+		public const string SM53_CANCEL_DENIED = "Bạn không có quyền hủy đơn này.";
+
+		// SM54: Quá hạn hủy
+		public const string SM54_CANCEL_EXPIRED = "Đã quá thời gian bắt đầu, không thể hủy.";
+
+		// SM55: Đã hủy trước đó
+		public const string SM55_ALREADY_CANCELLED = "Đơn này đã bị hủy hoặc từ chối trước đó.";
+
+		// SM56: Đặt trước tối thiểu 30p
+		public const string SM56_BOOKING_MIN_TIME = "Bạn cần đặt trước ít nhất 30 phút.";
+
+		public static string GetMessageFromCode(string code)
         {
             return code switch
             {
@@ -180,7 +219,20 @@
                 SM41_INVOICE_DETAIL_SUCCESS => SM41_INVOICE_DETAIL_SUCCESS,
                 SM42_ASSIGNMENT_OVERLAP => SM42_ASSIGNMENT_OVERLAP,
                 SM43_NOT_STAFF => SM43_NOT_STAFF,
-                _ => code
+				SM44_SERVICE_NOT_FOUND => SM44_SERVICE_NOT_FOUND,
+				SM45_END_TIME_INVALID => SM45_END_TIME_INVALID,
+				SM46_PAST_TIME_INVALID => SM46_PAST_TIME_INVALID,
+				SM47_MAX_DURATION_EXCEEDED => SM47_MAX_DURATION_EXCEEDED,
+				SM48_SLOT_OVERLAP => SM48_SLOT_OVERLAP,
+				SM49_OPENING_HOURS_INVALID => SM49_OPENING_HOURS_INVALID,
+				SM50_CLOSING_HOURS_INVALID => SM50_CLOSING_HOURS_INVALID,
+				SM51_PENDING_LIMIT_EXCEEDED => SM51_PENDING_LIMIT_EXCEEDED,
+				SM52_DAILY_BOOKING_LIMIT => SM52_DAILY_BOOKING_LIMIT,
+				SM53_CANCEL_DENIED => SM53_CANCEL_DENIED,
+				SM54_CANCEL_EXPIRED => SM54_CANCEL_EXPIRED,
+				SM55_ALREADY_CANCELLED => SM55_ALREADY_CANCELLED,
+				SM56_BOOKING_MIN_TIME => SM56_BOOKING_MIN_TIME,
+				_ => code
             };
         }
 

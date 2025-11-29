@@ -31,4 +31,13 @@ namespace ApartaAPI.DTOs.Proposals
         [MaxLength(2000)]
         public string ReplyContent { get; set; } = null!;
     }
+    public class ProposalQueryParams
+    {
+        public string? SearchTerm { get; set; }
+        public string? Status { get; set; }
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public string? SortColumn { get; set; } // Hỗ trợ: CreatedAt, Status
+        public string? SortDirection { get; set; } = "desc";
+    }
 }

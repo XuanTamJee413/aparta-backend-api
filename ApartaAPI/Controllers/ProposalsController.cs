@@ -64,13 +64,11 @@ namespace ApartaAPI.Controllers
         // ============================
         [HttpGet("staff-list")]
         [ProducesResponseType(typeof(ApiResponse<IEnumerable<ProposalDto>>), StatusCodes.Status200OK)]
-        // Yêu cầu Staff/Admin role để truy cập
-        [Authorize(Roles = "staff,admin")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ProposalDto>>>> GetStaffProposals()
+        public async Task<ActionResult<ApiResponse<PagedList<ProposalDto>>>> GetStaffProposals([FromQuery] ProposalQueryParams query)
         {
             var staffId = GetUserId();
-            var proposals = await _proposalService.GetProposalsForStaffAsync(staffId);
-            return Ok(ApiResponse<IEnumerable<ProposalDto>>.Success(proposals));
+            var response = await _proposalService.GetProposalsForStaffAsync(staffId, query);
+            return Ok(response);
         }
 
         // ============================

@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.Proposals;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.Proposals;
 
 namespace ApartaAPI.Services.Interfaces
 {
@@ -11,7 +12,7 @@ namespace ApartaAPI.Services.Interfaces
         Task<IEnumerable<ProposalDto>> GetProposalsByResidentAsync(string residentId);
 
         // Staff: Lấy danh sách Proposal cần xử lý
-        Task<IEnumerable<ProposalDto>> GetProposalsForStaffAsync(string staffId);
+        Task<ApiResponse<PagedList<ProposalDto>>> GetProposalsForStaffAsync(string staffId, ProposalQueryParams query);
 
         // Staff/Resident: Xem chi tiết
         Task<ProposalDto?> GetProposalDetailAsync(string proposalId, string currentUserId);

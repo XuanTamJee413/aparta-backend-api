@@ -1,4 +1,5 @@
 ﻿using ApartaAPI.Data;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Proposals;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
@@ -44,23 +45,29 @@ namespace ApartaAPI.Services
             return assignment?.UserId;
         }
 
-
         // ============================
         // CREATE PROPOSAL (RESIDENT)
         // ============================
         public async Task<ProposalDto> CreateProposalAsync(string residentId, ProposalCreateDto createDto)
         {
-            var staffId = await FindResponsibleStaffId(residentId);
-
+            // Map dữ liệu từ DTO sang Entity
             var proposal = _mapper.Map<Proposal>(createDto);
 
             proposal.ResidentId = residentId;
-            proposal.OperationStaffId = staffId; // Gán Staff phụ trách nếu tìm thấy
+
+            // LOGIC MỚI: Không tự động gán Staff. Để trống (null) để chờ Staff vào nhận.
+            proposal.OperationStaffId = null;
+
             proposal.Status = "Pending";
 
+            // Đảm bảo thời gian được set
+            if (proposal.CreatedAt == null) proposal.CreatedAt = DateTime.UtcNow;
+            if (proposal.UpdatedAt == null) proposal.UpdatedAt = DateTime.UtcNow;
+
+            // Lưu vào Database
             var createdProposal = await _proposalRepo.AddAsync(proposal);
 
-            // Cần lấy lại data với join để mapper sang DTO
+            // Lấy lại data đầy đủ (bao gồm thông tin Resident để hiển thị ngay)
             var result = await _proposalRepo.GetProposalDetailsAsync(createdProposal.ProposalId);
 
             return _mapper.Map<ProposalDto>(result!);
@@ -78,10 +85,60 @@ namespace ApartaAPI.Services
         // ============================
         // GET PROPOSALS (STAFF LIST)
         // ============================
-        public async Task<IEnumerable<ProposalDto>> GetProposalsForStaffAsync(string staffId)
+        public async Task<ApiResponse<PagedList<ProposalDto>>> GetProposalsForStaffAsync(string staffId,ProposalQueryParams query)
         {
-            var proposals = await _proposalRepo.GetStaffAssignedProposalsAsync(staffId);
-            return _mapper.Map<IEnumerable<ProposalDto>>(proposals);
+            var source = _proposalRepo.GetStaffProposalsQuery(staffId);
+
+            // 1. Filtering by Status (combobox)
+            if (!string.IsNullOrWhiteSpace(query.Status))
+            {
+                var status = query.Status.Trim();
+                source = source.Where(p => p.Status == status);
+            }
+
+            // 2. Filtering by SearchTerm (content search)
+            if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+            {
+                var term = query.SearchTerm.Trim().ToLowerInvariant();
+                source = source.Where(p =>
+                    p.Content.ToLower().Contains(term) ||
+                    p.Resident.Name.ToLower().Contains(term)
+                );
+            }
+
+            // 3. Sorting (by CreatedAt and Status - yêu cầu 5)
+            if (string.IsNullOrWhiteSpace(query.SortColumn))
+            {
+                query.SortColumn = "CreatedAt";
+            }
+
+            source = query.SortColumn.ToLowerInvariant() switch
+            {
+                "createdat" => query.SortDirection?.ToLowerInvariant() == "asc"
+                    ? source.OrderBy(p => p.CreatedAt)
+                    : source.OrderByDescending(p => p.CreatedAt),
+                "status" => query.SortDirection?.ToLowerInvariant() == "asc"
+                    ? source.OrderBy(p => p.Status).ThenByDescending(p => p.CreatedAt)
+                    : source.OrderByDescending(p => p.Status).ThenByDescending(p => p.CreatedAt),
+                _ => source.OrderByDescending(p => p.CreatedAt)
+            };
+
+            // 4. Pagination
+            var totalCount = await source.CountAsync();
+            var items = await source
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            var dtos = _mapper.Map<List<ProposalDto>>(items);
+            var pagedList = new PagedList<ProposalDto>(dtos, totalCount, query.PageNumber, query.PageSize);
+
+            if (totalCount == 0)
+            {
+                return ApiResponse<PagedList<ProposalDto>>.Success(pagedList, ApiResponse.SM01_NO_RESULTS);
+            }
+
+            return ApiResponse<PagedList<ProposalDto>>.Success(pagedList);
         }
 
         // ============================
@@ -92,11 +149,26 @@ namespace ApartaAPI.Services
             var proposal = await _proposalRepo.GetProposalDetailsAsync(proposalId);
             if (proposal == null) return null;
 
-            // Kiểm tra quyền: Chỉ Resident sở hữu hoặc Staff được gán mới được xem
-            if (proposal.ResidentId != currentUserId && proposal.OperationStaffId != currentUserId)
+            // --- ĐOẠN CODE SỬA ĐỔI ---
+
+            // 1. Lấy thông tin User hiện tại để check Role
+            var user = await _context.Users.Include(u => u.Role)
+                             .FirstOrDefaultAsync(u => u.UserId == currentUserId);
+            var roleName = user?.Role.RoleName.ToLower() ?? "";
+
+            // 2. Cho phép xem nếu:
+            //    - Là chủ sở hữu (Resident)
+            //    - Hoặc là người được gán (OperationStaffId)
+            //    - Hoặc là nhóm quản lý (Staff/Admin/Manager) -> Cho phép xem tất cả để hỗ trợ
+            bool isOwner = proposal.ResidentId == currentUserId;
+            bool isAssigned = proposal.OperationStaffId == currentUserId;
+            bool isManagement = roleName.Contains("staff") || roleName == "admin" || roleName == "manager";
+
+            if (!isOwner && !isAssigned && !isManagement)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xem Proposal này.");
             }
+            // ---------------------------
 
             return _mapper.Map<ProposalDto>(proposal);
         }
@@ -114,7 +186,7 @@ namespace ApartaAPI.Services
             var staffUser = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == staffId);
             var staffRoleName = staffUser?.Role.RoleName.ToLower() ?? "";
 
-            if (!staffRoleName.Contains("staff") && staffRoleName != "admin")
+            if (!staffRoleName.Contains("staff") && !staffRoleName.Contains("manager") && staffRoleName != "admin")
             {
                 throw new UnauthorizedAccessException("Chỉ Staff/Admin mới có thể trả lời đề xuất.");
             }

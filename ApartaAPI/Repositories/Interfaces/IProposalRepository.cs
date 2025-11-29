@@ -12,5 +12,6 @@ namespace ApartaAPI.Repositories.Interfaces
 
         // Staff: Lấy Proposal chi tiết (cần Include Resident)
         Task<Proposal?> GetProposalDetailsAsync(string proposalId);
+        IQueryable<Proposal> GetStaffProposalsQuery(string staffId);
     }
 }

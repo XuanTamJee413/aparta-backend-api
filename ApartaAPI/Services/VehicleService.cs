@@ -38,12 +38,11 @@ namespace ApartaAPI.Services
                 (statusFilter == null || (v.Status != null && v.Status.ToLower() == statusFilter)) &&
 
                 (searchTerm == null ||
-                    (v.VehicleNumber.ToLower().Contains(searchTerm)) || 
-                    (v.ApartmentId.ToLower().Contains(searchTerm)) ||   
+                    (v.VehicleNumber.ToLower().Contains(searchTerm)) ||
+                    (v.ApartmentId.ToLower().Contains(searchTerm)) ||
                     (v.Info != null && v.Info.ToLower().Contains(searchTerm))
                 );
 
-            
             var entities = await _repository.FindAsync(predicate);
 
             if (entities == null)
@@ -51,10 +50,8 @@ namespace ApartaAPI.Services
                 entities = new List<Vehicle>();
             }
 
-          
             var validEntities = entities.Where(e => e != null).ToList();
 
-           
             IOrderedEnumerable<Vehicle> sortedEntities;
             bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
 
@@ -67,17 +64,17 @@ namespace ApartaAPI.Services
                     break;
 
                 default:
-                    
                     sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt);
                     break;
             }
 
-           
             var dtos = _mapper.Map<IEnumerable<VehicleDto>>(sortedEntities);
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<VehicleDto>>.Success(new List<VehicleDto>(), "SM01"); 
+
+                return ApiResponse<IEnumerable<VehicleDto>>
+                    .SuccessWithCode(new List<VehicleDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<VehicleDto>>.Success(dtos);
@@ -95,17 +92,20 @@ namespace ApartaAPI.Services
             var entity = _mapper.Map<Vehicle>(dto);
 
             var existingVehicleNumber = await _repository.FirstOrDefaultAsync(
-              a => a.VehicleNumber == entity.VehicleNumber);
-             
+                a => a.VehicleNumber == entity.VehicleNumber);
+
             if (existingVehicleNumber != null)
             {
-                throw new InvalidOperationException("Biển số xe đã tồn tại.");
+
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "biển số xe");
+                throw new InvalidOperationException(error.Message);
             }
 
             entity.VehicleId = Guid.NewGuid().ToString("N");
             entity.CreatedAt = now;
             entity.UpdatedAt = now;
             entity.Status = "Chờ duyệt";
+
             await _repository.AddAsync(entity);
             await _repository.SaveChangesAsync();
 
@@ -116,7 +116,7 @@ namespace ApartaAPI.Services
         {
             var entity = await _repository.FirstOrDefaultAsync(v => v.VehicleId == id);
             if (entity == null) return false;
-           
+
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
 

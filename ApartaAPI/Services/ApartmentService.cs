@@ -24,7 +24,6 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-
         private async Task<Building> GetBuildingAsync(string buildingId)
         {
             var building = await _buildingRepository.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
@@ -64,7 +63,6 @@ namespace ApartaAPI.Services
             var normalizedCode = NormalizeBuildingCode(buildingCode);
             return $"{normalizedCode}-{floor}{roomIndex:D2}";
         }
-
 
         public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetAllAsync(ApartmentQueryParameters query)
         {
@@ -134,7 +132,8 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<ApartmentDto>>.Success(new List<ApartmentDto>(), "SM01");
+                return ApiResponse<IEnumerable<ApartmentDto>>
+                    .Success(new List<ApartmentDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<ApartmentDto>>.Success(dtos);
@@ -146,7 +145,6 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentDto?>(entity);
         }
 
-        
         public async Task<ApartmentDto> CreateAsync(ApartmentCreateDto dto)
         {
             if (dto.Floor is null || dto.Floor <= 0)
@@ -182,7 +180,8 @@ namespace ApartaAPI.Services
 
             if (existingApartmentCode != null)
             {
-                throw new InvalidOperationException($"Mã căn hộ '{rawCode}' đã tồn tại trong tòa nhà này.");
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "mã căn hộ");
+                throw new InvalidOperationException(error.Message);
             }
 
             var now = DateTime.UtcNow;
@@ -202,7 +201,6 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentDto>(entity);
         }
 
-       
         public async Task<IEnumerable<ApartmentDto>> CreateBulkAsync(ApartmentBulkCreateDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.BuildingId))
@@ -330,7 +328,8 @@ namespace ApartaAPI.Services
 
                 if (existing != null)
                 {
-                    throw new InvalidOperationException($"Mã căn hộ '{newCode}' đã tồn tại trong tòa nhà này.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "mã căn hộ");
+                    throw new InvalidOperationException(error.Message);
                 }
 
                 entity.Code = newCode;
@@ -349,10 +348,6 @@ namespace ApartaAPI.Services
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
                 entity.Status = dto.Status;
-            }
-
-            if (dto.Floor.HasValue && dto.Floor.Value != entity.Floor)
-            {
             }
 
             entity.UpdatedAt = DateTime.UtcNow;

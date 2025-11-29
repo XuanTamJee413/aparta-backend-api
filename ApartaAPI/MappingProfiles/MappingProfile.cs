@@ -26,9 +26,7 @@ namespace ApartaAPI.Profiles
         public MappingProfile()
         {
             CreateMap<Project, ProjectDto>();
-
             CreateMap<ProjectCreateDto, Project>();
-
             CreateMap<ProjectUpdateDto, Project>()
                 .ForMember(dest => dest.ProjectCode, opt => opt.Ignore())
                 .ForMember(dest => dest.ProjectId, opt => opt.Ignore())

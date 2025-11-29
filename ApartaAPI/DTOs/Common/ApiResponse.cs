@@ -208,15 +208,19 @@
             return new() { Succeeded = true, Message = message };
         }
 
-        public static ApiResponse Fail(string code, string? fieldName = null)
+        public static ApiResponse Fail(string code, string? fieldName = null, string? customMessage = null)
         {
-            string message = GetMessageFromCode(code);
+            string message = !string.IsNullOrEmpty(customMessage)
+                             ? customMessage
+                             : GetMessageFromCode(code);
 
             if (code == SM16_DUPLICATE_CODE && !string.IsNullOrEmpty(fieldName))
             {
                 string formattedFieldName = char.ToUpper(fieldName[0]) + fieldName.Substring(1);
-
-                message = message.Replace("{fieldName}", formattedFieldName);
+                if (string.IsNullOrEmpty(customMessage))
+                {
+                    message = message.Replace("{fieldName}", formattedFieldName);
+                }
             }
 
             return new() { Succeeded = false, Message = message };
@@ -241,19 +245,20 @@
             return new(data) { Succeeded = true, Message = message };
         }
 
-        public static new ApiResponse<T> Fail(string code, string? fieldName = null)
+        public static new ApiResponse<T> Fail(string code, string? fieldName = null, string? customMessage = null)
         {
-            string message = GetMessageFromCode(code);
+            string message = !string.IsNullOrEmpty(customMessage)
+                             ? customMessage
+                             : GetMessageFromCode(code);
 
-
-            // cấu hình đặc biệt cho SM16 với placeholder
             if (code == SM16_DUPLICATE_CODE && !string.IsNullOrEmpty(fieldName))
             {
                 string formattedFieldName = char.ToUpper(fieldName[0]) + fieldName.Substring(1);
-
-                message = message.Replace("{fieldName}", formattedFieldName);
+                if (string.IsNullOrEmpty(customMessage))
+                {
+                    message = message.Replace("{fieldName}", formattedFieldName);
+                }
             }
-
 
             return new((T?)default) { Succeeded = false, Message = message };
         }

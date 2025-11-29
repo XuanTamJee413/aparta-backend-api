@@ -3,9 +3,8 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.Assets;
-using ApartaAPI.DTOs.Common; 
-using System.Linq.Expressions; 
-
+using ApartaAPI.DTOs.Common;
+using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
 {
@@ -74,12 +73,12 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<AssetDto>>.Success(new List<AssetDto>(), "SM01"); 
+                return ApiResponse<IEnumerable<AssetDto>>
+                    .Success(new List<AssetDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<AssetDto>>.Success(dtos);
         }
-
 
         public async Task<AssetDto?> GetByIdAsync(string id)
         {

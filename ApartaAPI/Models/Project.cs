@@ -33,6 +33,13 @@ public partial class Project
 
     public string? BankAccountName { get; set; }
 
+    // PayOS Settings
+    public string? PayOSClientId { get; set; }
+
+    public string? PayOSApiKey { get; set; }
+
+    public string? PayOSChecksumKey { get; set; }
+
     public virtual User? Admin { get; set; }
 
     public virtual ICollection<Building> Buildings { get; set; } = new List<Building>();

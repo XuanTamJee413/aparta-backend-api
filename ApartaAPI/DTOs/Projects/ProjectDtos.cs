@@ -27,6 +27,11 @@ namespace ApartaAPI.DTOs.Projects
         string? BankAccountNumber,
         string? BankAccountName,
 
+        // Nhóm PayOS
+        string? PayOSClientId,
+        string? PayOSApiKey,
+        string? PayOSChecksumKey,
+
         // Thống kê (Calculated)
         int NumApartments,
         int NumBuildings,
@@ -46,7 +51,10 @@ namespace ApartaAPI.DTOs.Projects
         string? City,
         string? BankName,
         string? BankAccountNumber,
-        string? BankAccountName
+        string? BankAccountName,
+        string? PayOSClientId,
+        string? PayOSApiKey,
+        string? PayOSChecksumKey
     );
 
     // [UPDATE] Input: Thêm Address + Bank. BỎ NumApartments/NumBuildings
@@ -59,6 +67,9 @@ namespace ApartaAPI.DTOs.Projects
         string? BankName,
         string? BankAccountNumber,
         string? BankAccountName,
+        string? PayOSClientId,
+        string? PayOSApiKey,
+        string? PayOSChecksumKey,
         bool? IsActive
     );
 }

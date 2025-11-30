@@ -8,6 +8,8 @@ namespace ApartaAPI.DTOs.Dashboard
         public double OccupancyRate { get; set; }
         public List<MonthlyRevenueDto> RevenueByMonth { get; set; } = new List<MonthlyRevenueDto>();
         public ApartmentStatusDto ApartmentStatus { get; set; } = new ApartmentStatusDto();
+        public int PendingMeterReadings { get; set; }
+        public int UnpaidInvoices { get; set; }
     }
 
     public class MonthlyRevenueDto
@@ -20,6 +22,23 @@ namespace ApartaAPI.DTOs.Dashboard
     {
         public int Occupied { get; set; }
         public int Vacant { get; set; }
+    }
+
+    public class ProjectApartmentStatusDto
+    {
+        public string ProjectId { get; set; } = string.Empty;
+        public string ProjectName { get; set; } = string.Empty;
+        public int TotalApartments { get; set; }
+        public int SoldApartments { get; set; }
+        public int UnsoldApartments { get; set; }
+    }
+
+    public class ProjectRevenueDto
+    {
+        public string ProjectId { get; set; } = string.Empty;
+        public string ProjectName { get; set; } = string.Empty;
+        public List<MonthlyRevenueDto> RevenueByMonth { get; set; } = new List<MonthlyRevenueDto>();
+        public decimal TotalRevenue { get; set; }
     }
 }
 

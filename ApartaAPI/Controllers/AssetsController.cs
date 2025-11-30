@@ -4,7 +4,9 @@ using ApartaAPI.Services.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ApartaAPI.DTOs.Common; 
-using Microsoft.AspNetCore.Authorization; 
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace ApartaAPI.Controllers
 {
@@ -27,6 +29,21 @@ namespace ApartaAPI.Controllers
             var response = await _service.GetAllAsync(query); 
             return Ok(response); 
         }
+        [HttpGet("my-buildings")]
+        [Authorize(Policy = "CanReadAsset")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AssetDto>>>> GetAssetsByMyBuildings( [FromQuery] AssetQueryParameters query)
+        {
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập."));
+            }
+
+            var response = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(response);
+        }
+
 
         [HttpGet("{id}")]
         [Authorize(Policy = "CanReadAsset")]

@@ -1,4 +1,4 @@
-namespace ApartaAPI.Helpers
+namespace ApartaAPI.Utils.Helper
 {
     public class CloudinarySettings
     {
@@ -8,4 +8,5 @@ namespace ApartaAPI.Helpers
         public string DefaultFolder { get; set; } = "aparta-library";
     }
 }
+
 

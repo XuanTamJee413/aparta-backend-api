@@ -99,7 +99,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => apartmentIds.Contains(m.ApartmentId)
                      && m.IsOwner == true
-                     && m.Status == "Đã Thuê"
+                     && m.Status == "Đã Bán"
             );
             var ownerDict = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
                 .GroupBy(m => m.ApartmentId)
@@ -157,7 +157,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => m.ApartmentId == contract.ApartmentId
                      && m.IsOwner == true
-                     && m.Status == "Đang Thuê"
+                     && m.Status == "Đã Bán"
             );
             var owner = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
                 .OrderByDescending(m => m.CreatedAt)
@@ -202,9 +202,9 @@ namespace ApartaAPI.Services
             }
 
             if (apartment.Status == null ||
-                 apartment.Status.Trim().ToLowerInvariant() != "chưa thuê")
+                 apartment.Status.Trim().ToLowerInvariant() != "còn trống")
             {
-                throw new InvalidOperationException("Căn hộ này không có sẵn để cho thuê.");
+                throw new InvalidOperationException("Căn hộ này không có sẵn để mua.");
             }
 
             var ownerIdNumber = dto.OwnerIdNumber.Trim();
@@ -237,7 +237,7 @@ namespace ApartaAPI.Services
                 throw new InvalidOperationException(error.Message);
             }
 
-            apartment.Status = "Đã Thuê";
+            apartment.Status = "Đã Bán";
             apartment.UpdatedAt = now;
 
             var contract = _mapper.Map<Contract>(dto);
@@ -267,9 +267,9 @@ namespace ApartaAPI.Services
                     Name = dto.OwnerName,
 
                     PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.",
-                    Status = "Active",
+                    Status = "active",
                     IsDeleted = false,
-                    IsFirstLogin = false,
+                    IsFirstLogin = true,
                     AvatarUrl = null,
                     StaffCode = Guid.NewGuid().ToString("N"),
                     LastLoginAt = null,
@@ -293,7 +293,7 @@ namespace ApartaAPI.Services
 
                 IsOwner = true,
                 FamilyRole = "Chủ Hộ",
-                Status = "Đang Thuê",
+                Status = "Đang cư trú",
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -358,7 +358,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => m.ApartmentId == contract.ApartmentId
                      && m.IsOwner == true
-                     && m.Status == "Đang Thuê"
+                     && m.Status == "Đang cư trú"
             );
 
             var now = DateTime.UtcNow;
@@ -387,7 +387,7 @@ namespace ApartaAPI.Services
                     BuildingId = apartment.BuildingId,
                     Code = originalCode,
                     Type = apartment.Type,
-                    Status = "Chưa Thuê",
+                    Status = "Còn Trống",
                     Area = apartment.Area,
                     Floor = apartment.Floor,
                     CreatedAt = now,

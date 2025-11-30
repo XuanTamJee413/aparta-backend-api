@@ -49,7 +49,8 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         [StringLength(255, ErrorMessage = "Email không được vượt quá 255 ký tự")]
         public string? Email { get; init; }
 
-        [StringLength(50, ErrorMessage = "Mã nhân viên không được vượt quá 50 ký tự")]
+        [StringLength(5, MinimumLength = 5, ErrorMessage = "Mã nhân viên phải gồm đúng 5 ký tự")]
+        [RegularExpression(@"^[A-Z0-9]{5}$", ErrorMessage = "Mã nhân viên chỉ được chứa chữ in hoa và số")]
         public string? StaffCode { get; init; }
 
         public string? AvatarUrl { get; init; }
@@ -79,7 +80,8 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? Email { get; init; }
 
         //ef2: Staff code validation
-        [StringLength(50, ErrorMessage = "Mã nhân viên không được vượt quá 50 ký tự")]
+        [StringLength(5, MinimumLength = 5, ErrorMessage = "Mã nhân viên phải gồm đúng 5 ký tự")]
+        [RegularExpression(@"^[A-Z0-9]{5}$", ErrorMessage = "Mã nhân viên chỉ được chứa chữ in hoa và số")]
         public string? StaffCode { get; init; }
 
         public string? AvatarUrl { get; init; }

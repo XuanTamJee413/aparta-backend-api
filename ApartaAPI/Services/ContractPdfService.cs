@@ -20,7 +20,7 @@ namespace ApartaAPI.Services
                     page.DefaultTextStyle(x => x.FontSize(12));
 
                     page.Header()
-                        .Text("HỢP ĐỒNG THUÊ CĂN HỘ")
+                        .Text("HỢP ĐỒNG MUA CĂN HỘ")
                         .SemiBold().FontSize(18).AlignCenter();
 
                     page.Content().PaddingVertical(10).Column(col =>
@@ -34,7 +34,7 @@ namespace ApartaAPI.Services
                         col.Item().Text($"Email: {contract.OwnerEmail ?? "-"}");
 
                         col.Item().Text($"Ngày bắt đầu: {FormatDate(contract.StartDate)}");
-                        col.Item().Text($"Ngày kết thúc: {FormatDate(contract.EndDate)}");
+                        //col.Item().Text($"Ngày kết thúc: {FormatDate(contract.EndDate)}");
 
                         //if (!string.IsNullOrWhiteSpace(contract.Image))
                         //{
@@ -46,9 +46,9 @@ namespace ApartaAPI.Services
 
                         col.Item().Text(text =>
                         {
-                            text.Span("1. Bên thuê cam kết sử dụng căn hộ đúng mục đích, chấp hành nội quy tòa nhà.").LineHeight(1.2f);
+                            text.Span("1. Bên mua cam kết sử dụng căn hộ đúng mục đích, chấp hành nội quy tòa nhà.").LineHeight(1.2f);
                             text.Line("");
-                            text.Span("2. Bên cho thuê đảm bảo căn hộ đủ điều kiện sử dụng, hỗ trợ bên thuê trong quá trình cư trú.").LineHeight(1.2f);
+                            text.Span("2. Bên bán đảm bảo căn hộ đủ điều kiện sử dụng, hỗ trợ bên mua trong quá trình cư trú.").LineHeight(1.2f);
                             text.Line("");
                             text.Span("3. Các điều khoản chi tiết khác được quy định trong hệ thống quản lý Aparta.").LineHeight(1.2f);
                         });
@@ -57,13 +57,13 @@ namespace ApartaAPI.Services
                         {
                             row.RelativeItem().Column(c =>
                             {
-                                c.Item().Text("BÊN CHO THUÊ").SemiBold();
+                                c.Item().Text("BÊN BÁN").SemiBold();
                                 c.Item().PaddingTop(40).Text("Ký, ghi rõ họ tên");
                             });
 
                             row.RelativeItem().Column(c =>
                             {
-                                c.Item().Text("BÊN THUÊ").SemiBold();
+                                c.Item().Text("BÊN MUA").SemiBold();
                                 c.Item().PaddingTop(40).Text(contract.OwnerName ?? "________________");
                             });
                         });

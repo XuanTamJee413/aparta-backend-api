@@ -80,6 +80,73 @@ namespace ApartaAPI.Services
             return ApiResponse<IEnumerable<VehicleDto>>.Success(dtos);
         }
 
+        public async Task<ApiResponse<IEnumerable<VehicleDto>>> GetByUserBuildingsAsync( string userId, VehicleQueryParameters query)
+        {
+            if (query == null)
+            {
+                query = new VehicleQueryParameters(null, null, null, null);
+            }
+
+            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim().ToLowerInvariant();
+
+            var statusFilter = string.IsNullOrWhiteSpace(query.Status)
+                ? null
+                : query.Status.Trim().ToLowerInvariant();
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            Expression<Func<Vehicle, bool>> predicate = v =>
+                v.Apartment != null &&
+                v.Apartment.Building.StaffBuildingAssignments.Any(sba =>
+                    sba.UserId == userId &&
+                    sba.IsActive &&
+                    (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                )
+                && (statusFilter == null || (v.Status != null && v.Status.ToLower() == statusFilter))
+                && (searchTerm == null ||
+                    (v.VehicleNumber != null && v.VehicleNumber.ToLower().Contains(searchTerm)) ||
+                    (v.ApartmentId != null && v.ApartmentId.ToLower().Contains(searchTerm)) ||
+                    (v.Info != null && v.Info.ToLower().Contains(searchTerm))
+                );
+
+            var entities = await _repository.FindAsync(predicate);
+
+            if (entities == null)
+            {
+                entities = new List<Vehicle>();
+            }
+
+            var validEntities = entities.Where(e => e != null).ToList();
+
+            IOrderedEnumerable<Vehicle> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "vehiclenumber":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(v => v.VehicleNumber)
+                        : validEntities.OrderBy(v => v.VehicleNumber);
+                    break;
+
+                default:
+                    sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt);
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<VehicleDto>>(sortedEntities);
+
+            if (!dtos.Any())
+            {
+                return ApiResponse<IEnumerable<VehicleDto>>
+                    .SuccessWithCode(new List<VehicleDto>(), ApiResponse.SM01_NO_RESULTS);
+            }
+
+            return ApiResponse<IEnumerable<VehicleDto>>.Success(dtos);
+        }
+
         public async Task<VehicleDto?> GetByIdAsync(string id)
         {
             var entity = await _repository.FirstOrDefaultAsync(v => v.VehicleId == id);

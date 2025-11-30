@@ -33,13 +33,13 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-        public async Task<ApiResponse<IEnumerable<string>>> GetServicesForApartmentAsync(string apartmentId)
+        public async Task<ApiResponse<IEnumerable<MeterReadingServiceDto>>> GetServicesForApartmentAsync(string apartmentId)
         {
             // 1. Tìm Apartment theo apartmentId
             var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == apartmentId);
             if (apartment == null)
             {
-                return ApiResponse<IEnumerable<string>>.Fail(ApiResponse.SM01_NO_RESULTS);
+                return ApiResponse<IEnumerable<MeterReadingServiceDto>>.Fail(ApiResponse.SM01_NO_RESULTS);
             }
 
             // 2. Lấy buildingId từ Apartment
@@ -50,13 +50,16 @@ namespace ApartaAPI.Services
                 pq.BuildingId == buildingId &&
                 (pq.CalculationMethod == "PER_UNIT_METER" || pq.CalculationMethod == "TIERED"));
 
-            // 4. Lấy distinct fee_type
-            var feeTypes = priceQuotations
-                .Select(pq => pq.FeeType)
-                .Distinct()
+            // 4. Lấy distinct fee_type và calculation_method
+            var services = priceQuotations
+                .GroupBy(pq => pq.FeeType)
+                .Select(g => new MeterReadingServiceDto(
+                    FeeType: g.Key,
+                    CalculationMethod: g.First().CalculationMethod
+                ))
                 .ToList();
 
-            return ApiResponse<IEnumerable<string>>.Success(feeTypes);
+            return ApiResponse<IEnumerable<MeterReadingServiceDto>>.Success(services);
         }
 
         public async Task<ApiResponse<MeterReadingCheckResponse>> CheckMeterReadingExistsAsync(string apartmentId, string feeType, string billingPeriod)
@@ -132,12 +135,34 @@ namespace ApartaAPI.Services
             var windowEnd = building.ReadingWindowEnd;
             var today = DateTime.Now.Day;
 
-            if (today < windowStart || today > windowEnd)
+            // Kiểm tra xem hôm nay có trong cửa sổ ghi số không
+            bool isInWindow;
+            string allowedDays;
+            
+            if (windowStart == windowEnd)
             {
-                // Ghép danh sách ngày hợp lệ theo định dạng dễ hiểu cho nhân viên
-                var allowedDays = windowStart == windowEnd
-                    ? windowStart.ToString(CultureInfo.InvariantCulture)
-                    : string.Join(", ", Enumerable.Range(windowStart, windowEnd - windowStart + 1));
+                isInWindow = today == windowStart;
+                allowedDays = windowStart.ToString(CultureInfo.InvariantCulture);
+            }
+            else if (windowEnd > windowStart)
+            {
+                // Trường hợp bình thường: windowStart < windowEnd (ví dụ: 1-5)
+                isInWindow = today >= windowStart && today <= windowEnd;
+                allowedDays = string.Join(", ", Enumerable.Range(windowStart, windowEnd - windowStart + 1));
+            }
+            else
+            {
+                // Trường hợp cross-month: windowEnd < windowStart (ví dụ: 31 -> 1)
+                // Cửa sổ từ windowStart đến cuối tháng, rồi từ đầu tháng đến windowEnd
+                isInWindow = today >= windowStart || today <= windowEnd;
+                var daysInMonth = DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month);
+                var days1 = Enumerable.Range(windowStart, daysInMonth - windowStart + 1);
+                var days2 = Enumerable.Range(1, windowEnd);
+                allowedDays = string.Join(", ", days1.Concat(days2));
+            }
+
+            if (!isInWindow)
+            {
                 var message = $"Lỗi: Chỉ được phép ghi chỉ số vào ngày {allowedDays} hàng tháng.";
                 return ApiResponse.Fail(message);
             }
@@ -285,16 +310,16 @@ namespace ApartaAPI.Services
                 }
 
                 // Bước 2: Tải 3 Nguồn Dữ liệu Gốc
-                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã thuê"
+                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã Bán"
                 var apartments = await _apartmentRepository.FindAsync(a =>
                     a.BuildingId == buildingId &&
-                    a.Status == "Đã thuê");
+                    a.Status == "Đã Bán");
 
                 if (!apartments.Any())
                 {
                     return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
                         new List<MeterReadingStatusDto>(),
-                        "Không có căn hộ nào có trạng thái 'Đã thuê' trong tòa nhà này."
+                        "Không có căn hộ nào có trạng thái 'Đã Bán' trong tòa nhà này."
                     );
                 }
 
@@ -343,7 +368,7 @@ namespace ApartaAPI.Services
                         {
                             // TÌM THẤY - Đã ghi
                             var status = string.IsNullOrEmpty(matchingReading.InvoiceItemId)
-                                ? "Đã ghi"
+                                ? "Đã ghi - Mở"
                                 : "Đã ghi - Đã khóa";
 
                             var dto = new MeterReadingStatusDto(

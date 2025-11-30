@@ -1,7 +1,7 @@
 ﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Common;
-using ApartaAPI.Helpers;
+using ApartaAPI.Utils.Helper;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;

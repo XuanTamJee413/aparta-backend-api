@@ -6,6 +6,10 @@ namespace ApartaAPI.DTOs.Buildings
     // 1. Param
     public sealed record BuildingQueryParameters(
         string? SearchTerm,
+        string? ProjectId,
+        bool? IsActive,
+        string? SortBy,
+        string? SortOrder,
         int Skip = 0,
         int Take = 10
     );

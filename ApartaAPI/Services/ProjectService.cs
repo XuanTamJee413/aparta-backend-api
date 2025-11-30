@@ -100,7 +100,7 @@ namespace ApartaAPI.Services
             return null;
         }
 
-        // --- GET ALL (Đã sửa logic đếm) ---
+        // --- GET ALL ---
         public async Task<ApiResponse<IEnumerable<ProjectDto>>> GetAllAsync(ProjectQueryParameters query)
         {
             try
@@ -120,13 +120,11 @@ namespace ApartaAPI.Services
                     switch (query.SortBy.ToLower())
                     {
                         case "numapartments":
-                            // Sắp xếp theo số căn "Đã thuê"
                             queryable = isDesc
                                 ? queryable.OrderByDescending(p => p.Buildings.SelectMany(b => b.Apartments).Count(a => a.Status == "Đã Thuê"))
                                 : queryable.OrderBy(p => p.Buildings.SelectMany(b => b.Apartments).Count(a => a.Status == "Đã Thuê"));
                             break;
                         case "numbuildings":
-                            // Sắp xếp theo số tòa "Active"
                             queryable = isDesc
                                 ? queryable.OrderByDescending(p => p.Buildings.Count(b => b.IsActive))
                                 : queryable.OrderBy(p => p.Buildings.Count(b => b.IsActive));
@@ -141,7 +139,6 @@ namespace ApartaAPI.Services
                     queryable = queryable.OrderByDescending(p => p.CreatedAt);
                 }
 
-                // [QUAN TRỌNG] Sửa logic Count trong Select
                 var dtos = await queryable
                     .Select(p => new ProjectDto(
                         p.ProjectId,
@@ -178,7 +175,7 @@ namespace ApartaAPI.Services
             }
         }
 
-        // --- GET BY ID (Đã sửa logic đếm) ---
+        // --- GET BY ID ---
         public async Task<ApiResponse<ProjectDto>> GetByIdAsync(string id)
         {
             try
@@ -219,7 +216,7 @@ namespace ApartaAPI.Services
             }
         }
 
-        // --- CREATE (Giữ nguyên logic Validate & Normalize mới) ---
+        // --- CREATE ---
         public async Task<ApiResponse<ProjectDto>> CreateAsync(ProjectCreateDto dto, string adminId)
         {
             try
@@ -267,7 +264,7 @@ namespace ApartaAPI.Services
             }
         }
 
-        // --- UPDATE (Đã thêm logic Deactivate User & Staff Assignment) ---
+        // --- UPDATE (Quan trọng: Xử lý Deactivate và Reactivate) ---
         public async Task<ApiResponse> UpdateAsync(string id, ProjectUpdateDto dto)
         {
             try
@@ -285,14 +282,13 @@ namespace ApartaAPI.Services
                 );
                 if (errorMsg != null) return ApiResponse.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
 
-                // === LOGIC DEACTIVATE ===
-                bool isDeactivating = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
+                var now = DateTime.UtcNow;
 
+                // === LOGIC 1: DEACTIVATE (Chuyển từ Active -> Inactive) ===
+                bool isDeactivating = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
                 if (isDeactivating)
                 {
-                    var now = DateTime.UtcNow;
-
-                    // 1. Hủy Subscription
+                    // 1. Hủy Subscription đang chạy (nếu có)
                     var activeSub = await _subscriptionRepository.FirstOrDefaultAsync(
                         s => s.ProjectId == id && s.Status == "Active" && s.ExpiredAt > now
                     );
@@ -303,8 +299,18 @@ namespace ApartaAPI.Services
                         activeSub.UpdatedAt = now;
                     }
 
-                    // 2. Vô hiệu hóa Cư dân (User linked to Apartment in Project)
-                    // Tìm user có ApartmentId thuộc về Building thuộc Project này
+                    // 2. Vô hiệu hóa Project Admin
+                    if (!string.IsNullOrEmpty(entity.AdminId))
+                    {
+                        var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == entity.AdminId);
+                        if (adminUser != null)
+                        {
+                            adminUser.Status = "Inactive";
+                            adminUser.UpdatedAt = now;
+                        }
+                    }
+
+                    // 3. Vô hiệu hóa Cư dân (User linked to Apartment in Project)
                     var residentUsers = await _context.Users
                         .Where(u => u.Apartment != null && u.Apartment.Building.ProjectId == id && u.Status == "Active")
                         .ToListAsync();
@@ -315,8 +321,7 @@ namespace ApartaAPI.Services
                         user.UpdatedAt = now;
                     }
 
-                    // 3. Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment)
-                    // Tìm assignment thuộc Building của Project này và đang Active
+                    // 4. Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment)
                     var staffAssignments = await _context.StaffBuildingAssignments
                         .Where(sba => sba.Building.ProjectId == id && sba.IsActive == true)
                         .ToListAsync();
@@ -329,8 +334,43 @@ namespace ApartaAPI.Services
                     }
                 }
 
-                _mapper.Map(dto, entity);
+                // === LOGIC 2: REACTIVATE (Chuyển từ Inactive -> Active) ===
+                bool isActivating = dto.IsActive.HasValue && dto.IsActive.Value == true && entity.IsActive == false;
+                if (isActivating)
+                {
+                    // 1. Kích hoạt lại Project Admin
+                    if (!string.IsNullOrEmpty(entity.AdminId))
+                    {
+                        var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == entity.AdminId);
+                        // Chỉ kích hoạt lại nếu đang Inactive (tránh ghi đè trạng thái khác nếu có)
+                        if (adminUser != null && adminUser.Status == "Inactive")
+                        {
+                            adminUser.Status = "Active";
+                            adminUser.UpdatedAt = now;
+                        }
+                    }
 
+                    // 2. Kích hoạt lại Cư dân (Residents)
+                    // Chỉ tìm những người đang Inactive thuộc dự án này
+                    var inactiveResidents = await _context.Users
+                        .Where(u => u.Apartment != null &&
+                                    u.Apartment.Building.ProjectId == id &&
+                                    u.Status == "Inactive")
+                        .ToListAsync();
+
+                    foreach (var user in inactiveResidents)
+                    {
+                        user.Status = "Active";
+                        user.UpdatedAt = now;
+                    }
+
+                    // 3. Phân công nhân viên (Assignments): KHÔNG TỰ ĐỘNG PHỤC HỒI
+                    // Lý do: Nhân viên có thể đã nghỉ hoặc chuyển dự án khác trong thời gian dự án này đóng băng.
+                    // Quản lý sẽ cần phân công lại thủ công.
+                }
+
+                // Cập nhật thông tin chung
+                _mapper.Map(dto, entity);
                 if (dto.Name != null) entity.Name = ConvertToTitleCase(dto.Name) ?? entity.Name;
                 if (dto.Address != null) entity.Address = ConvertToTitleCase(dto.Address);
                 if (dto.Ward != null) entity.Ward = ConvertToTitleCase(dto.Ward);
@@ -338,11 +378,11 @@ namespace ApartaAPI.Services
                 if (dto.City != null) entity.City = ConvertToTitleCase(dto.City);
                 if (dto.BankAccountName != null) entity.BankAccountName = ConvertToUpperCase(dto.BankAccountName);
 
-                entity.UpdatedAt = DateTime.UtcNow;
+                entity.UpdatedAt = now;
 
                 // Lưu tất cả thay đổi (Project, Subscription, Users, Assignments) trong 1 transaction
                 await _repository.UpdateAsync(entity);
-                await _repository.SaveChangesAsync(); // SaveChanges của _context sẽ lưu tất cả tracker
+                await _repository.SaveChangesAsync();
 
                 return ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS);
             }

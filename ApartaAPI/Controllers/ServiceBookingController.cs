@@ -118,21 +118,20 @@ namespace ApartaAPI.Controllers
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		public async Task<ActionResult<ServiceBookingDto>> UpdateBookingStatus(string id, [FromBody] ServiceBookingUpdateDto updateDto)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(ModelState);
-			}
+			if (!ModelState.IsValid) return BadRequest(ModelState);
 
 			try
 			{
-				var updatedBooking = await _bookingService.UpdateBookingStatusAsync(id, updateDto);
-				if (updatedBooking == null)
-				{
-					return NotFound();
-				}
+				var staffId = GetCurrentUserId(); // Lấy ID của OS đang đăng nhập
+
+				// Truyền staffId vào
+				var updatedBooking = await _bookingService.UpdateBookingStatusAsync(id, updateDto, staffId);
+
+				if (updatedBooking == null) return NotFound();
+
 				return Ok(updatedBooking);
 			}
-			catch (ArgumentException ex) // Bắt lỗi validation (ví dụ: giá âm)
+			catch (ArgumentException ex)
 			{
 				return BadRequest(new { message = ex.Message });
 			}

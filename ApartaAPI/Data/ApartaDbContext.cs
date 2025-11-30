@@ -1197,8 +1197,11 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.AssigneeNote)
+	            .HasMaxLength(255)
+	            .HasColumnName("assignee_note");
 
-            entity.HasOne(d => d.OperationStaff).WithMany(p => p.Tasks)
+			entity.HasOne(d => d.OperationStaff).WithMany(p => p.Tasks)
                 .HasForeignKey(d => d.OperationStaffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Task_Assigner");

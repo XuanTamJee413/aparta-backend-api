@@ -1,4 +1,4 @@
-using ApartaAPI.Helpers;
+using ApartaAPI.Utils.Helper;
 using ApartaAPI.Services.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;

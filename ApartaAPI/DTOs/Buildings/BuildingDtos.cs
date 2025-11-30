@@ -1,46 +1,81 @@
-﻿namespace ApartaAPI.DTOs.Buildings
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace ApartaAPI.DTOs.Buildings
 {
-    /// <summary>
-    /// Parameters for querying the building list with pagination and search.
-    /// </summary>
+    // 1. Param
     public sealed record BuildingQueryParameters(
-        string? SearchTerm, // Used for BuildingCode and Name
-        int Skip = 0,       // For pagination: number of records to skip
-        int Take = 10       // For pagination: number of records to take (page size)
+        string? SearchTerm,
+        string? ProjectId,
+        bool? IsActive,
+        string? SortBy,
+        string? SortOrder,
+        int Skip = 0,
+        int Take = 10
     );
 
-    // Read model
+    // 2. Output
     public sealed record BuildingDto(
         string BuildingId,
-        string ProjectId, // Added ProjectId for context
+        string ProjectId,
         string? BuildingCode,
         string? Name,
-        int? NumResidents,
-        int? NumApartments,
+
+        // Các trường đếm
+        int NumApartments,
+        int NumResidents,
+
+        // Thông tin vật lý
+        int TotalFloors,
+        int TotalBasements,
+        double? TotalArea,
+
+        // Thông tin khác
+        DateOnly? HandoverDate,
+        string? WarrantyStatus,
+        string? ReceptionPhone,
+        string? Description,
+
+        // Cấu hình chốt số
+        int ReadingWindowStart,
+        int ReadingWindowEnd,
+
         DateTime? CreatedAt,
         DateTime? UpdatedAt,
-        bool IsActive, // Assuming IsActive exists or will be added to the Building model
-        int ReadingWindowStart, // Cửa sổ ghi số - ngày bắt đầu
-        int ReadingWindowEnd // Cửa sổ ghi số - ngày kết thúc
+        bool IsActive
     );
 
-    // Create input
+    // 3. Create Input
     public sealed record BuildingCreateDto(
-        string ProjectId, // Need ProjectId to associate the building
-        string BuildingCode,
-        string Name,
-        int? NumApartments,
-        int? NumResidents
+        [Required] string ProjectId,
+        [Required] string BuildingCode,
+        [Required] string Name,
+        [Required] int TotalFloors,
+
+        double? TotalArea,
+        DateOnly? HandoverDate,
+        string? Description,
+        string? ReceptionPhone,
+
+        int TotalBasements = 0,
+        int ReadingWindowStart = 1,
+        int ReadingWindowEnd = 5
     );
 
-    // Update input
+    // 4. Update Input
     public sealed record BuildingUpdateDto(
-        // BuildingCode is intentionally omitted as per BR-19
         string? Name,
-        int? NumApartments,
-        int? NumResidents,
-        bool? IsActive, // Added for soft delete/deactivation
-        int? ReadingWindowStart, // Cửa sổ ghi số - ngày bắt đầu (optional)
-        int? ReadingWindowEnd // Cửa sổ ghi số - ngày kết thúc (optional)
+        bool? IsActive,
+
+        int? TotalFloors,
+        int? TotalBasements,
+
+        double? TotalArea,
+        DateOnly? HandoverDate,
+        string? Description,
+        string? ReceptionPhone,
+
+        int? ReadingWindowStart,
+        int? ReadingWindowEnd
     );
 }

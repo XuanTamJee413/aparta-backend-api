@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using PayOS;
 using PayOS.Models.V2.PaymentRequests;
 using ApartaAPI.DTOs.PayOS;
@@ -23,6 +24,39 @@ public class PayOSService
 
         // Initialize PayOS SDK v2.0.1
         _payOSClient = new PayOSClient(clientId, apiKey, _checksumKey);
+    }
+
+    // Constructor mới: nhận settings trực tiếp từ project
+    public PayOSService(string clientId, string apiKey, string checksumKey)
+    {
+        if (string.IsNullOrWhiteSpace(clientId))
+            throw new Exception("PayOS Client ID is required");
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new Exception("PayOS API Key is required");
+        if (string.IsNullOrWhiteSpace(checksumKey))
+            throw new Exception("PayOS Checksum Key is required");
+
+        _checksumKey = checksumKey;
+        // Initialize PayOS SDK v2.0.1
+        _payOSClient = new PayOSClient(clientId, apiKey, checksumKey);
+    }
+
+    // Factory method để tạo instance từ project settings
+    public static PayOSService CreateFromProject(string? clientId, string? apiKey, string? checksumKey, IConfiguration? fallbackConfig = null)
+    {
+        // Ưu tiên sử dụng settings từ project
+        if (!string.IsNullOrWhiteSpace(clientId) && !string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(checksumKey))
+        {
+            return new PayOSService(clientId, apiKey, checksumKey);
+        }
+
+        // Fallback về configuration nếu project chưa có settings
+        if (fallbackConfig != null)
+        {
+            return new PayOSService(fallbackConfig);
+        }
+
+        throw new Exception("PayOS settings not found. Please configure PayOS settings in Project or appsettings.json");
     }
 
     public async Task<CreatePaymentResult> CreatePaymentAsync(string invoiceId, decimal amount, string description, string cancelUrl, string returnUrl)
@@ -108,8 +142,8 @@ public class PayOSService
         }
         catch (Exception ex)
         {
-            var errorMsg = $"PayOS Exception: {ex.Message}";
-            Console.WriteLine(errorMsg);
+            var errorMsg = ex.Message;
+            Console.WriteLine($"PayOS Exception: {errorMsg}");
             if (ex.InnerException != null)
             {
                 Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");

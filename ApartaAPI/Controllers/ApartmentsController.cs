@@ -2,11 +2,15 @@
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.Services.Interfaces;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
+
     public class ApartmentsController : ControllerBase
     {
         private readonly IApartmentService _service;
@@ -22,6 +26,20 @@ namespace ApartaAPI.Controllers
             var response = await _service.GetAllAsync(query);
             return Ok(response);
         }
+        [HttpGet("my-buildings")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentDto>>>> GetMyBuildingApartments([FromQuery] ApartmentQueryParameters query)
+        {
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập."));
+            }
+
+            var response = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(response);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ApartmentDto>> GetApartment(string id)

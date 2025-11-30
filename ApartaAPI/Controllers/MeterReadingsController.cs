@@ -22,7 +22,7 @@ namespace ApartaAPI.Controllers
         // Lấy danh sách các loại phí (fee_type) cân trả hằng tháng cho một căn hộ
         [HttpGet("services-for-apartment/{apartmentId}")]
         [Authorize(Policy = "CanReadMeterReadings")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<string>>>> GetServicesForApartment(string apartmentId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<MeterReadingServiceDto>>>> GetServicesForApartment(string apartmentId)
         {
             var response = await _service.GetServicesForApartmentAsync(apartmentId);
 

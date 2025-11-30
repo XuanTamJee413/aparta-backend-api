@@ -1,0 +1,945 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="12a3ee32-b3b4-4f23-9fdd-b5d96e34434d" name="xuant@TAMJEE 2025-11-30 02:27:48" runUser="TAMJEE\xuant" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-11-30T02:27:48.5380271+07:00" queuing="2025-11-30T02:27:48.5380278+07:00" start="2025-11-30T02:27:47.5464112+07:00" finish="2025-11-30T02:27:49.6120372+07:00" />
+  <TestSettings name="default" id="50594bbf-d7b2-4e4e-a386-0a8162086669">
+    <Deployment runDeploymentRoot="xuant_TAMJEE_2025-11-30_02_27_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="319fe7d5-b596-43a3-9876-5ca2f7573e05" testId="982ab276-0e37-116d-36cf-e86d702be447" testName="ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiHopLe_NenTaoStaff" computerName="TAMJEE" duration="00:00:00.5620859" startTime="2025-11-30T02:27:48.9255169+07:00" endTime="2025-11-30T02:27:48.9255173+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="319fe7d5-b596-43a3-9876-5ca2f7573e05">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ArgumentNullException : Value cannot be null. (Parameter 'source')</Message>
+          <StackTrace>   at System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)&#xD;
+   at System.Linq.Enumerable.Select[TSource,TResult](IEnumerable`1 source, Func`2 selector)&#xD;
+   at ApartaAPI.Services.UserManagementService.GetAccountsByRoleInternalAsync(UserQueryParams queryParams, List`1 roles) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\UserManagementService.cs:line 86&#xD;
+   at ApartaAPI.Services.UserManagementService.CreateStaffAccountAsync(StaffCreateDto createDto) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\UserManagementService.cs:line 159&#xD;
+   at ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiHopLe_NenTaoStaff() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\UserManagementServiceTests.cs:line 110&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="78b134c1-a86a-43e4-a891-6097fefa1404" testId="d9ac2201-89bd-4b5e-ebd1-4cb57fb79fa8" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0019726" startTime="2025-11-30T02:27:48.5633258+07:00" endTime="2025-11-30T02:27:48.5633259+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="78b134c1-a86a-43e4-a891-6097fefa1404" />
+    <UnitTestResult executionId="94acc94a-09e2-4a9d-91d3-91e494476e65" testId="4039c936-b2b0-b86b-45b5-fd9281a4e305" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" computerName="TAMJEE" duration="00:00:00.0034585" startTime="2025-11-30T02:27:48.5093053+07:00" endTime="2025-11-30T02:27:48.5093054+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="94acc94a-09e2-4a9d-91d3-91e494476e65" />
+    <UnitTestResult executionId="bc575a54-3466-4b8a-a25b-44f5daaec3f0" testId="bd447c2c-874e-e154-d781-68b4b1f9d7d9" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiHopLe_NenTaoMoi" computerName="TAMJEE" duration="00:00:00.0047628" startTime="2025-11-30T02:27:48.5187440+07:00" endTime="2025-11-30T02:27:48.5187441+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc575a54-3466-4b8a-a25b-44f5daaec3f0" />
+    <UnitTestResult executionId="9df61552-2d6f-4fb5-9768-b68bfb5d0a86" testId="21cdc907-8860-bcc1-3525-833b57f14188" testName="ServiceUnitTest.Repositories.MessageRepositoryTests.GetUnreadCountForInteractionAsync_KhiGoi_NenTraVeSoLuongChuaDoc" computerName="TAMJEE" duration="00:00:00.0054991" startTime="2025-11-30T02:27:49.3966407+07:00" endTime="2025-11-30T02:27:49.3966408+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9df61552-2d6f-4fb5-9768-b68bfb5d0a86" />
+    <UnitTestResult executionId="20576299-7729-4a49-9f6c-8fe620538e70" testId="45dc0510-45c7-0f82-e9a5-2b3e8c2b6a75" testName="ServiceUnitTest.Services.UserManagementServiceTests.UpdateStaffAssignmentAsync_KhiStaffTonTai_NenCapNhatAssignment" computerName="TAMJEE" duration="00:00:00.4608335" startTime="2025-11-30T02:27:49.3895099+07:00" endTime="2025-11-30T02:27:49.3895106+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="20576299-7729-4a49-9f6c-8fe620538e70" />
+    <UnitTestResult executionId="b0c2e8f9-3784-4d08-bbb4-2640674f08ab" testId="f44431fb-5b17-ee96-7ed8-a2fafd85620f" testName="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach" computerName="TAMJEE" duration="00:00:00.1264603" startTime="2025-11-30T02:27:49.3262495+07:00" endTime="2025-11-30T02:27:49.3262498+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b0c2e8f9-3784-4d08-bbb4-2640674f08ab">
+      <Output>
+        <ErrorInfo>
+          <Message>Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.</Message>
+          <StackTrace>   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs:line 56&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="baee1864-d18f-4156-be60-20ecf5366d01" testId="66da7052-acd2-95c3-8103-1777b06650b3" testName="ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiEmailTrung_NenNemInvalidOperationException" computerName="TAMJEE" duration="00:00:00.0030687" startTime="2025-11-30T02:27:49.3927024+07:00" endTime="2025-11-30T02:27:49.3927027+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="baee1864-d18f-4156-be60-20ecf5366d01" />
+    <UnitTestResult executionId="84340f44-3994-4cb7-ae33-9ac6a0e4cdab" testId="82546d9e-1536-3fe3-2613-5f48b519c06b" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationsByBuildingIdAsync_KhiBuildingTonTai_NenTraVeDanhSach" computerName="TAMJEE" duration="00:00:00.0050586" startTime="2025-11-30T02:27:48.5241415+07:00" endTime="2025-11-30T02:27:48.5241418+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="84340f44-3994-4cb7-ae33-9ac6a0e4cdab" />
+    <UnitTestResult executionId="19c3a086-5171-4eb2-8c34-7479fd3c2208" testId="da870282-613e-d781-3428-a9ab276047f4" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetByIdAsync_WhenAssetExists_ShouldReturnAssetDto" computerName="TAMJEE" duration="00:00:00.0040853" startTime="2025-11-30T02:27:48.5091749+07:00" endTime="2025-11-30T02:27:48.5091750+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="19c3a086-5171-4eb2-8c34-7479fd3c2208" />
+    <UnitTestResult executionId="b0b6be0d-6df5-4713-bb68-3395560443dd" testId="a596a705-2c09-c671-491a-1aa3004e7fb5" testName="ServiceUnitTest.Services.UserManagementServiceTests.GetResidentAccountsAsync_KhiGoi_NenTraVeDanhSachResident" computerName="TAMJEE" duration="00:00:00.0040664" startTime="2025-11-30T02:27:48.9285545+07:00" endTime="2025-11-30T02:27:48.9285548+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b0b6be0d-6df5-4713-bb68-3395560443dd" />
+    <UnitTestResult executionId="e207393e-b2c7-4c1d-8d08-78147fe27fa9" testId="8302768d-b368-ab33-03e7-a3f621506771" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_VehicleNumber_ShouldReturnMatchingVehicles" computerName="TAMJEE" duration="00:00:00.0023650" startTime="2025-11-30T02:27:48.5862825+07:00" endTime="2025-11-30T02:27:48.5862832+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e207393e-b2c7-4c1d-8d08-78147fe27fa9" />
+    <UnitTestResult executionId="830cc39f-4504-4716-8135-7f9ba7f7f743" testId="2d2f25e7-f720-1c73-4398-d20510497121" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_ApartmentId_ShouldReturnMatchingVehicles" computerName="TAMJEE" duration="00:00:00.0024467" startTime="2025-11-30T02:27:48.5340631+07:00" endTime="2025-11-30T02:27:48.5340634+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="830cc39f-4504-4716-8135-7f9ba7f7f743" />
+    <UnitTestResult executionId="b7948f99-92a5-4a20-a8bf-49c192ded1fc" testId="d7703cc6-772a-7efe-2362-8131da471502" testName="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_ShouldSetCreatedAtAndUpdatedAt" computerName="TAMJEE" duration="00:00:00.0030326" startTime="2025-11-30T02:27:48.5609727+07:00" endTime="2025-11-30T02:27:48.5609728+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7948f99-92a5-4a20-a8bf-49c192ded1fc" />
+    <UnitTestResult executionId="6675c9b5-8173-44c3-a4f9-d5441fe0a6d9" testId="4de74439-69c3-3bb4-25e5-a067c379881b" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithBuildingIdFilter_ShouldReturnFilteredAssets" computerName="TAMJEE" duration="00:00:00.0018847" startTime="2025-11-30T02:27:48.5686641+07:00" endTime="2025-11-30T02:27:48.5686642+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6675c9b5-8173-44c3-a4f9-d5441fe0a6d9" />
+    <UnitTestResult executionId="75481959-a2d1-4555-b65f-f6c32ea88199" testId="e5eabe51-0797-622d-457e-603958d0e266" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" computerName="TAMJEE" duration="00:00:00.0153448" startTime="2025-11-30T02:27:48.5523862+07:00" endTime="2025-11-30T02:27:48.5523868+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="75481959-a2d1-4555-b65f-f6c32ea88199" />
+    <UnitTestResult executionId="18b9c9ff-c158-4e9c-acb6-11022f096d89" testId="f8d24f85-f662-71c0-33fe-3ae31a753dec" testName="ServiceUnitTest.Services.ProposalServiceTests.CreateProposalAsync_KhiThongTinHopLe_NenTaoProposal" computerName="TAMJEE" duration="00:00:00.0055528" startTime="2025-11-30T02:27:49.4698523+07:00" endTime="2025-11-30T02:27:49.4698526+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18b9c9ff-c158-4e9c-acb6-11022f096d89" />
+    <UnitTestResult executionId="32f3bf0d-950f-4e6c-8840-b12ac1e5066c" testId="08d305fb-58bd-dc09-c915-c28ca17deab3" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithStatusFilter_ShouldReturnFilteredVehicles" computerName="TAMJEE" duration="00:00:00.0018686" startTime="2025-11-30T02:27:48.5543047+07:00" endTime="2025-11-30T02:27:48.5543049+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="32f3bf0d-950f-4e6c-8840-b12ac1e5066c" />
+    <UnitTestResult executionId="c3442511-eed9-4ee0-9eae-c937a5d36126" testId="2cd8b322-1838-bcb1-72c9-dcce59774f81" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_Info_ShouldReturnMatchingVehicles" computerName="TAMJEE" duration="00:00:00.0017880" startTime="2025-11-30T02:27:48.5612909+07:00" endTime="2025-11-30T02:27:48.5612909+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c3442511-eed9-4ee0-9eae-c937a5d36126" />
+    <UnitTestResult executionId="dd8c73d0-5b0c-4a63-a2e5-d3ae8eea9856" testId="8b0768ee-f92c-1597-dc16-e9e9b3a9780c" testName="ServiceUnitTest.Repositories.VisitorRepositoryTests.GetByIdAsync_KhiIdTonTai_NenTraVeVisitor" computerName="TAMJEE" duration="00:00:00.9569265" startTime="2025-11-30T02:27:49.3179063+07:00" endTime="2025-11-30T02:27:49.3179068+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dd8c73d0-5b0c-4a63-a2e5-d3ae8eea9856" />
+    <UnitTestResult executionId="b30f16f3-ad09-4d48-8fbb-99717c2dba98" testId="54bf5aff-8ed2-b789-a163-4d3516dc03f3" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" computerName="TAMJEE" duration="00:00:00.0019913" startTime="2025-11-30T02:27:48.5837510+07:00" endTime="2025-11-30T02:27:48.5837511+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b30f16f3-ad09-4d48-8fbb-99717c2dba98" />
+    <UnitTestResult executionId="fe8a6de8-6fba-4547-9476-cdf19ef52eb4" testId="5da4d1e3-fb19-664f-2de3-214ea4028a46" testName="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetStaffProposalsQuery_KhiGoi_NenTraVeQuery" computerName="TAMJEE" duration="00:00:00.0319993" startTime="2025-11-30T02:27:49.5426367+07:00" endTime="2025-11-30T02:27:49.5426369+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fe8a6de8-6fba-4547-9476-cdf19ef52eb4" />
+    <UnitTestResult executionId="f5c1ded4-610c-4cd4-a804-7b8afd5c7a0e" testId="7e0cd22e-99e3-635a-9d96-1163b3dbbdc9" testName="ServiceUnitTest.Services.ChatServiceTests.SearchPotentialPartnersAsync_KhiLaResident_NenTraVeStaff" computerName="TAMJEE" duration="00:00:00.1397383" startTime="2025-11-30T02:27:49.5418971+07:00" endTime="2025-11-30T02:27:49.5418976+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f5c1ded4-610c-4cd4-a804-7b8afd5c7a0e" />
+    <UnitTestResult executionId="d8983522-89d1-45ae-9e72-e7ca11b6bee9" testId="0c0e3132-92a1-6f03-925c-35ea497d935e" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenVehicleExists_ShouldDeleteAndReturnTrue" computerName="TAMJEE" duration="00:00:00.0182307" startTime="2025-11-30T02:27:48.5524316+07:00" endTime="2025-11-30T02:27:48.5524316+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d8983522-89d1-45ae-9e72-e7ca11b6bee9" />
+    <UnitTestResult executionId="a45d5b75-2e2b-48c1-a2f1-9ec618f61005" testId="785cc6f3-cb4e-88c9-0ab5-82497f6469e3" testName="ServiceUnitTest.Repositories.VisitorRepositoryTests.AddAsync_KhiVisitorHopLe_NenThemThanhCong" computerName="TAMJEE" duration="00:00:00.0029513" startTime="2025-11-30T02:27:49.3210295+07:00" endTime="2025-11-30T02:27:49.3210302+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a45d5b75-2e2b-48c1-a2f1-9ec618f61005" />
+    <UnitTestResult executionId="1b70984c-6861-4b4c-a297-4d616cf97f94" testId="072847d6-3f2a-27a5-2155-061911f38c04" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByInfo_Ascending_ShouldReturnSortedAssets" computerName="TAMJEE" duration="00:00:00.0018099" startTime="2025-11-30T02:27:48.5196870+07:00" endTime="2025-11-30T02:27:48.5196871+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b70984c-6861-4b4c-a297-4d616cf97f94" />
+    <UnitTestResult executionId="cb32b638-c409-40dd-b7fa-0986b8af9ef9" testId="65caf143-6045-4f93-1352-84bf06cb1c6c" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_ShouldGenerateUniqueVehicleIdAndSetStatusToChoDuyet" computerName="TAMJEE" duration="00:00:00.0065853" startTime="2025-11-30T02:27:48.5220076+07:00" endTime="2025-11-30T02:27:48.5220079+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cb32b638-c409-40dd-b7fa-0986b8af9ef9" />
+    <UnitTestResult executionId="d5519df4-8296-48c7-b4d1-c83e546401fa" testId="938b8379-f5ce-a109-e6da-f9811e1cdef0" testName="ServiceUnitTest.Repositories.VisitorRepositoryTests.UpdateAsync_KhiVisitorHopLe_NenCapNhatThanhCong" computerName="TAMJEE" duration="00:00:00.0059637" startTime="2025-11-30T02:27:49.3271248+07:00" endTime="2025-11-30T02:27:49.3271251+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d5519df4-8296-48c7-b4d1-c83e546401fa" />
+    <UnitTestResult executionId="f7dfe7d5-9e96-4035-a952-a9cdabf8fdf4" testId="d87af088-a468-8b81-2ad3-1f045d0f6530" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleNotFound_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0016653" startTime="2025-11-30T02:27:48.5094469+07:00" endTime="2025-11-30T02:27:48.5094470+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f7dfe7d5-9e96-4035-a952-a9cdabf8fdf4" />
+    <UnitTestResult executionId="17f424bd-499b-4d87-95d1-a0e9095645b5" testId="24879c2b-0bf9-2f01-3597-a11e2989f376" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSortByVehicleNumber_Ascending_ShouldReturnSortedVehicles" computerName="TAMJEE" duration="00:00:00.0016864" startTime="2025-11-30T02:27:48.5710958+07:00" endTime="2025-11-30T02:27:48.5710961+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="17f424bd-499b-4d87-95d1-a0e9095645b5" />
+    <UnitTestResult executionId="5e61eff0-2a93-4283-a639-4178df07bb5a" testId="17054e1d-b925-6aa1-e9e8-b2c350d7d955" testName="ServiceUnitTest.Repositories.MessageRepositoryTests.GetMessagesAsync_KhiGoi_NenTraVeTinNhanPhanTrang" computerName="TAMJEE" duration="00:00:00.0138290" startTime="2025-11-30T02:27:49.4207961+07:00" endTime="2025-11-30T02:27:49.4207966+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5e61eff0-2a93-4283-a639-4178df07bb5a" />
+    <UnitTestResult executionId="01b3dd07-53f4-4163-9be3-d81a21e57dfe" testId="6e89261e-8129-cc5d-6a50-bf1ef3ddec7c" testName="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetQuotationsQueryable_KhiGoi_NenTraVeQueryable" computerName="TAMJEE" duration="00:00:00.8362946" startTime="2025-11-30T02:27:49.1972490+07:00" endTime="2025-11-30T02:27:49.1972496+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="01b3dd07-53f4-4163-9be3-d81a21e57dfe" />
+    <UnitTestResult executionId="fa4966c1-7d96-4885-89a9-1995ec217cca" testId="633347c3-9dc4-6161-2f9b-94196326037b" testName="ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting" computerName="TAMJEE" duration="00:00:00.0061177" startTime="2025-11-30T02:27:49.4024497+07:00" endTime="2025-11-30T02:27:49.4024499+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fa4966c1-7d96-4885-89a9-1995ec217cca">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NullReferenceException : Object reference not set to an instance of an object.</Message>
+          <StackTrace>   at ApartaAPI.Services.ChatService.CreateAdHocInteractionAsync(String currentUserId, String partnerId) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs:line 42&#xD;
+   at ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs:line 53&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cafc083f-81ff-4a3d-93f1-13c8d7e71808" testId="27416949-758f-1c46-9f40-ca30ceee51c0" testName="ServiceUnitTest.Services.VisitLogServiceTests.GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList" computerName="TAMJEE" duration="00:00:00.0403494" startTime="2025-11-30T02:27:48.6098082+07:00" endTime="2025-11-30T02:27:48.6098085+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cafc083f-81ff-4a3d-93f1-13c8d7e71808">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidCastException : Unable to cast object of type 'ServiceUnitTest.Helpers.TestAsyncEnumerable`1[ApartaAPI.Models.VisitLog]' to type 'System.Linq.IQueryable`1[ApartaAPI.DTOs.VisitLogs.VisitLogStaffViewDto]'.</Message>
+          <StackTrace>   at AutoMapper.QueryableExtensions.Extensions.ToCore[TResult](IQueryable source, IConfigurationProvider configuration, Object parameters, IEnumerable`1 memberPathsToExpand)&#xD;
+   at AutoMapper.QueryableExtensions.Extensions.ProjectTo[TDestination](IQueryable source, IConfigurationProvider configuration, Object parameters, Expression`1[] membersToExpand)&#xD;
+   at AutoMapper.QueryableExtensions.Extensions.ProjectTo[TDestination](IQueryable source, IConfigurationProvider configuration, Expression`1[] membersToExpand)&#xD;
+   at ApartaAPI.Services.VisitLogService.GetStaffViewLogsAsync(VisitorQueryParameters queryParams) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\VisitLogService.cs:line 62&#xD;
+   at ServiceUnitTest.Services.VisitLogServiceTests.GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\VisitLogServiceTests.cs:line 51&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6af4cf41-5cd2-4607-830f-1d888334e696" testId="606e350c-500a-bec5-2bb6-5ec6bf75fb0a" testName="ServiceUnitTest.Repositories.UserManagementRepositoryTests.GetStaffAssignmentsAsync_KhiUserIdTonTai_NenTraVeDanhSachAssignment" computerName="TAMJEE" duration="00:00:00.0397101" startTime="2025-11-30T02:27:49.4571698+07:00" endTime="2025-11-30T02:27:49.4571703+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6af4cf41-5cd2-4607-830f-1d888334e696" />
+    <UnitTestResult executionId="aac84fd2-07d8-4c02-b12e-a06e42579aef" testId="ba22531b-e808-4f29-290a-03eaaed3cb1e" testName="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0079072" startTime="2025-11-30T02:27:48.5277350+07:00" endTime="2025-11-30T02:27:48.5277358+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aac84fd2-07d8-4c02-b12e-a06e42579aef" />
+    <UnitTestResult executionId="1a1203e8-2e96-40b9-8f4d-9686738b6676" testId="76b2a201-13ea-e704-56dc-65b72af68dad" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationsAsync_KhiGoi_NenTraVeDanhSach" computerName="TAMJEE" duration="00:00:00.0039214" startTime="2025-11-30T02:27:48.5328811+07:00" endTime="2025-11-30T02:27:48.5328813+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1a1203e8-2e96-40b9-8f4d-9686738b6676" />
+    <UnitTestResult executionId="d92c35ac-d971-4f26-b366-345f778c94f9" testId="46634805-6294-e98f-e437-f89a4939bcb6" testName="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetNotFound_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0012463" startTime="2025-11-30T02:27:48.5622864+07:00" endTime="2025-11-30T02:27:48.5622865+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d92c35ac-d971-4f26-b366-345f778c94f9" />
+    <UnitTestResult executionId="c862687d-03a3-4279-aee9-b39d7edc99a8" testId="2fd907ea-09be-2e75-f7f0-6e1643a0f3ad" testName="ServiceUnitTest.Services.VisitLogServiceTests.CheckOutAsync_KhiStatusKhongPhaiCheckedIn_NenTraVeFalse" computerName="TAMJEE" duration="00:00:00.0096747" startTime="2025-11-30T02:27:48.6190022+07:00" endTime="2025-11-30T02:27:48.6190026+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c862687d-03a3-4279-aee9-b39d7edc99a8" />
+    <UnitTestResult executionId="6ad31f29-b505-4fb4-b262-d265d868d3a9" testId="08903901-081e-4aee-a83a-a1681061ed19" testName="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet" computerName="TAMJEE" duration="00:00:00.0039356" startTime="2025-11-30T02:27:49.3311972+07:00" endTime="2025-11-30T02:27:49.3311975+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6ad31f29-b505-4fb4-b262-d265d868d3a9">
+      <Output>
+        <ErrorInfo>
+          <Message>Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.</Message>
+          <StackTrace>   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs:line 76&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="3daf9533-03d2-4394-923e-4795a7e0584a" testId="8bd405ab-80aa-497d-244c-cce12385a01f" testName="ServiceUnitTest.Repositories.MessageRepositoryTests.GetTotalUnreadCountAsync_KhiGoi_NenTraVeTongSoLuongChuaDoc" computerName="TAMJEE" duration="00:00:00.0525449" startTime="2025-11-30T02:27:49.3910623+07:00" endTime="2025-11-30T02:27:49.3910625+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3daf9533-03d2-4394-923e-4795a7e0584a" />
+    <UnitTestResult executionId="9fb15d69-b6fd-4330-9b59-8186219cc3c7" testId="53ac88c5-172e-9619-25b7-03988178fb6a" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetByIdAsync_WhenVehicleExists_ShouldReturnVehicleDto" computerName="TAMJEE" duration="00:00:00.0092406" startTime="2025-11-30T02:27:48.5314035+07:00" endTime="2025-11-30T02:27:48.5314038+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9fb15d69-b6fd-4330-9b59-8186219cc3c7" />
+    <UnitTestResult executionId="8de295e8-7c57-4286-b347-4493ad733276" testId="31d982e3-1c92-bd7a-3a91-2ad4d0e36b03" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedVehicles" computerName="TAMJEE" duration="00:00:00.0080042" startTime="2025-11-30T02:27:48.5164234+07:00" endTime="2025-11-30T02:27:48.5164235+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8de295e8-7c57-4286-b347-4493ad733276" />
+    <UnitTestResult executionId="b48a20d1-0b11-4a29-bb17-71b13ec52126" testId="bd2235db-c0db-294c-bbae-61d2ccca741f" testName="ServiceUnitTest.Services.ChatServiceTests.GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead" computerName="TAMJEE" duration="00:00:00.0815789" startTime="2025-11-30T02:27:49.3886891+07:00" endTime="2025-11-30T02:27:49.3886898+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b48a20d1-0b11-4a29-bb17-71b13ec52126">
+      <Output>
+        <ErrorInfo>
+          <Message>System.UnauthorizedAccessException : Không có quyền truy cập vào cuộc hội thoại này.</Message>
+          <StackTrace>   at ApartaAPI.Services.ChatService.GetMessageHistoryAsync(String interactionId, String currentUserId, Int32 pageNumber, Int32 pageSize) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs:line 142&#xD;
+   at ServiceUnitTest.Services.ChatServiceTests.GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs:line 119&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fc71dcb5-8e93-4497-9cb7-d5b5c2bf995a" testId="899c7332-4cad-7d4c-129a-77ce0d580ecf" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiFeeTypeTrung_NenNemInvalidOperationException" computerName="TAMJEE" duration="00:00:00.0098004" startTime="2025-11-30T02:27:48.5162836+07:00" endTime="2025-11-30T02:27:48.5162838+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc71dcb5-8e93-4497-9cb7-d5b5c2bf995a" />
+    <UnitTestResult executionId="d23448b5-4a81-4611-84db-6ab8ad7d67ca" testId="f9a53155-5872-c0bf-db68-209d756a7939" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0037859" startTime="2025-11-30T02:27:48.5927992+07:00" endTime="2025-11-30T02:27:48.5927995+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d23448b5-4a81-4611-84db-6ab8ad7d67ca" />
+    <UnitTestResult executionId="4c813adf-6030-4a32-8b93-590ed0a2a47a" testId="0a411339-16d1-8d54-b087-c1ec9094d0e7" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.UpdateAsync_KhiIdTonTaiVaHopLe_NenCapNhat" computerName="TAMJEE" duration="00:00:00.0088936" startTime="2025-11-30T02:27:48.5090858+07:00" endTime="2025-11-30T02:27:48.5090859+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4c813adf-6030-4a32-8b93-590ed0a2a47a" />
+    <UnitTestResult executionId="226415d2-239d-4459-9570-1abae1dc0eda" testId="47717fdc-378e-e103-ea9c-b5e0672bed9c" testName="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetExists_ShouldUpdateUpdatedAt" computerName="TAMJEE" duration="00:00:00.0067202" startTime="2025-11-30T02:27:48.5346044+07:00" endTime="2025-11-30T02:27:48.5346048+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="226415d2-239d-4459-9570-1abae1dc0eda" />
+    <UnitTestResult executionId="ca0ab7bd-028a-46a8-99cd-c0f02c8fd3e7" testId="17de93e8-22b4-7da6-b4cd-4e81bdf62818" testName="ServiceUnitTest.Repositories.VisitLogRepositoryTests.GetStaffViewLogsQuery_KhiGoi_NenTraVeQueryVoiIncludes" computerName="TAMJEE" duration="00:00:01.0365331" startTime="2025-11-30T02:27:49.3974560+07:00" endTime="2025-11-30T02:27:49.3974563+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ca0ab7bd-028a-46a8-99cd-c0f02c8fd3e7" />
+    <UnitTestResult executionId="7f285c0d-9ddc-4fbb-b52a-a63a19f4858b" testId="bfb37e57-bf81-8cb9-c5bb-a2d33d19a539" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByQuantity_Descending_ShouldReturnSortedAssets" computerName="TAMJEE" duration="00:00:00.0021765" startTime="2025-11-30T02:27:48.5368693+07:00" endTime="2025-11-30T02:27:48.5368694+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f285c0d-9ddc-4fbb-b52a-a63a19f4858b" />
+    <UnitTestResult executionId="547b986b-101b-41d2-9ccd-ce4185b557ec" testId="ac0685fb-6cbe-a8b2-576a-f893283cc375" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetByIdAsync_WhenVehicleNotFound_ShouldReturnNull" computerName="TAMJEE" duration="00:00:00.0012814" startTime="2025-11-30T02:27:48.5693358+07:00" endTime="2025-11-30T02:27:48.5693359+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="547b986b-101b-41d2-9ccd-ce4185b557ec" />
+    <UnitTestResult executionId="76f6d812-3088-45c9-b4ce-de4af4b2be97" testId="42bcaf26-66c5-c773-531b-93730cdb4585" testName="ServiceUnitTest.Repositories.MessageRepositoryTests.MarkAsReadAsync_KhiCoTinNhanChuaDoc_NenCapNhatIsRead" computerName="TAMJEE" duration="00:00:00.0101336" startTime="2025-11-30T02:27:49.4068769+07:00" endTime="2025-11-30T02:27:49.4068772+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76f6d812-3088-45c9-b4ce-de4af4b2be97" />
+    <UnitTestResult executionId="f4277d8b-727d-4e88-aeeb-5b3dc1bdbe22" testId="c894807d-700d-0069-56c9-8bf5b738462e" testName="ServiceUnitTest.Services.ChatServiceTests.GetInteractionListAsync_KhiGoi_NenTraVeDanhSach" computerName="TAMJEE" duration="00:00:00.0069564" startTime="2025-11-30T02:27:49.3960376+07:00" endTime="2025-11-30T02:27:49.3960378+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f4277d8b-727d-4e88-aeeb-5b3dc1bdbe22">
+      <Output>
+        <ErrorInfo>
+          <Message>System.NullReferenceException : Object reference not set to an instance of an object.</Message>
+          <StackTrace>   at ApartaAPI.Services.ChatService.GetInteractionListAsync(String currentUserId) in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs:line 114&#xD;
+   at ServiceUnitTest.Services.ChatServiceTests.GetInteractionListAsync_KhiGoi_NenTraVeDanhSach() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs:line 98&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0ce6e8be-8289-46ba-bd5a-ad45f197ac66" testId="fbcbf036-afaf-1e6a-23ff-2e86e00e2c2c" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" computerName="TAMJEE" duration="00:00:00.0013661" startTime="2025-11-30T02:27:48.5538046+07:00" endTime="2025-11-30T02:27:48.5538048+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ce6e8be-8289-46ba-bd5a-ad45f197ac66" />
+    <UnitTestResult executionId="81d4bfcc-1683-46fa-9ba8-5a0382c3cee6" testId="4f4a9432-580f-50c0-4d55-79a8b9699def" testName="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenAssetExists_ShouldDeleteAndReturnTrue" computerName="TAMJEE" duration="00:00:00.0025329" startTime="2025-11-30T02:27:48.5841199+07:00" endTime="2025-11-30T02:27:48.5841200+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="81d4bfcc-1683-46fa-9ba8-5a0382c3cee6" />
+    <UnitTestResult executionId="7faa3ee3-7b27-4d49-a924-f2dd41dd63ab" testId="bc4baa34-206b-564e-8b71-3dc6d66b5332" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationByIdAsync_KhiIdTonTai_NenTraVeChiTiet" computerName="TAMJEE" duration="00:00:00.0028195" startTime="2025-11-30T02:27:48.5358341+07:00" endTime="2025-11-30T02:27:48.5358346+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7faa3ee3-7b27-4d49-a924-f2dd41dd63ab" />
+    <UnitTestResult executionId="595e3803-f608-4938-9526-5c1333b1301d" testId="c339059c-7eca-3d7d-2953-bc1dc8249cf6" testName="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenAssetNotFound_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0021114" startTime="2025-11-30T02:27:48.5644753+07:00" endTime="2025-11-30T02:27:48.5644755+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="595e3803-f608-4938-9526-5c1333b1301d" />
+    <UnitTestResult executionId="3b448acf-87b3-41ac-952e-b9c87a42d20f" testId="e298a3fe-58fb-6a3a-753b-a81a74204e34" testName="ServiceUnitTest.Services.ProposalServiceTests.GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList" computerName="TAMJEE" duration="00:00:00.0303509" startTime="2025-11-30T02:27:49.4312410+07:00" endTime="2025-11-30T02:27:49.4312413+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3b448acf-87b3-41ac-952e-b9c87a42d20f">
+      <Output>
+        <ErrorInfo>
+          <Message>Expected result.Data.Items to contain 1 item(s), but found &lt;null&gt;.</Message>
+          <StackTrace>   at FluentAssertions.Execution.LateBoundTestFramework.Throw(String message)&#xD;
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)&#xD;
+   at FluentAssertions.Execution.AssertionScope.AddPreFormattedFailure(String formattedFailureMessage)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(String message, Object[] args)&#xD;
+   at FluentAssertions.Collections.GenericCollectionAssertions`3.HaveCount(Int32 expected, String because, Object[] becauseArgs)&#xD;
+   at ServiceUnitTest.Services.ProposalServiceTests.GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ProposalServiceTests.cs:line 123&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b07e0fd1-7bf9-46af-8bf3-6902b2aa9a3b" testId="de73053c-e28c-9cf8-0aeb-566f9b88f360" testName="ServiceUnitTest.Repositories.MessageRepositoryTests.AddMessageAsync_KhiMessageHopLe_NenThemVaCapNhatInteraction" computerName="TAMJEE" duration="00:00:00.8021025" startTime="2025-11-30T02:27:49.3383870+07:00" endTime="2025-11-30T02:27:49.3383875+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b07e0fd1-7bf9-46af-8bf3-6902b2aa9a3b" />
+    <UnitTestResult executionId="1f598c56-d051-4384-82d2-fd047ee535de" testId="525103e1-1565-6986-20da-151232c788eb" testName="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiCanHoKhongTonTai_NenNemValidationException" computerName="TAMJEE" duration="00:00:00.0025728" startTime="2025-11-30T02:27:48.5229161+07:00" endTime="2025-11-30T02:27:48.5229166+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1f598c56-d051-4384-82d2-fd047ee535de" />
+    <UnitTestResult executionId="bfb0565a-993c-47dd-8d2b-fe26faaef8b2" testId="828ef680-936f-cda8-5b9e-824b89eb4bb8" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSortByVehicleNumber_Descending_ShouldReturnSortedVehicles" computerName="TAMJEE" duration="00:00:00.0024458" startTime="2025-11-30T02:27:48.5834826+07:00" endTime="2025-11-30T02:27:48.5834827+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bfb0565a-993c-47dd-8d2b-fe26faaef8b2" />
+    <UnitTestResult executionId="9f3ab780-b100-414d-be70-5db8bad4f6f2" testId="693c0e12-dd23-289c-9d1a-9a3390e477c5" testName="ServiceUnitTest.Services.ProposalServiceTests.GetProposalDetailAsync_KhiUserLaOwner_NenTraVeChiTiet" computerName="TAMJEE" duration="00:00:01.0337485" startTime="2025-11-30T02:27:49.3947386+07:00" endTime="2025-11-30T02:27:49.3947391+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9f3ab780-b100-414d-be70-5db8bad4f6f2" />
+    <UnitTestResult executionId="0c887f03-59bd-4eba-81ba-d386b8a0a916" testId="7c330c24-b8a5-d704-93ae-65f327fde930" testName="ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi" computerName="TAMJEE" duration="00:00:00.7294465" startTime="2025-11-30T02:27:49.3069299+07:00" endTime="2025-11-30T02:27:49.3069303+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0c887f03-59bd-4eba-81ba-d386b8a0a916">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Unable to track an entity of type 'Role' because its primary key property 'RoleId' is null.</Message>
+          <StackTrace>   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.NullableKeyIdentityMap`1.Add(InternalEntityEntry entry)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.StartTracking(InternalEntityEntry entry)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityState(EntityState oldState, EntityState newState, Boolean acceptChanges, Boolean modifyProperties)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityStateAsync(EntityState entityState, Boolean acceptChanges, Boolean modifyProperties, Nullable`1 forceStateWhenUnknownKey, Nullable`1 fallbackState, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.PaintActionAsync(EntityEntryGraphNode`1 node, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityEntryGraphIterator.TraverseGraphAsync[TState](EntityEntryGraphNode`1 node, Func`3 handleNode, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityEntryGraphIterator.TraverseGraphAsync[TState](EntityEntryGraphNode`1 node, Func`3 handleNode, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.AttachGraphAsync(InternalEntityEntry rootEntry, EntityState targetState, EntityState storeGeneratedWithKeySetTargetState, Boolean forceStateWhenUnknownKey, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.AddRangeAsync(TEntity[] entities)&#xD;
+   at ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs:line 71&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="88a3b6a9-008f-41ed-b09a-4a1222c56475" testId="c33989d6-500a-c0b6-0057-da1ebf6e21a8" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_WithValidDto_ShouldCreateVehicle" computerName="TAMJEE" duration="00:00:00.0039899" startTime="2025-11-30T02:27:48.5827744+07:00" endTime="2025-11-30T02:27:48.5827744+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="88a3b6a9-008f-41ed-b09a-4a1222c56475" />
+    <UnitTestResult executionId="6711eec7-37f8-4d9f-89d4-2202e4c04b49" testId="98c4f1ac-88ae-f049-40df-f37dad0fc4f9" testName="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetProposalDetailsAsync_KhiIdTonTai_NenTraVeChiTietVoiIncludes" computerName="TAMJEE" duration="00:00:00.8879110" startTime="2025-11-30T02:27:49.4149310+07:00" endTime="2025-11-30T02:27:49.4149316+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6711eec7-37f8-4d9f-89d4-2202e4c04b49" />
+    <UnitTestResult executionId="38a328a0-240b-432b-a783-c4f1dda79518" testId="0389a713-5d92-9c60-198f-d1b5279ca2f3" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByQuantity_Ascending_ShouldReturnSortedAssets" computerName="TAMJEE" duration="00:00:00.0049734" startTime="2025-11-30T02:27:48.5003193+07:00" endTime="2025-11-30T02:27:48.5003193+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="38a328a0-240b-432b-a783-c4f1dda79518" />
+    <UnitTestResult executionId="dbc9403d-1bb8-4a9c-8ad1-ba9d9959aba1" testId="6f81a2f5-f182-cf4c-03a9-1b537caa53a3" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.DeleteAsync_KhiIdTonTai_NenXoa" computerName="TAMJEE" duration="00:00:00.1318115" startTime="2025-11-30T02:27:48.4995149+07:00" endTime="2025-11-30T02:27:48.4995151+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dbc9403d-1bb8-4a9c-8ad1-ba9d9959aba1" />
+    <UnitTestResult executionId="acd47990-0ddc-42fc-a025-0830915a0184" testId="fc824589-f86f-30d9-44b3-01b69a2cf960" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WhenNoVehiclesFound_ShouldReturnEmptyListWithNoResultsMessage" computerName="TAMJEE" duration="00:00:00.0068980" startTime="2025-11-30T02:27:48.5089075+07:00" endTime="2025-11-30T02:27:48.5089077+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="acd47990-0ddc-42fc-a025-0830915a0184" />
+    <UnitTestResult executionId="a64f8fa9-f264-4c6a-a696-fcfbb1278a62" testId="01d67411-1a81-aa6d-ffd0-a0f57b383a5d" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByInfo_Descending_ShouldReturnSortedAssets" computerName="TAMJEE" duration="00:00:00.0018198" startTime="2025-11-30T02:27:48.5834238+07:00" endTime="2025-11-30T02:27:48.5834239+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a64f8fa9-f264-4c6a-a696-fcfbb1278a62" />
+    <UnitTestResult executionId="4f3039c9-261e-401d-8fe3-aeae902b911f" testId="d7bc34c8-3a15-85f7-e780-5f2e5ffe7cec" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSearchTerm_ShouldReturnMatchingAssets" computerName="TAMJEE" duration="00:00:00.0022307" startTime="2025-11-30T02:27:48.5745520+07:00" endTime="2025-11-30T02:27:48.5745523+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4f3039c9-261e-401d-8fe3-aeae902b911f" />
+    <UnitTestResult executionId="45945c03-74c5-4aaf-b6d2-2038b54469f7" testId="0ee5cfe1-27c2-2bdd-baea-7434f0357835" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedAssets" computerName="TAMJEE" duration="00:00:00.0094672" startTime="2025-11-30T02:27:48.5164085+07:00" endTime="2025-11-30T02:27:48.5164085+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="45945c03-74c5-4aaf-b6d2-2038b54469f7" />
+    <UnitTestResult executionId="a8fd4adf-6ea0-4020-ae74-33d08900ad08" testId="eacb5974-faae-2d81-9116-ad2db1f71cf0" testName="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0021751" startTime="2025-11-30T02:27:48.5667039+07:00" endTime="2025-11-30T02:27:48.5667041+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a8fd4adf-6ea0-4020-ae74-33d08900ad08" />
+    <UnitTestResult executionId="7237b111-68f8-4259-b8f8-5c72845a5d42" testId="43e0e8e9-6ba6-e05a-d59e-c20c5a40777e" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleExists_ShouldUpdateUpdatedAt" computerName="TAMJEE" duration="00:00:00.0034491" startTime="2025-11-30T02:27:48.5594453+07:00" endTime="2025-11-30T02:27:48.5594455+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7237b111-68f8-4259-b8f8-5c72845a5d42" />
+    <UnitTestResult executionId="ef82ff2f-2555-400e-81b5-9bcaa38d94f4" testId="737fddb8-8f79-cfc6-8636-3ed8d5812bd0" testName="ServiceUnitTest.Services.ProposalServiceTests.GetProposalsByResidentAsync_KhiGoi_NenTraVeDanhSach" computerName="TAMJEE" duration="00:00:00.0047769" startTime="2025-11-30T02:27:49.3997303+07:00" endTime="2025-11-30T02:27:49.3997315+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef82ff2f-2555-400e-81b5-9bcaa38d94f4" />
+    <UnitTestResult executionId="dc5ada5e-4fe5-4a03-9e75-ced41193706b" testId="2fc4a7d0-c1e8-e7e4-9526-83a588dffa18" testName="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetStaffAssignedProposalsAsync_KhiStaffIdTonTai_NenTraVeProposalDuocGanVaPending" computerName="TAMJEE" duration="00:00:00.0689410" startTime="2025-11-30T02:27:49.5105515+07:00" endTime="2025-11-30T02:27:49.5105520+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dc5ada5e-4fe5-4a03-9e75-ced41193706b" />
+    <UnitTestResult executionId="71bce6d7-2e06-4600-8e93-5573c03d9c7c" testId="e08dbe78-d415-605e-bcbc-7cd78acd4499" testName="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding" computerName="TAMJEE" duration="00:00:00.0031628" startTime="2025-11-30T02:27:49.3348248+07:00" endTime="2025-11-30T02:27:49.3348257+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="71bce6d7-2e06-4600-8e93-5573c03d9c7c">
+      <Output>
+        <ErrorInfo>
+          <Message>Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.</Message>
+          <StackTrace>   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs:line 35&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4ec72d2e-c091-4215-a981-339d6f342598" testId="ffc1cc8f-2b4d-f450-c3a6-a2b7509a95fb" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithNullQuery_ShouldReturnAllAssets" computerName="TAMJEE" duration="00:00:00.0015016" startTime="2025-11-30T02:27:48.5093849+07:00" endTime="2025-11-30T02:27:48.5093849+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4ec72d2e-c091-4215-a981-339d6f342598" />
+    <UnitTestResult executionId="06e1edce-92c6-4bfe-9ce8-90372611f1ee" testId="0964f890-4273-8f6b-0908-6f11902c3ae8" testName="ServiceUnitTest.Repositories.UserManagementRepositoryTests.GetPagedUsersAsync_KhiCoThamSo_NenTraVePagedList" computerName="TAMJEE" duration="00:00:01.0560523" startTime="2025-11-30T02:27:49.4170579+07:00" endTime="2025-11-30T02:27:49.4170584+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="06e1edce-92c6-4bfe-9ce8-90372611f1ee" />
+    <UnitTestResult executionId="66dea15f-c28a-4c84-94ba-25e4893a4477" testId="b9e2e70c-65f5-8502-5796-f8a87fac9fe2" testName="ServiceUnitTest.Services.ChatServiceTests.SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan" computerName="TAMJEE" duration="00:00:00.2097629" startTime="2025-11-30T02:27:48.5824102+07:00" endTime="2025-11-30T02:27:48.5824105+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="66dea15f-c28a-4c84-94ba-25e4893a4477">
+      <Output>
+        <ErrorInfo>
+          <Message>Expected result.Message not to be &lt;null&gt;.</Message>
+          <StackTrace>   at FluentAssertions.Execution.LateBoundTestFramework.Throw(String message)&#xD;
+   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)&#xD;
+   at FluentAssertions.Execution.AssertionScope.AddPreFormattedFailure(String formattedFailureMessage)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+   at FluentAssertions.Execution.AssertionChain.FailWith(String message)&#xD;
+   at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)&#xD;
+   at ServiceUnitTest.Services.ChatServiceTests.SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs:line 141&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f26fde0f-1751-43ae-8eff-fd4c8775a6a6" testId="a8237466-6f07-fd63-96fc-399dcff6fd24" testName="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetExists_ShouldUpdateAndReturnTrue" computerName="TAMJEE" duration="00:00:00.0049506" startTime="2025-11-30T02:27:48.5827944+07:00" endTime="2025-11-30T02:27:48.5827944+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f26fde0f-1751-43ae-8eff-fd4c8775a6a6" />
+    <UnitTestResult executionId="ce361909-18a7-4539-aa96-fdc6c53be65d" testId="33903387-4a17-8f06-d9b2-aa69aab48ab5" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleExists_ShouldUpdateAndReturnTrue" computerName="TAMJEE" duration="00:00:00.1305594" startTime="2025-11-30T02:27:48.4963643+07:00" endTime="2025-11-30T02:27:48.4963866+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ce361909-18a7-4539-aa96-fdc6c53be65d" />
+    <UnitTestResult executionId="eaf292ed-6210-4978-b336-5d8cf62af70a" testId="e00880e5-4a59-a258-b187-79b95cf19a84" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenVehicleNotFound_ShouldReturnFalse" computerName="TAMJEE" duration="00:00:00.0015500" startTime="2025-11-30T02:27:48.5559197+07:00" endTime="2025-11-30T02:27:48.5559199+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eaf292ed-6210-4978-b336-5d8cf62af70a" />
+    <UnitTestResult executionId="a2821988-cb77-420c-aa6c-b098428d5842" testId="7bedae29-8133-d91c-62c4-4d8b50302804" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetByIdAsync_WhenAssetNotFound_ShouldReturnNull" computerName="TAMJEE" duration="00:00:00.0023749" startTime="2025-11-30T02:27:48.5177953+07:00" endTime="2025-11-30T02:27:48.5177955+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a2821988-cb77-420c-aa6c-b098428d5842" />
+    <UnitTestResult executionId="b9d000dd-5b38-48d4-bfed-b34da749fe03" testId="690eee46-5bb0-2017-8434-f8bfad3c8eb4" testName="ServiceUnitTest.Services.UserManagementServiceTests.GetStaffAccountsAsync_KhiGoi_NenTraVeDanhSachStaff" computerName="TAMJEE" duration="00:00:00.0034783" startTime="2025-11-30T02:27:49.3962281+07:00" endTime="2025-11-30T02:27:49.3962282+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b9d000dd-5b38-48d4-bfed-b34da749fe03" />
+    <UnitTestResult executionId="212c308b-af4f-484c-b07e-89748da8c4af" testId="6034d841-d46e-8426-eef5-f1caf730f81d" testName="ServiceUnitTest.Services.ProposalServiceTests.ReplyProposalAsync_KhiUserLaStaff_NenTaoReplyVaCapNhatStatus" computerName="TAMJEE" duration="00:00:00.0334985" startTime="2025-11-30T02:27:49.4641555+07:00" endTime="2025-11-30T02:27:49.4641557+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="212c308b-af4f-484c-b07e-89748da8c4af" />
+    <UnitTestResult executionId="a989b38d-84f2-4967-b6ce-738ba38d9f13" testId="35119fbf-8466-bd08-a442-d805dc9918fa" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_WithDuplicateVehicleNumber_ShouldThrowException" computerName="TAMJEE" duration="00:00:00.0046131" startTime="2025-11-30T02:27:48.5680317+07:00" endTime="2025-11-30T02:27:48.5680318+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a989b38d-84f2-4967-b6ce-738ba38d9f13" />
+    <UnitTestResult executionId="8e3078b5-9b6a-4a1f-9a42-dbe613143336" testId="e583f6af-2510-31bd-3647-03513ba1bba5" testName="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiThongTinHopLe_NenTaoVisitorVaLog" computerName="TAMJEE" duration="00:00:00.0062176" startTime="2025-11-30T02:27:48.5203024+07:00" endTime="2025-11-30T02:27:48.5203025+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8e3078b5-9b6a-4a1f-9a42-dbe613143336" />
+    <UnitTestResult executionId="553b5f3f-d2b3-418a-ab9f-f62eb939b3b9" testId="f39a078b-b5cb-8596-274a-9522ff1e951d" testName="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WhenNoAssetsFound_ShouldReturnEmptyListWithNoResultsMessage" computerName="TAMJEE" duration="00:00:00.1302969" startTime="2025-11-30T02:27:48.4995285+07:00" endTime="2025-11-30T02:27:48.4995285+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="553b5f3f-d2b3-418a-ab9f-f62eb939b3b9" />
+    <UnitTestResult executionId="0880476e-e12a-45bb-ac0b-5e92e6d9efe3" testId="2ad1b383-3fa3-733f-16ce-aacd035893fb" testName="ServiceUnitTest.Services.VisitLogServiceTests.CheckInAsync_KhiStatusPending_NenCapNhatThanhCheckedIn" computerName="TAMJEE" duration="00:00:00.0176506" startTime="2025-11-30T02:27:48.6367976+07:00" endTime="2025-11-30T02:27:48.6367981+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0880476e-e12a-45bb-ac0b-5e92e6d9efe3" />
+    <UnitTestResult executionId="ff935816-19f5-4033-97c8-c48c1ec809c0" testId="818acf3c-9a31-0f6f-6b2d-676bcbb6f648" testName="ServiceUnitTest.Services.VisitLogServiceTests.CheckOutAsync_KhiStatusCheckedIn_NenCapNhatThanhCheckedOut" computerName="TAMJEE" duration="00:00:00.2049752" startTime="2025-11-30T02:27:48.5659211+07:00" endTime="2025-11-30T02:27:48.5659213+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ff935816-19f5-4033-97c8-c48c1ec809c0" />
+    <UnitTestResult executionId="4d7d12b4-7b56-407f-9dbb-bd9fafd82575" testId="1e3254d3-d7be-138d-5284-b29f981e6d3b" testName="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetResidentProposalsAsync_KhiResidentIdTonTai_NenTraVeDanhSachProposal" computerName="TAMJEE" duration="00:00:00.0263581" startTime="2025-11-30T02:27:49.4414566+07:00" endTime="2025-11-30T02:27:49.4414568+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4d7d12b4-7b56-407f-9dbb-bd9fafd82575" />
+    <UnitTestResult executionId="e78fa92f-4473-4e25-aa8a-ab9675935a90" testId="18ea6aaa-8759-1127-338b-c07fffca5745" testName="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiBuildingKhongTonTai_NenTraVeNull" computerName="TAMJEE" duration="00:00:00.0043431" startTime="2025-11-30T02:27:48.5288255+07:00" endTime="2025-11-30T02:27:48.5288258+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e78fa92f-4473-4e25-aa8a-ab9675935a90" />
+    <UnitTestResult executionId="cc2490bc-6719-4e7f-9b25-a3c9007b4abe" testId="6fb57b80-8976-077d-22ab-aab3f921c039" testName="ServiceUnitTest.Services.UserManagementServiceTests.ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus" computerName="TAMJEE" duration="00:00:00.0049630" startTime="2025-11-30T02:27:49.4030844+07:00" endTime="2025-11-30T02:27:49.4030846+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc2490bc-6719-4e7f-9b25-a3c9007b4abe">
+      <Output>
+        <ErrorInfo>
+          <Message>Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'Name', 'PasswordHash'}' are missing for the instance of entity type 'User'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.</Message>
+          <StackTrace>   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+   at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at ServiceUnitTest.Services.UserManagementServiceTests.ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus() in D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\UserManagementServiceTests.cs:line 150&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f7ec7cc8-6c1d-42ec-ab92-e10b17a5300e" testId="0f8ad43d-e87a-9b86-c2b0-3d64246500ad" testName="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_ShouldGenerateUniqueAssetId" computerName="TAMJEE" duration="00:00:00.0039742" startTime="2025-11-30T02:27:48.5578765+07:00" endTime="2025-11-30T02:27:48.5578767+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f7ec7cc8-6c1d-42ec-ab92-e10b17a5300e" />
+    <UnitTestResult executionId="182192ac-a68d-4bfc-9203-56711121d78c" testId="f8acbb5f-d745-6ba2-3a63-97b5a9edcf98" testName="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_WithValidDto_ShouldCreateAsset" computerName="TAMJEE" duration="00:00:00.0034619" startTime="2025-11-30T02:27:48.5722134+07:00" endTime="2025-11-30T02:27:48.5722137+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="182192ac-a68d-4bfc-9203-56711121d78c" />
+    <UnitTestResult executionId="23105ace-5666-4070-a4c3-a5510e9ff504" testId="a6d84dd5-241f-d59d-c5a4-e108491d4fba" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithNullQuery_ShouldReturnAllVehicles" computerName="TAMJEE" duration="00:00:00.0020961" startTime="2025-11-30T02:27:48.5885641+07:00" endTime="2025-11-30T02:27:48.5885659+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="23105ace-5666-4070-a4c3-a5510e9ff504" />
+    <UnitTestResult executionId="1f99b6b0-f476-4461-970c-3563d1fa9d35" testId="e529748a-bb58-6278-13e1-dc90e4c03e41" testName="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_ShouldSetCreatedAtAndUpdatedAt" computerName="TAMJEE" duration="00:00:00.0038636" startTime="2025-11-30T02:27:48.5827314+07:00" endTime="2025-11-30T02:27:48.5827315+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1f99b6b0-f476-4461-970c-3563d1fa9d35" />
+    <UnitTestResult executionId="fd7ba2d7-7b93-497d-b7d0-5adc47eb389a" testId="e138f28c-54c2-8099-fb61-170bde14e566" testName="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiVisitorDaTonTai_NenNemValidationException" computerName="TAMJEE" duration="00:00:00.0187813" startTime="2025-11-30T02:27:48.5138543+07:00" endTime="2025-11-30T02:27:48.5138547+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fd7ba2d7-7b93-497d-b7d0-5adc47eb389a" />
+    <UnitTestResult executionId="6889044d-0d2b-43f2-a339-fbb645c3eb80" testId="99f7114f-f099-c11f-e6c6-b99479bebb6b" testName="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiCheckInTuongLai_NenSetStatusPending" computerName="TAMJEE" duration="00:00:00.1304461" startTime="2025-11-30T02:27:48.4992505+07:00" endTime="2025-11-30T02:27:48.4992507+07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6889044d-0d2b-43f2-a339-fbb645c3eb80" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="ServiceUnitTest.Repositories.VisitorRepositoryTests.UpdateAsync_KhiVisitorHopLe_NenCapNhatThanhCong" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="938b8379-f5ce-a109-e6da-f9811e1cdef0">
+      <Execution id="d5519df4-8296-48c7-b4d1-c83e546401fa" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.VisitorRepositoryTests" name="UpdateAsync_KhiVisitorHopLe_NenCapNhatThanhCong" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByQuantity_Descending_ShouldReturnSortedAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="bfb37e57-bf81-8cb9-c5bb-a2d33d19a539">
+      <Execution id="7f285c0d-9ddc-4fbb-b52a-a63a19f4858b" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithSortByQuantity_Descending_ShouldReturnSortedAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetByIdAsync_WhenVehicleExists_ShouldReturnVehicleDto" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="53ac88c5-172e-9619-25b7-03988178fb6a">
+      <Execution id="9fb15d69-b6fd-4330-9b59-8186219cc3c7" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetByIdAsync_WhenVehicleExists_ShouldReturnVehicleDto" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ProposalServiceTests.ReplyProposalAsync_KhiUserLaStaff_NenTaoReplyVaCapNhatStatus" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="6034d841-d46e-8426-eef5-f1caf730f81d">
+      <Execution id="212c308b-af4f-484c-b07e-89748da8c4af" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ProposalServiceTests" name="ReplyProposalAsync_KhiUserLaStaff_NenTaoReplyVaCapNhatStatus" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="54bf5aff-8ed2-b789-a163-4d3516dc03f3">
+      <Execution id="b30f16f3-ad09-4d48-8fbb-99717c2dba98" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WhenNoVehiclesFound_ShouldReturnEmptyListWithNoResultsMessage" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="fc824589-f86f-30d9-44b3-01b69a2cf960">
+      <Execution id="acd47990-0ddc-42fc-a025-0830915a0184" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WhenNoVehiclesFound_ShouldReturnEmptyListWithNoResultsMessage" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithStatusFilter_ShouldReturnFilteredVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="08d305fb-58bd-dc09-c915-c28ca17deab3">
+      <Execution id="32f3bf0d-950f-4e6c-8840-b12ac1e5066c" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithStatusFilter_ShouldReturnFilteredVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithNullQuery_ShouldReturnAllVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="a6d84dd5-241f-d59d-c5a4-e108491d4fba">
+      <Execution id="23105ace-5666-4070-a4c3-a5510e9ff504" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithNullQuery_ShouldReturnAllVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiHopLe_NenTaoStaff" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="982ab276-0e37-116d-36cf-e86d702be447">
+      <Execution id="319fe7d5-b596-43a3-9876-5ca2f7573e05" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="CreateStaffAccountAsync_KhiHopLe_NenTaoStaff" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiHopLe_NenTaoMoi" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="bd447c2c-874e-e154-d781-68b4b1f9d7d9">
+      <Execution id="bc575a54-3466-4b8a-a25b-44f5daaec3f0" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="CreatePriceQuotationAsync_KhiHopLe_NenTaoMoi" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="6fb57b80-8976-077d-22ab-aab3f921c039">
+      <Execution id="cc2490bc-6719-4e7f-9b25-a3c9007b4abe" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_ShouldGenerateUniqueVehicleIdAndSetStatusToChoDuyet" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="65caf143-6045-4f93-1352-84bf06cb1c6c">
+      <Execution id="cb32b638-c409-40dd-b7fa-0986b8af9ef9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="CreateAsync_ShouldGenerateUniqueVehicleIdAndSetStatusToChoDuyet" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.VisitorRepositoryTests.AddAsync_KhiVisitorHopLe_NenThemThanhCong" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="785cc6f3-cb4e-88c9-0ab5-82497f6469e3">
+      <Execution id="a45d5b75-2e2b-48c1-a2f1-9ec618f61005" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.VisitorRepositoryTests" name="AddAsync_KhiVisitorHopLe_NenThemThanhCong" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationsAsync_KhiGoi_NenTraVeDanhSach" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="76b2a201-13ea-e704-56dc-65b72af68dad">
+      <Execution id="1a1203e8-2e96-40b9-8f4d-9686738b6676" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="GetPriceQuotationsAsync_KhiGoi_NenTraVeDanhSach" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_ShouldSetCreatedAtAndUpdatedAt" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="d7703cc6-772a-7efe-2362-8131da471502">
+      <Execution id="b7948f99-92a5-4a20-a8bf-49c192ded1fc" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="CreateAsync_ShouldSetCreatedAtAndUpdatedAt" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e5eabe51-0797-622d-457e-603958d0e266">
+      <Execution id="75481959-a2d1-4555-b65f-f6c32ea88199" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="08903901-081e-4aee-a83a-a1681061ed19">
+      <Execution id="6ad31f29-b505-4fb4-b262-d265d868d3a9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests" name="GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationByIdAsync_KhiIdTonTai_NenTraVeChiTiet" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="bc4baa34-206b-564e-8b71-3dc6d66b5332">
+      <Execution id="7faa3ee3-7b27-4d49-a924-f2dd41dd63ab" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="GetPriceQuotationByIdAsync_KhiIdTonTai_NenTraVeChiTiet" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.VisitorRepositoryTests.GetByIdAsync_KhiIdTonTai_NenTraVeVisitor" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="8b0768ee-f92c-1597-dc16-e9e9b3a9780c">
+      <Execution id="dd8c73d0-5b0c-4a63-a2e5-d3ae8eea9856" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.VisitorRepositoryTests" name="GetByIdAsync_KhiIdTonTai_NenTraVeVisitor" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="d9ac2201-89bd-4b5e-ebd1-4cb57fb79fa8">
+      <Execution id="78b134c1-a86a-43e4-a891-6097fefa1404" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ProposalServiceTests.GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e298a3fe-58fb-6a3a-753b-a81a74204e34">
+      <Execution id="3b448acf-87b3-41ac-952e-b9c87a42d20f" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ProposalServiceTests" name="GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetByIdAsync_WhenVehicleNotFound_ShouldReturnNull" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="ac0685fb-6cbe-a8b2-576a-f893283cc375">
+      <Execution id="547b986b-101b-41d2-9ccd-ce4185b557ec" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetByIdAsync_WhenVehicleNotFound_ShouldReturnNull" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_ShouldGenerateUniqueAssetId" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0f8ad43d-e87a-9b86-c2b0-3d64246500ad">
+      <Execution id="f7ec7cc8-6c1d-42ec-ab92-e10b17a5300e" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="CreateAsync_ShouldGenerateUniqueAssetId" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenVehicleNotFound_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e00880e5-4a59-a258-b187-79b95cf19a84">
+      <Execution id="eaf292ed-6210-4978-b336-5d8cf62af70a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="DeleteAsync_WhenVehicleNotFound_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByInfo_Descending_ShouldReturnSortedAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="01d67411-1a81-aa6d-ffd0-a0f57b383a5d">
+      <Execution id="a64f8fa9-f264-4c6a-a696-fcfbb1278a62" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithSortByInfo_Descending_ShouldReturnSortedAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiVisitorDaTonTai_NenNemValidationException" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e138f28c-54c2-8099-fb61-170bde14e566">
+      <Execution id="fd7ba2d7-7b93-497d-b7d0-5adc47eb389a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitorServiceTests" name="CreateVisitAsync_KhiVisitorDaTonTai_NenNemValidationException" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WhenNoAssetsFound_ShouldReturnEmptyListWithNoResultsMessage" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="f39a078b-b5cb-8596-274a-9522ff1e951d">
+      <Execution id="553b5f3f-d2b3-418a-ab9f-f62eb939b3b9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WhenNoAssetsFound_ShouldReturnEmptyListWithNoResultsMessage" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="7c330c24-b8a5-d704-93ae-65f327fde930">
+      <Execution id="0c887f03-59bd-4eba-81ba-d386b8a0a916" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByInfo_Ascending_ShouldReturnSortedAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="072847d6-3f2a-27a5-2155-061911f38c04">
+      <Execution id="1b70984c-6861-4b4c-a297-4d616cf97f94" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithSortByInfo_Ascending_ShouldReturnSortedAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSearchTerm_ShouldReturnMatchingAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="d7bc34c8-3a15-85f7-e780-5f2e5ffe7cec">
+      <Execution id="4f3039c9-261e-401d-8fe3-aeae902b911f" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithSearchTerm_ShouldReturnMatchingAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetNotFound_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="46634805-6294-e98f-e437-f89a4939bcb6">
+      <Execution id="d92c35ac-d971-4f26-b366-345f778c94f9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="UpdateAsync_WhenAssetNotFound_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.UserManagementRepositoryTests.GetStaffAssignmentsAsync_KhiUserIdTonTai_NenTraVeDanhSachAssignment" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="606e350c-500a-bec5-2bb6-5ec6bf75fb0a">
+      <Execution id="6af4cf41-5cd2-4607-830f-1d888334e696" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.UserManagementRepositoryTests" name="GetStaffAssignmentsAsync_KhiUserIdTonTai_NenTraVeDanhSachAssignment" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiBuildingKhongTonTai_NenTraVeNull" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="18ea6aaa-8759-1127-338b-c07fffca5745">
+      <Execution id="e78fa92f-4473-4e25-aa8a-ab9675935a90" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="CreatePriceQuotationAsync_KhiBuildingKhongTonTai_NenTraVeNull" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetStaffAssignedProposalsAsync_KhiStaffIdTonTai_NenTraVeProposalDuocGanVaPending" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="2fc4a7d0-c1e8-e7e4-9526-83a588dffa18">
+      <Execution id="dc5ada5e-4fe5-4a03-9e75-ced41193706b" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.ProposalRepositoryTests" name="GetStaffAssignedProposalsAsync_KhiStaffIdTonTai_NenTraVeProposalDuocGanVaPending" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="31d982e3-1c92-bd7a-3a91-2ad4d0e36b03">
+      <Execution id="8de295e8-7c57-4286-b347-4493ad733276" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.DeleteAsync_KhiIdTonTai_NenXoa" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="6f81a2f5-f182-cf4c-03a9-1b537caa53a3">
+      <Execution id="dbc9403d-1bb8-4a9c-8ad1-ba9d9959aba1" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="DeleteAsync_KhiIdTonTai_NenXoa" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_ShouldSetCreatedAtAndUpdatedAt" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e529748a-bb58-6278-13e1-dc90e4c03e41">
+      <Execution id="1f99b6b0-f476-4461-970c-3563d1fa9d35" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="CreateAsync_ShouldSetCreatedAtAndUpdatedAt" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitLogServiceTests.CheckOutAsync_KhiStatusCheckedIn_NenCapNhatThanhCheckedOut" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="818acf3c-9a31-0f6f-6b2d-676bcbb6f648">
+      <Execution id="ff935816-19f5-4033-97c8-c48c1ec809c0" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitLogServiceTests" name="CheckOutAsync_KhiStatusCheckedIn_NenCapNhatThanhCheckedOut" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="eacb5974-faae-2d81-9116-ad2db1f71cf0">
+      <Execution id="a8fd4adf-6ea0-4020-ae74-33d08900ad08" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="DeleteAsync_WhenSaveChangesFails_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.GetPriceQuotationsByBuildingIdAsync_KhiBuildingTonTai_NenTraVeDanhSach" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="82546d9e-1536-3fe3-2613-5f48b519c06b">
+      <Execution id="84340f44-3994-4cb7-ae33-9ac6a0e4cdab" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="GetPriceQuotationsByBuildingIdAsync_KhiBuildingTonTai_NenTraVeDanhSach" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="b9e2e70c-65f5-8502-5796-f8a87fac9fe2">
+      <Execution id="66dea15f-c28a-4c84-94ba-25e4893a4477" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetStaffProposalsQuery_KhiGoi_NenTraVeQuery" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="5da4d1e3-fb19-664f-2de3-214ea4028a46">
+      <Execution id="fe8a6de8-6fba-4547-9476-cdf19ef52eb4" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.ProposalRepositoryTests" name="GetStaffProposalsQuery_KhiGoi_NenTraVeQuery" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_Info_ShouldReturnMatchingVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="2cd8b322-1838-bcb1-72c9-dcce59774f81">
+      <Execution id="c3442511-eed9-4ee0-9eae-c937a5d36126" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithSearchTerm_Info_ShouldReturnMatchingVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.MessageRepositoryTests.GetTotalUnreadCountAsync_KhiGoi_NenTraVeTongSoLuongChuaDoc" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="8bd405ab-80aa-497d-244c-cce12385a01f">
+      <Execution id="3daf9533-03d2-4394-923e-4795a7e0584a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.MessageRepositoryTests" name="GetTotalUnreadCountAsync_KhiGoi_NenTraVeTongSoLuongChuaDoc" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.GetInteractionListAsync_KhiGoi_NenTraVeDanhSach" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="c894807d-700d-0069-56c9-8bf5b738462e">
+      <Execution id="f4277d8b-727d-4e88-aeeb-5b3dc1bdbe22" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="GetInteractionListAsync_KhiGoi_NenTraVeDanhSach" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenAssetNotFound_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="c339059c-7eca-3d7d-2953-bc1dc8249cf6">
+      <Execution id="595e3803-f608-4938-9526-5c1333b1301d" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="DeleteAsync_WhenAssetNotFound_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_VehicleNumber_ShouldReturnMatchingVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="8302768d-b368-ab33-03e7-a3f621506771">
+      <Execution id="e207393e-b2c7-4c1d-8d08-78147fe27fa9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithSearchTerm_VehicleNumber_ShouldReturnMatchingVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.UpdateAsync_KhiIdTonTaiVaHopLe_NenCapNhat" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0a411339-16d1-8d54-b087-c1ec9094d0e7">
+      <Execution id="4c813adf-6030-4a32-8b93-590ed0a2a47a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="UpdateAsync_KhiIdTonTaiVaHopLe_NenCapNhat" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.PriceQuotationServiceTests.CreatePriceQuotationAsync_KhiFeeTypeTrung_NenNemInvalidOperationException" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="899c7332-4cad-7d4c-129a-77ce0d580ecf">
+      <Execution id="fc71dcb5-8e93-4497-9cb7-d5b5c2bf995a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.PriceQuotationServiceTests" name="CreatePriceQuotationAsync_KhiFeeTypeTrung_NenNemInvalidOperationException" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiCanHoKhongTonTai_NenNemValidationException" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="525103e1-1565-6986-20da-151232c788eb">
+      <Execution id="1f598c56-d051-4384-82d2-fd047ee535de" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitorServiceTests" name="CreateVisitAsync_KhiCanHoKhongTonTai_NenNemValidationException" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiThongTinHopLe_NenTaoVisitorVaLog" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e583f6af-2510-31bd-3647-03513ba1bba5">
+      <Execution id="8e3078b5-9b6a-4a1f-9a42-dbe613143336" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitorServiceTests" name="CreateVisitAsync_KhiThongTinHopLe_NenTaoVisitorVaLog" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.MessageRepositoryTests.MarkAsReadAsync_KhiCoTinNhanChuaDoc_NenCapNhatIsRead" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="42bcaf26-66c5-c773-531b-93730cdb4585">
+      <Execution id="76f6d812-3088-45c9-b4ce-de4af4b2be97" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.MessageRepositoryTests" name="MarkAsReadAsync_KhiCoTinNhanChuaDoc_NenCapNhatIsRead" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetProposalDetailsAsync_KhiIdTonTai_NenTraVeChiTietVoiIncludes" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="98c4f1ac-88ae-f049-40df-f37dad0fc4f9">
+      <Execution id="6711eec7-37f8-4d9f-89d4-2202e4c04b49" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.ProposalRepositoryTests" name="GetProposalDetailsAsync_KhiIdTonTai_NenTraVeChiTietVoiIncludes" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ProposalServiceTests.CreateProposalAsync_KhiThongTinHopLe_NenTaoProposal" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="f8d24f85-f662-71c0-33fe-3ae31a753dec">
+      <Execution id="18b9c9ff-c158-4e9c-acb6-11022f096d89" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ProposalServiceTests" name="CreateProposalAsync_KhiThongTinHopLe_NenTaoProposal" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitLogServiceTests.CheckOutAsync_KhiStatusKhongPhaiCheckedIn_NenTraVeFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="2fd907ea-09be-2e75-f7f0-6e1643a0f3ad">
+      <Execution id="c862687d-03a3-4279-aee9-b39d7edc99a8" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitLogServiceTests" name="CheckOutAsync_KhiStatusKhongPhaiCheckedIn_NenTraVeFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.UserManagementRepositoryTests.GetPagedUsersAsync_KhiCoThamSo_NenTraVePagedList" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0964f890-4273-8f6b-0908-6f11902c3ae8">
+      <Execution id="06e1edce-92c6-4bfe-9ce8-90372611f1ee" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.UserManagementRepositoryTests" name="GetPagedUsersAsync_KhiCoThamSo_NenTraVePagedList" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiEmailTrung_NenNemInvalidOperationException" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="66da7052-acd2-95c3-8103-1777b06650b3">
+      <Execution id="baee1864-d18f-4156-be60-20ecf5366d01" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="CreateStaffAccountAsync_KhiEmailTrung_NenNemInvalidOperationException" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitLogServiceTests.GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="27416949-758f-1c46-9f40-ca30ceee51c0">
+      <Execution id="cafc083f-81ff-4a3d-93f1-13c8d7e71808" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitLogServiceTests" name="GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.MessageRepositoryTests.GetMessagesAsync_KhiGoi_NenTraVeTinNhanPhanTrang" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="17054e1d-b925-6aa1-e9e8-b2c350d7d955">
+      <Execution id="5e61eff0-2a93-4283-a639-4178df07bb5a" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.MessageRepositoryTests" name="GetMessagesAsync_KhiGoi_NenTraVeTinNhanPhanTrang" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleExists_ShouldUpdateAndReturnTrue" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="33903387-4a17-8f06-d9b2-aa69aab48ab5">
+      <Execution id="ce361909-18a7-4539-aa96-fdc6c53be65d" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="UpdateAsync_WhenVehicleExists_ShouldUpdateAndReturnTrue" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithBuildingIdFilter_ShouldReturnFilteredAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="4de74439-69c3-3bb4-25e5-a067c379881b">
+      <Execution id="6675c9b5-8173-44c3-a4f9-d5441fe0a6d9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithBuildingIdFilter_ShouldReturnFilteredAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleNotFound_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="d87af088-a468-8b81-2ad3-1f045d0f6530">
+      <Execution id="f7dfe7d5-9e96-4035-a952-a9cdabf8fdf4" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="UpdateAsync_WhenVehicleNotFound_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.DeleteAsync_WhenAssetExists_ShouldDeleteAndReturnTrue" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="4f4a9432-580f-50c0-4d55-79a8b9699def">
+      <Execution id="81d4bfcc-1683-46fa-9ba8-5a0382c3cee6" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="DeleteAsync_WhenAssetExists_ShouldDeleteAndReturnTrue" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithNullQuery_ShouldReturnAllAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="ffc1cc8f-2b4d-f450-c3a6-a2b7509a95fb">
+      <Execution id="4ec72d2e-c091-4215-a981-339d6f342598" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithNullQuery_ShouldReturnAllAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="ba22531b-e808-4f29-290a-03eaaed3cb1e">
+      <Execution id="aac84fd2-07d8-4c02-b12e-a06e42579aef" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="f9a53155-5872-c0bf-db68-209d756a7939">
+      <Execution id="d23448b5-4a81-4611-84db-6ab8ad7d67ca" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="UpdateAsync_WhenSaveChangesFails_ShouldReturnFalse" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="4039c936-b2b0-b86b-45b5-fd9281a4e305">
+      <Execution id="94acc94a-09e2-4a9d-91d3-91e494476e65" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithNoSortBy_ShouldSortByCreatedAtDescending" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSearchTerm_ApartmentId_ShouldReturnMatchingVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="2d2f25e7-f720-1c73-4398-d20510497121">
+      <Execution id="830cc39f-4504-4716-8135-7f9ba7f7f743" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithSearchTerm_ApartmentId_ShouldReturnMatchingVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.MessageRepositoryTests.AddMessageAsync_KhiMessageHopLe_NenThemVaCapNhatInteraction" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="de73053c-e28c-9cf8-0aeb-566f9b88f360">
+      <Execution id="b07e0fd1-7bf9-46af-8bf3-6902b2aa9a3b" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.MessageRepositoryTests" name="AddMessageAsync_KhiMessageHopLe_NenThemVaCapNhatInteraction" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitorServiceTests.CreateVisitAsync_KhiCheckInTuongLai_NenSetStatusPending" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="99f7114f-f099-c11f-e6c6-b99479bebb6b">
+      <Execution id="6889044d-0d2b-43f2-a339-fbb645c3eb80" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitorServiceTests" name="CreateVisitAsync_KhiCheckInTuongLai_NenSetStatusPending" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.ProposalRepositoryTests.GetResidentProposalsAsync_KhiResidentIdTonTai_NenTraVeDanhSachProposal" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="1e3254d3-d7be-138d-5284-b29f981e6d3b">
+      <Execution id="4d7d12b4-7b56-407f-9dbb-bd9fafd82575" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.ProposalRepositoryTests" name="GetResidentProposalsAsync_KhiResidentIdTonTai_NenTraVeDanhSachProposal" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.GetResidentAccountsAsync_KhiGoi_NenTraVeDanhSachResident" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="a596a705-2c09-c671-491a-1aa3004e7fb5">
+      <Execution id="b0b6be0d-6df5-4713-bb68-3395560443dd" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="GetResidentAccountsAsync_KhiGoi_NenTraVeDanhSachResident" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.SearchPotentialPartnersAsync_KhiLaResident_NenTraVeStaff" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="7e0cd22e-99e3-635a-9d96-1163b3dbbdc9">
+      <Execution id="f5c1ded4-610c-4cd4-a804-7b8afd5c7a0e" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="SearchPotentialPartnersAsync_KhiLaResident_NenTraVeStaff" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.MessageRepositoryTests.GetUnreadCountForInteractionAsync_KhiGoi_NenTraVeSoLuongChuaDoc" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="21cdc907-8860-bcc1-3525-833b57f14188">
+      <Execution id="9df61552-2d6f-4fb5-9768-b68bfb5d0a86" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.MessageRepositoryTests" name="GetUnreadCountForInteractionAsync_KhiGoi_NenTraVeSoLuongChuaDoc" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.UpdateStaffAssignmentAsync_KhiStaffTonTai_NenCapNhatAssignment" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="45dc0510-45c7-0f82-e9a5-2b3e8c2b6a75">
+      <Execution id="20576299-7729-4a49-9f6c-8fe620538e70" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="UpdateStaffAssignmentAsync_KhiStaffTonTai_NenCapNhatAssignment" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.DeleteAsync_WhenVehicleExists_ShouldDeleteAndReturnTrue" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0c0e3132-92a1-6f03-925c-35ea497d935e">
+      <Execution id="d8983522-89d1-45ae-9e72-e7ca11b6bee9" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="DeleteAsync_WhenVehicleExists_ShouldDeleteAndReturnTrue" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetByIdAsync_WhenAssetExists_ShouldReturnAssetDto" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="da870282-613e-d781-3428-a9ab276047f4">
+      <Execution id="19c3a086-5171-4eb2-8c34-7479fd3c2208" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetByIdAsync_WhenAssetExists_ShouldReturnAssetDto" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithSortByQuantity_Ascending_ShouldReturnSortedAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0389a713-5d92-9c60-198f-d1b5279ca2f3">
+      <Execution id="38a328a0-240b-432b-a783-c4f1dda79518" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithSortByQuantity_Ascending_ShouldReturnSortedAssets" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="fbcbf036-afaf-1e6a-23ff-2e86e00e2c2c">
+      <Execution id="0ce6e8be-8289-46ba-bd5a-ad45f197ac66" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WhenRepositoryReturnsNull_ShouldReturnEmptyList" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.UserManagementServiceTests.GetStaffAccountsAsync_KhiGoi_NenTraVeDanhSachStaff" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="690eee46-5bb0-2017-8434-f8bfad3c8eb4">
+      <Execution id="b9d000dd-5b38-48d4-bfed-b34da749fe03" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.UserManagementServiceTests" name="GetStaffAccountsAsync_KhiGoi_NenTraVeDanhSachStaff" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetExists_ShouldUpdateAndReturnTrue" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="a8237466-6f07-fd63-96fc-399dcff6fd24">
+      <Execution id="f26fde0f-1751-43ae-8eff-fd4c8775a6a6" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="UpdateAsync_WhenAssetExists_ShouldUpdateAndReturnTrue" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="633347c3-9dc4-6161-2f9b-94196326037b">
+      <Execution id="fa4966c1-7d96-4885-89a9-1995ec217cca" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.CreateAsync_WithValidDto_ShouldCreateAsset" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="f8acbb5f-d745-6ba2-3a63-97b5a9edcf98">
+      <Execution id="182192ac-a68d-4bfc-9203-56711121d78c" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="CreateAsync_WithValidDto_ShouldCreateAsset" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.VisitLogRepositoryTests.GetStaffViewLogsQuery_KhiGoi_NenTraVeQueryVoiIncludes" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="17de93e8-22b4-7da6-b4cd-4e81bdf62818">
+      <Execution id="ca0ab7bd-028a-46a8-99cd-c0f02c8fd3e7" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.VisitLogRepositoryTests" name="GetStaffViewLogsQuery_KhiGoi_NenTraVeQueryVoiIncludes" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ProposalServiceTests.GetProposalDetailAsync_KhiUserLaOwner_NenTraVeChiTiet" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="693c0e12-dd23-289c-9d1a-9a3390e477c5">
+      <Execution id="9f3ab780-b100-414d-be70-5db8bad4f6f2" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ProposalServiceTests" name="GetProposalDetailAsync_KhiUserLaOwner_NenTraVeChiTiet" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.UpdateAsync_WhenVehicleExists_ShouldUpdateUpdatedAt" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="43e0e8e9-6ba6-e05a-d59e-c20c5a40777e">
+      <Execution id="7237b111-68f8-4259-b8f8-5c72845a5d42" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="UpdateAsync_WhenVehicleExists_ShouldUpdateUpdatedAt" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.VisitLogServiceTests.CheckInAsync_KhiStatusPending_NenCapNhatThanhCheckedIn" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="2ad1b383-3fa3-733f-16ce-aacd035893fb">
+      <Execution id="0880476e-e12a-45bb-ac0b-5e92e6d9efe3" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.VisitLogServiceTests" name="CheckInAsync_KhiStatusPending_NenCapNhatThanhCheckedIn" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetQuotationsQueryable_KhiGoi_NenTraVeQueryable" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="6e89261e-8129-cc5d-6a50-bf1ef3ddec7c">
+      <Execution id="01b3dd07-53f4-4163-9be3-d81a21e57dfe" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests" name="GetQuotationsQueryable_KhiGoi_NenTraVeQueryable" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_WithDuplicateVehicleNumber_ShouldThrowException" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="35119fbf-8466-bd08-a442-d805dc9918fa">
+      <Execution id="a989b38d-84f2-4967-b6ce-738ba38d9f13" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="CreateAsync_WithDuplicateVehicleNumber_ShouldThrowException" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ProposalServiceTests.GetProposalsByResidentAsync_KhiGoi_NenTraVeDanhSach" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="737fddb8-8f79-cfc6-8636-3ed8d5812bd0">
+      <Execution id="ef82ff2f-2555-400e-81b5-9bcaa38d94f4" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ProposalServiceTests" name="GetProposalsByResidentAsync_KhiGoi_NenTraVeDanhSach" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetByIdAsync_WhenAssetNotFound_ShouldReturnNull" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="7bedae29-8133-d91c-62c4-4d8b50302804">
+      <Execution id="a2821988-cb77-420c-aa6c-b098428d5842" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetByIdAsync_WhenAssetNotFound_ShouldReturnNull" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="e08dbe78-d415-605e-bcbc-7cd78acd4499">
+      <Execution id="71bce6d7-2e06-4600-8e93-5573c03d9c7c" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests" name="GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSortByVehicleNumber_Ascending_ShouldReturnSortedVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="24879c2b-0bf9-2f01-3597-a11e2989f376">
+      <Execution id="17f424bd-499b-4d87-95d1-a0e9095645b5" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithSortByVehicleNumber_Ascending_ShouldReturnSortedVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="f44431fb-5b17-ee96-7ed8-a2fafd85620f">
+      <Execution id="b0c2e8f9-3784-4d08-bbb4-2640674f08ab" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Repositories.PriceQuotationRepositoryTests" name="GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.CreateAsync_WithValidDto_ShouldCreateVehicle" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="c33989d6-500a-c0b6-0057-da1ebf6e21a8">
+      <Execution id="88a3b6a9-008f-41ed-b09a-4a1222c56475" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="CreateAsync_WithValidDto_ShouldCreateVehicle" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestVehicle.VehicleServiceTests.GetAllAsync_WithSortByVehicleNumber_Descending_ShouldReturnSortedVehicles" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="828ef680-936f-cda8-5b9e-824b89eb4bb8">
+      <Execution id="bfb0565a-993c-47dd-8d2b-fe26faaef8b2" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestVehicle.VehicleServiceTests" name="GetAllAsync_WithSortByVehicleNumber_Descending_ShouldReturnSortedVehicles" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.UpdateAsync_WhenAssetExists_ShouldUpdateUpdatedAt" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="47717fdc-378e-e103-ea9c-b5e0672bed9c">
+      <Execution id="226415d2-239d-4459-9570-1abae1dc0eda" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="UpdateAsync_WhenAssetExists_ShouldUpdateUpdatedAt" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.Services.ChatServiceTests.GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="bd2235db-c0db-294c-bbae-61d2ccca741f">
+      <Execution id="b48a20d1-0b11-4a29-bb17-71b13ec52126" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.Services.ChatServiceTests" name="GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead" />
+    </UnitTest>
+    <UnitTest name="ServiceUnitTest.TestAsset.AssetServiceTests.GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedAssets" storage="d:\k17_ktpm\git_repo\team_repo\aparta-backend-api\serviceunittest\bin\debug\net8.0\serviceunittest.dll" id="0ee5cfe1-27c2-2bdd-baea-7434f0357835">
+      <Execution id="45945c03-74c5-4aaf-b6d2-2038b54469f7" />
+      <TestMethod codeBase="D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\bin\Debug\net8.0\ServiceUnitTest.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="ServiceUnitTest.TestAsset.AssetServiceTests" name="GetAllAsync_WithCombinedFilters_ShouldReturnFilteredAndSortedAssets" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="982ab276-0e37-116d-36cf-e86d702be447" executionId="319fe7d5-b596-43a3-9876-5ca2f7573e05" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d9ac2201-89bd-4b5e-ebd1-4cb57fb79fa8" executionId="78b134c1-a86a-43e4-a891-6097fefa1404" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4039c936-b2b0-b86b-45b5-fd9281a4e305" executionId="94acc94a-09e2-4a9d-91d3-91e494476e65" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd447c2c-874e-e154-d781-68b4b1f9d7d9" executionId="bc575a54-3466-4b8a-a25b-44f5daaec3f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="21cdc907-8860-bcc1-3525-833b57f14188" executionId="9df61552-2d6f-4fb5-9768-b68bfb5d0a86" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="45dc0510-45c7-0f82-e9a5-2b3e8c2b6a75" executionId="20576299-7729-4a49-9f6c-8fe620538e70" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f44431fb-5b17-ee96-7ed8-a2fafd85620f" executionId="b0c2e8f9-3784-4d08-bbb4-2640674f08ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="66da7052-acd2-95c3-8103-1777b06650b3" executionId="baee1864-d18f-4156-be60-20ecf5366d01" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="82546d9e-1536-3fe3-2613-5f48b519c06b" executionId="84340f44-3994-4cb7-ae33-9ac6a0e4cdab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="da870282-613e-d781-3428-a9ab276047f4" executionId="19c3a086-5171-4eb2-8c34-7479fd3c2208" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a596a705-2c09-c671-491a-1aa3004e7fb5" executionId="b0b6be0d-6df5-4713-bb68-3395560443dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8302768d-b368-ab33-03e7-a3f621506771" executionId="e207393e-b2c7-4c1d-8d08-78147fe27fa9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2d2f25e7-f720-1c73-4398-d20510497121" executionId="830cc39f-4504-4716-8135-7f9ba7f7f743" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7703cc6-772a-7efe-2362-8131da471502" executionId="b7948f99-92a5-4a20-a8bf-49c192ded1fc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4de74439-69c3-3bb4-25e5-a067c379881b" executionId="6675c9b5-8173-44c3-a4f9-d5441fe0a6d9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e5eabe51-0797-622d-457e-603958d0e266" executionId="75481959-a2d1-4555-b65f-f6c32ea88199" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f8d24f85-f662-71c0-33fe-3ae31a753dec" executionId="18b9c9ff-c158-4e9c-acb6-11022f096d89" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08d305fb-58bd-dc09-c915-c28ca17deab3" executionId="32f3bf0d-950f-4e6c-8840-b12ac1e5066c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2cd8b322-1838-bcb1-72c9-dcce59774f81" executionId="c3442511-eed9-4ee0-9eae-c937a5d36126" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8b0768ee-f92c-1597-dc16-e9e9b3a9780c" executionId="dd8c73d0-5b0c-4a63-a2e5-d3ae8eea9856" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="54bf5aff-8ed2-b789-a163-4d3516dc03f3" executionId="b30f16f3-ad09-4d48-8fbb-99717c2dba98" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5da4d1e3-fb19-664f-2de3-214ea4028a46" executionId="fe8a6de8-6fba-4547-9476-cdf19ef52eb4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7e0cd22e-99e3-635a-9d96-1163b3dbbdc9" executionId="f5c1ded4-610c-4cd4-a804-7b8afd5c7a0e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0c0e3132-92a1-6f03-925c-35ea497d935e" executionId="d8983522-89d1-45ae-9e72-e7ca11b6bee9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="785cc6f3-cb4e-88c9-0ab5-82497f6469e3" executionId="a45d5b75-2e2b-48c1-a2f1-9ec618f61005" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="072847d6-3f2a-27a5-2155-061911f38c04" executionId="1b70984c-6861-4b4c-a297-4d616cf97f94" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="65caf143-6045-4f93-1352-84bf06cb1c6c" executionId="cb32b638-c409-40dd-b7fa-0986b8af9ef9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="938b8379-f5ce-a109-e6da-f9811e1cdef0" executionId="d5519df4-8296-48c7-b4d1-c83e546401fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d87af088-a468-8b81-2ad3-1f045d0f6530" executionId="f7dfe7d5-9e96-4035-a952-a9cdabf8fdf4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24879c2b-0bf9-2f01-3597-a11e2989f376" executionId="17f424bd-499b-4d87-95d1-a0e9095645b5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17054e1d-b925-6aa1-e9e8-b2c350d7d955" executionId="5e61eff0-2a93-4283-a639-4178df07bb5a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6e89261e-8129-cc5d-6a50-bf1ef3ddec7c" executionId="01b3dd07-53f4-4163-9be3-d81a21e57dfe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="633347c3-9dc4-6161-2f9b-94196326037b" executionId="fa4966c1-7d96-4885-89a9-1995ec217cca" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="27416949-758f-1c46-9f40-ca30ceee51c0" executionId="cafc083f-81ff-4a3d-93f1-13c8d7e71808" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="606e350c-500a-bec5-2bb6-5ec6bf75fb0a" executionId="6af4cf41-5cd2-4607-830f-1d888334e696" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ba22531b-e808-4f29-290a-03eaaed3cb1e" executionId="aac84fd2-07d8-4c02-b12e-a06e42579aef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="76b2a201-13ea-e704-56dc-65b72af68dad" executionId="1a1203e8-2e96-40b9-8f4d-9686738b6676" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46634805-6294-e98f-e437-f89a4939bcb6" executionId="d92c35ac-d971-4f26-b366-345f778c94f9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2fd907ea-09be-2e75-f7f0-6e1643a0f3ad" executionId="c862687d-03a3-4279-aee9-b39d7edc99a8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08903901-081e-4aee-a83a-a1681061ed19" executionId="6ad31f29-b505-4fb4-b262-d265d868d3a9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8bd405ab-80aa-497d-244c-cce12385a01f" executionId="3daf9533-03d2-4394-923e-4795a7e0584a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="53ac88c5-172e-9619-25b7-03988178fb6a" executionId="9fb15d69-b6fd-4330-9b59-8186219cc3c7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="31d982e3-1c92-bd7a-3a91-2ad4d0e36b03" executionId="8de295e8-7c57-4286-b347-4493ad733276" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd2235db-c0db-294c-bbae-61d2ccca741f" executionId="b48a20d1-0b11-4a29-bb17-71b13ec52126" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="899c7332-4cad-7d4c-129a-77ce0d580ecf" executionId="fc71dcb5-8e93-4497-9cb7-d5b5c2bf995a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f9a53155-5872-c0bf-db68-209d756a7939" executionId="d23448b5-4a81-4611-84db-6ab8ad7d67ca" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0a411339-16d1-8d54-b087-c1ec9094d0e7" executionId="4c813adf-6030-4a32-8b93-590ed0a2a47a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="47717fdc-378e-e103-ea9c-b5e0672bed9c" executionId="226415d2-239d-4459-9570-1abae1dc0eda" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="17de93e8-22b4-7da6-b4cd-4e81bdf62818" executionId="ca0ab7bd-028a-46a8-99cd-c0f02c8fd3e7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bfb37e57-bf81-8cb9-c5bb-a2d33d19a539" executionId="7f285c0d-9ddc-4fbb-b52a-a63a19f4858b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ac0685fb-6cbe-a8b2-576a-f893283cc375" executionId="547b986b-101b-41d2-9ccd-ce4185b557ec" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="42bcaf26-66c5-c773-531b-93730cdb4585" executionId="76f6d812-3088-45c9-b4ce-de4af4b2be97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c894807d-700d-0069-56c9-8bf5b738462e" executionId="f4277d8b-727d-4e88-aeeb-5b3dc1bdbe22" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fbcbf036-afaf-1e6a-23ff-2e86e00e2c2c" executionId="0ce6e8be-8289-46ba-bd5a-ad45f197ac66" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4f4a9432-580f-50c0-4d55-79a8b9699def" executionId="81d4bfcc-1683-46fa-9ba8-5a0382c3cee6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc4baa34-206b-564e-8b71-3dc6d66b5332" executionId="7faa3ee3-7b27-4d49-a924-f2dd41dd63ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c339059c-7eca-3d7d-2953-bc1dc8249cf6" executionId="595e3803-f608-4938-9526-5c1333b1301d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e298a3fe-58fb-6a3a-753b-a81a74204e34" executionId="3b448acf-87b3-41ac-952e-b9c87a42d20f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="de73053c-e28c-9cf8-0aeb-566f9b88f360" executionId="b07e0fd1-7bf9-46af-8bf3-6902b2aa9a3b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="525103e1-1565-6986-20da-151232c788eb" executionId="1f598c56-d051-4384-82d2-fd047ee535de" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="828ef680-936f-cda8-5b9e-824b89eb4bb8" executionId="bfb0565a-993c-47dd-8d2b-fe26faaef8b2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="693c0e12-dd23-289c-9d1a-9a3390e477c5" executionId="9f3ab780-b100-414d-be70-5db8bad4f6f2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c330c24-b8a5-d704-93ae-65f327fde930" executionId="0c887f03-59bd-4eba-81ba-d386b8a0a916" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c33989d6-500a-c0b6-0057-da1ebf6e21a8" executionId="88a3b6a9-008f-41ed-b09a-4a1222c56475" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="98c4f1ac-88ae-f049-40df-f37dad0fc4f9" executionId="6711eec7-37f8-4d9f-89d4-2202e4c04b49" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0389a713-5d92-9c60-198f-d1b5279ca2f3" executionId="38a328a0-240b-432b-a783-c4f1dda79518" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6f81a2f5-f182-cf4c-03a9-1b537caa53a3" executionId="dbc9403d-1bb8-4a9c-8ad1-ba9d9959aba1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fc824589-f86f-30d9-44b3-01b69a2cf960" executionId="acd47990-0ddc-42fc-a025-0830915a0184" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="01d67411-1a81-aa6d-ffd0-a0f57b383a5d" executionId="a64f8fa9-f264-4c6a-a696-fcfbb1278a62" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d7bc34c8-3a15-85f7-e780-5f2e5ffe7cec" executionId="4f3039c9-261e-401d-8fe3-aeae902b911f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ee5cfe1-27c2-2bdd-baea-7434f0357835" executionId="45945c03-74c5-4aaf-b6d2-2038b54469f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eacb5974-faae-2d81-9116-ad2db1f71cf0" executionId="a8fd4adf-6ea0-4020-ae74-33d08900ad08" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43e0e8e9-6ba6-e05a-d59e-c20c5a40777e" executionId="7237b111-68f8-4259-b8f8-5c72845a5d42" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="737fddb8-8f79-cfc6-8636-3ed8d5812bd0" executionId="ef82ff2f-2555-400e-81b5-9bcaa38d94f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2fc4a7d0-c1e8-e7e4-9526-83a588dffa18" executionId="dc5ada5e-4fe5-4a03-9e75-ced41193706b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e08dbe78-d415-605e-bcbc-7cd78acd4499" executionId="71bce6d7-2e06-4600-8e93-5573c03d9c7c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ffc1cc8f-2b4d-f450-c3a6-a2b7509a95fb" executionId="4ec72d2e-c091-4215-a981-339d6f342598" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0964f890-4273-8f6b-0908-6f11902c3ae8" executionId="06e1edce-92c6-4bfe-9ce8-90372611f1ee" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b9e2e70c-65f5-8502-5796-f8a87fac9fe2" executionId="66dea15f-c28a-4c84-94ba-25e4893a4477" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a8237466-6f07-fd63-96fc-399dcff6fd24" executionId="f26fde0f-1751-43ae-8eff-fd4c8775a6a6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="33903387-4a17-8f06-d9b2-aa69aab48ab5" executionId="ce361909-18a7-4539-aa96-fdc6c53be65d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e00880e5-4a59-a258-b187-79b95cf19a84" executionId="eaf292ed-6210-4978-b336-5d8cf62af70a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7bedae29-8133-d91c-62c4-4d8b50302804" executionId="a2821988-cb77-420c-aa6c-b098428d5842" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="690eee46-5bb0-2017-8434-f8bfad3c8eb4" executionId="b9d000dd-5b38-48d4-bfed-b34da749fe03" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6034d841-d46e-8426-eef5-f1caf730f81d" executionId="212c308b-af4f-484c-b07e-89748da8c4af" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="35119fbf-8466-bd08-a442-d805dc9918fa" executionId="a989b38d-84f2-4967-b6ce-738ba38d9f13" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e583f6af-2510-31bd-3647-03513ba1bba5" executionId="8e3078b5-9b6a-4a1f-9a42-dbe613143336" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f39a078b-b5cb-8596-274a-9522ff1e951d" executionId="553b5f3f-d2b3-418a-ab9f-f62eb939b3b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2ad1b383-3fa3-733f-16ce-aacd035893fb" executionId="0880476e-e12a-45bb-ac0b-5e92e6d9efe3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="818acf3c-9a31-0f6f-6b2d-676bcbb6f648" executionId="ff935816-19f5-4033-97c8-c48c1ec809c0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e3254d3-d7be-138d-5284-b29f981e6d3b" executionId="4d7d12b4-7b56-407f-9dbb-bd9fafd82575" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="18ea6aaa-8759-1127-338b-c07fffca5745" executionId="e78fa92f-4473-4e25-aa8a-ab9675935a90" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6fb57b80-8976-077d-22ab-aab3f921c039" executionId="cc2490bc-6719-4e7f-9b25-a3c9007b4abe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f8ad43d-e87a-9b86-c2b0-3d64246500ad" executionId="f7ec7cc8-6c1d-42ec-ab92-e10b17a5300e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f8acbb5f-d745-6ba2-3a63-97b5a9edcf98" executionId="182192ac-a68d-4bfc-9203-56711121d78c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a6d84dd5-241f-d59d-c5a4-e108491d4fba" executionId="23105ace-5666-4070-a4c3-a5510e9ff504" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e529748a-bb58-6278-13e1-dc90e4c03e41" executionId="1f99b6b0-f476-4461-970c-3563d1fa9d35" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e138f28c-54c2-8099-fb61-170bde14e566" executionId="fd7ba2d7-7b93-497d-b7d0-5adc47eb389a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="99f7114f-f099-c11f-e6c6-b99479bebb6b" executionId="6889044d-0d2b-43f2-a339-fbb645c3eb80" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="99" executed="99" passed="87" failed="12" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 8.0.18)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: ServiceUnitTest&#xD;
+[xUnit.net 00:00:00.20]   Discovered:  ServiceUnitTest&#xD;
+[xUnit.net 00:00:00.20]   Starting:    ServiceUnitTest&#xD;
+     Warning:&#xD;
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and&#xD;
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for&#xD;
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.&#xD;
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.&#xD;
+     A paid commercial license supports the development and continued increasing support of&#xD;
+     Fluent Assertions users under both commercial and community licenses. Help us&#xD;
+     keep Fluent Assertions at the forefront of unit testing.&#xD;
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/&#xD;
+[xUnit.net 00:00:00.46]       Expected result.Message not to be &lt;null&gt;.&#xD;
+[xUnit.net 00:00:00.46]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.LateBoundTestFramework.Throw(String message)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.AssertionScope.AddPreFormattedFailure(String formattedFailureMessage)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Execution.AssertionChain.FailWith(String message)&#xD;
+[xUnit.net 00:00:00.46]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)&#xD;
+[xUnit.net 00:00:00.46]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs(141,0): at ServiceUnitTest.Services.ChatServiceTests.SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan()&#xD;
+[xUnit.net 00:00:00.46]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.49]       System.InvalidCastException : Unable to cast object of type 'ServiceUnitTest.Helpers.TestAsyncEnumerable`1[ApartaAPI.Models.VisitLog]' to type 'System.Linq.IQueryable`1[ApartaAPI.DTOs.VisitLogs.VisitLogStaffViewDto]'.&#xD;
+[xUnit.net 00:00:00.49]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.49]            at AutoMapper.QueryableExtensions.Extensions.ToCore[TResult](IQueryable source, IConfigurationProvider configuration, Object parameters, IEnumerable`1 memberPathsToExpand)&#xD;
+[xUnit.net 00:00:00.49]            at AutoMapper.QueryableExtensions.Extensions.ProjectTo[TDestination](IQueryable source, IConfigurationProvider configuration, Object parameters, Expression`1[] membersToExpand)&#xD;
+[xUnit.net 00:00:00.49]            at AutoMapper.QueryableExtensions.Extensions.ProjectTo[TDestination](IQueryable source, IConfigurationProvider configuration, Expression`1[] membersToExpand)&#xD;
+[xUnit.net 00:00:00.49]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\VisitLogService.cs(62,0): at ApartaAPI.Services.VisitLogService.GetStaffViewLogsAsync(VisitorQueryParameters queryParams)&#xD;
+[xUnit.net 00:00:00.49]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\VisitLogServiceTests.cs(51,0): at ServiceUnitTest.Services.VisitLogServiceTests.GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList()&#xD;
+[xUnit.net 00:00:00.49]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.80]       System.ArgumentNullException : Value cannot be null. (Parameter 'source')&#xD;
+[xUnit.net 00:00:00.81]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.81]            at System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)&#xD;
+[xUnit.net 00:00:00.81]            at System.Linq.Enumerable.Select[TSource,TResult](IEnumerable`1 source, Func`2 selector)&#xD;
+[xUnit.net 00:00:00.81]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\UserManagementService.cs(86,0): at ApartaAPI.Services.UserManagementService.GetAccountsByRoleInternalAsync(UserQueryParams queryParams, List`1 roles)&#xD;
+[xUnit.net 00:00:00.81]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\UserManagementService.cs(159,0): at ApartaAPI.Services.UserManagementService.CreateStaffAccountAsync(StaffCreateDto createDto)&#xD;
+[xUnit.net 00:00:00.81]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\UserManagementServiceTests.cs(110,0): at ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiHopLe_NenTaoStaff()&#xD;
+[xUnit.net 00:00:00.81]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.19]       System.InvalidOperationException : Unable to track an entity of type 'Role' because its primary key property 'RoleId' is null.&#xD;
+[xUnit.net 00:00:01.19]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.NullableKeyIdentityMap`1.Add(InternalEntityEntry entry)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.StartTracking(InternalEntityEntry entry)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityState(EntityState oldState, EntityState newState, Boolean acceptChanges, Boolean modifyProperties)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.InternalEntityEntry.SetEntityStateAsync(EntityState entityState, Boolean acceptChanges, Boolean modifyProperties, Nullable`1 forceStateWhenUnknownKey, Nullable`1 fallbackState, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.PaintActionAsync(EntityEntryGraphNode`1 node, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityEntryGraphIterator.TraverseGraphAsync[TState](EntityEntryGraphNode`1 node, Func`3 handleNode, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityEntryGraphIterator.TraverseGraphAsync[TState](EntityEntryGraphNode`1 node, Func`3 handleNode, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.EntityGraphAttacher.AttachGraphAsync(InternalEntityEntry rootEntry, EntityState targetState, EntityState storeGeneratedWithKeySetTargetState, Boolean forceStateWhenUnknownKey, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.19]            at Microsoft.EntityFrameworkCore.Internal.InternalDbSet`1.AddRangeAsync(TEntity[] entities)&#xD;
+[xUnit.net 00:00:01.19]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs(71,0): at ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi()&#xD;
+[xUnit.net 00:00:01.19]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.21]       Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs(56,0): at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach()&#xD;
+[xUnit.net 00:00:01.21]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.21]       Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs(76,0): at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet()&#xD;
+[xUnit.net 00:00:01.21]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.21]       Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'CalculationMethod'}' are missing for the instance of entity type 'PriceQuotation'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.&#xD;
+[xUnit.net 00:00:01.21]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.21]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Repositories\PriceQuotationRepositoryTests.cs(35,0): at ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding()&#xD;
+[xUnit.net 00:00:01.21]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.27]       System.UnauthorizedAccessException : Không có quyền truy cập vào cuộc hội thoại này.&#xD;
+[xUnit.net 00:00:01.27]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.27]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs(142,0): at ApartaAPI.Services.ChatService.GetMessageHistoryAsync(String interactionId, String currentUserId, Int32 pageNumber, Int32 pageSize)&#xD;
+[xUnit.net 00:00:01.27]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs(119,0): at ServiceUnitTest.Services.ChatServiceTests.GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead()&#xD;
+[xUnit.net 00:00:01.27]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.28]       System.NullReferenceException : Object reference not set to an instance of an object.&#xD;
+[xUnit.net 00:00:01.28]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.28]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs(114,0): at ApartaAPI.Services.ChatService.GetInteractionListAsync(String currentUserId)&#xD;
+[xUnit.net 00:00:01.28]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs(98,0): at ServiceUnitTest.Services.ChatServiceTests.GetInteractionListAsync_KhiGoi_NenTraVeDanhSach()&#xD;
+[xUnit.net 00:00:01.28]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.28]       System.NullReferenceException : Object reference not set to an instance of an object.&#xD;
+[xUnit.net 00:00:01.28]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.28]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ApartaAPI\Services\ChatService.cs(42,0): at ApartaAPI.Services.ChatService.CreateAdHocInteractionAsync(String currentUserId, String partnerId)&#xD;
+[xUnit.net 00:00:01.28]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ChatServiceTests.cs(53,0): at ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting()&#xD;
+[xUnit.net 00:00:01.28]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.28]       Microsoft.EntityFrameworkCore.DbUpdateException : Required properties '{'Name', 'PasswordHash'}' are missing for the instance of entity type 'User'. Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the entity key value.&#xD;
+[xUnit.net 00:00:01.28]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.ThrowNullabilityErrorException(IUpdateEntry entry, IList`1 nullabilityErrors)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryTable`1.Create(IUpdateEntry entry, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryStore.ExecuteTransaction(IList`1 entries, IDiagnosticsLogger`1 updateLogger)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.InMemory.Storage.Internal.InMemoryDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.28]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:00:01.28]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\UserManagementServiceTests.cs(150,0): at ServiceUnitTest.Services.UserManagementServiceTests.ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus()&#xD;
+[xUnit.net 00:00:01.28]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.31]       Expected result.Data.Items to contain 1 item(s), but found &lt;null&gt;.&#xD;
+[xUnit.net 00:00:01.31]       Stack Trace:&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.LateBoundTestFramework.Throw(String message)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.AssertionScope.AddPreFormattedFailure(String formattedFailureMessage)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.AssertionChain.FailWith(Func`1 getFailureReason)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Execution.AssertionChain.FailWith(String message, Object[] args)&#xD;
+[xUnit.net 00:00:01.31]            at FluentAssertions.Collections.GenericCollectionAssertions`3.HaveCount(Int32 expected, String because, Object[] becauseArgs)&#xD;
+[xUnit.net 00:00:01.31]         D:\K17_KTPM\Git_Repo\Team_Repo\aparta-backend-api\ServiceUnitTest\Services\ProposalServiceTests.cs(123,0): at ServiceUnitTest.Services.ProposalServiceTests.GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList()&#xD;
+[xUnit.net 00:00:01.31]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:01.43]   Finished:    ServiceUnitTest&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:48.5790260+07:00">
+        <Text>[xUnit.net 00:00:00.46]     ServiceUnitTest.Services.ChatServiceTests.SendMessageAsync_KhiThongTinHopLe_NenGuiTinNhan [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:48.6097482+07:00">
+        <Text>[xUnit.net 00:00:00.49]     ServiceUnitTest.Services.VisitLogServiceTests.GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:48.9249650+07:00">
+        <Text>[xUnit.net 00:00:00.80]     ServiceUnitTest.Services.UserManagementServiceTests.CreateStaffAccountAsync_KhiHopLe_NenTaoStaff [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3064092+07:00">
+        <Text>[xUnit.net 00:00:01.19]     ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiChuaTonTai_NenTaoMoi [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3402943+07:00">
+        <Text>[xUnit.net 00:00:01.21]     ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByBuildingIdWithBuildingAsync_KhiBuildingIdTonTai_NenTraVeDanhSach [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3408570+07:00">
+        <Text>[xUnit.net 00:00:01.21]     ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetByIdWithBuildingAsync_KhiIdTonTai_NenTraVeChiTiet [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3411383+07:00">
+        <Text>[xUnit.net 00:00:01.21]     ServiceUnitTest.Repositories.PriceQuotationRepositoryTests.GetAllWithBuildingAsync_KhiGoi_NenTraVeDanhSachVoiBuilding [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3886441+07:00">
+        <Text>[xUnit.net 00:00:01.27]     ServiceUnitTest.Services.ChatServiceTests.GetMessageHistoryAsync_KhiGoi_NenTraVeTinNhanVaMarkRead [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.3960952+07:00">
+        <Text>[xUnit.net 00:00:01.28]     ServiceUnitTest.Services.ChatServiceTests.GetInteractionListAsync_KhiGoi_NenTraVeDanhSach [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.4026646+07:00">
+        <Text>[xUnit.net 00:00:01.28]     ServiceUnitTest.Services.ChatServiceTests.CreateAdHocInteractionAsync_KhiInteractionTonTai_NenTraVeExisting [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.4030229+07:00">
+        <Text>[xUnit.net 00:00:01.28]     ServiceUnitTest.Services.UserManagementServiceTests.ToggleUserStatusAsync_KhiIdTonTai_NenCapNhatStatus [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="TAMJEE" outcome="Error" timestamp="2025-11-30T02:27:49.4309935+07:00">
+        <Text>[xUnit.net 00:00:01.31]     ServiceUnitTest.Services.ProposalServiceTests.GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

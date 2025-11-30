@@ -1,4 +1,4 @@
-namespace ApartaAPI.Helpers
+namespace ApartaAPI.Utils.Helper
 {
     public class MailSettings
     {
@@ -9,4 +9,5 @@ namespace ApartaAPI.Helpers
         public int Port { get; set; } = 587;
     }
 }
+
 

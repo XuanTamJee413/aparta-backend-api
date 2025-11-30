@@ -3,9 +3,8 @@ using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.Assets;
-using ApartaAPI.DTOs.Common; 
-using System.Linq.Expressions; 
-
+using ApartaAPI.DTOs.Common;
+using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
 {
@@ -74,12 +73,78 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<AssetDto>>.Success(new List<AssetDto>(), "SM01"); 
+                return ApiResponse<IEnumerable<AssetDto>>
+                    .Success(new List<AssetDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<AssetDto>>.Success(dtos);
         }
 
+        public async Task<ApiResponse<IEnumerable<AssetDto>>> GetByUserBuildingsAsync(string userId, AssetQueryParameters query)
+        {
+            if (query == null)
+            {
+                query = new AssetQueryParameters(null, null, null, null);
+            }
+
+            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim().ToLowerInvariant();
+
+            var buildingIdFilter = string.IsNullOrWhiteSpace(query.BuildingId)
+                ? null
+                : query.BuildingId.Trim();
+
+            Expression<Func<Asset, bool>> predicate = a =>
+                a.Building.StaffBuildingAssignments.Any(sba =>
+                    sba.UserId == userId &&
+                    sba.IsActive
+                 && (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= DateOnly.FromDateTime(DateTime.UtcNow))
+                )
+                && (buildingIdFilter == null || a.BuildingId == buildingIdFilter)
+                && (searchTerm == null ||
+                    (a.Info != null && a.Info.ToLower().Contains(searchTerm))
+                );
+
+            var entities = await _repository.FindAsync(predicate);
+
+            if (entities == null)
+            {
+                entities = new List<Asset>();
+            }
+
+            var validEntities = entities.Where(e => e != null).ToList();
+
+            IOrderedEnumerable<Asset> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "info":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(a => a.Info ?? string.Empty)
+                        : validEntities.OrderBy(a => a.Info ?? string.Empty);
+                    break;
+                case "quantity":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(a => a.Quantity)
+                        : validEntities.OrderBy(a => a.Quantity);
+                    break;
+                default:
+                    sortedEntities = validEntities.OrderByDescending(a => a.CreatedAt);
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<AssetDto>>(sortedEntities);
+
+            if (!dtos.Any())
+            {
+                return ApiResponse<IEnumerable<AssetDto>>
+                    .Success(new List<AssetDto>(), ApiResponse.SM01_NO_RESULTS);
+            }
+
+            return ApiResponse<IEnumerable<AssetDto>>.Success(dtos);
+        }
 
         public async Task<AssetDto?> GetByIdAsync(string id)
         {

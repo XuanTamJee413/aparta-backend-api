@@ -1,7 +1,7 @@
 ﻿using ApartaAPI.BackgroundJobs;
 using ApartaAPI.Data;
 using ApartaAPI.Extensions;
-using ApartaAPI.Helpers;
+using ApartaAPI.Utils.Helper;
 using ApartaAPI.Hubs;
 using ApartaAPI.Models;
 using ApartaAPI.Profiles;
@@ -88,7 +88,10 @@ namespace ApartaAPI
 			builder.Services.AddScoped<IManagerService, ManagerService>();
 			builder.Services.AddScoped<INewsService, NewsService>();
 			builder.Services.AddScoped<IPriceQuotationService, PriceQuotationService>();
-			builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+			builder.Services.AddScoped<IProposalService, ProposalService>();
+            builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 			builder.Services.AddScoped<IPaymentService, PaymentService>();
 			builder.Services.AddScoped<IVehicleService, VehicleService>();
 			builder.Services.AddScoped<IApartmentService, ApartmentService>();
@@ -108,6 +111,9 @@ namespace ApartaAPI
             builder.Services.AddScoped<IVisitLogRepository, VisitLogRepository>();
 			builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
 			builder.Services.AddScoped<IPriceQuotationRepository, PriceQuotationRepository>();
+			builder.Services.AddScoped<IProposalRepository, ProposalRepository>();
+            builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
+
             builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
             builder.Services.AddScoped<IMessageRepository, MessageRepository>();
             builder.Services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();

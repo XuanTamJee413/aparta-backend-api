@@ -2,6 +2,8 @@
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers
 {
@@ -22,6 +24,24 @@ namespace ApartaAPI.Controllers
             var response = await _service.GetAllAsync(query);
             return Ok(response);
         }
+        [HttpGet("my-buildings")]
+        [Authorize] 
+        public async Task<ActionResult<ApiResponse<IEnumerable<VehicleDto>>>> GetVehiclesByMyBuildings([FromQuery] VehicleQueryParameters query)
+        {
+            
+            var userId =
+                User.FindFirst("id")?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập."));
+            }
+
+            var response = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(response);
+        }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<VehicleDto>> GetVehicle(string id)

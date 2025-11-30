@@ -11,5 +11,8 @@ namespace ApartaAPI.Services.Interfaces
         Task<IEnumerable<ApartmentDto>> CreateBulkAsync(ApartmentBulkCreateDto dto);
         Task<bool> UpdateAsync(string id, ApartmentUpdateDto dto);
         Task<bool> DeleteAsync(string id);
+        Task<ApiResponse<IEnumerable<ApartmentDto>>> GetByUserBuildingsAsync(string userId,ApartmentQueryParameters query
+);
+
     }
 }

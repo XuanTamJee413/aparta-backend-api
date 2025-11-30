@@ -10,5 +10,8 @@ namespace ApartaAPI.Services.Interfaces
         Task<AssetDto> CreateAsync(AssetCreateDto dto);
         Task<bool> UpdateAsync(string id, AssetUpdateDto dto);
         Task<bool> DeleteAsync(string id);
+        Task<ApiResponse<IEnumerable<AssetDto>>> GetByUserBuildingsAsync(string userId,AssetQueryParameters query
+);
+
     }
 }

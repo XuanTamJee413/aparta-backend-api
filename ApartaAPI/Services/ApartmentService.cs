@@ -24,7 +24,6 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-
         private async Task<Building> GetBuildingAsync(string buildingId)
         {
             var building = await _buildingRepository.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
@@ -64,7 +63,6 @@ namespace ApartaAPI.Services
             var normalizedCode = NormalizeBuildingCode(buildingCode);
             return $"{normalizedCode}-{floor}{roomIndex:D2}";
         }
-
 
         public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetAllAsync(ApartmentQueryParameters query)
         {
@@ -134,7 +132,8 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<ApartmentDto>>.Success(new List<ApartmentDto>(), "SM01");
+                return ApiResponse<IEnumerable<ApartmentDto>>
+                    .Success(new List<ApartmentDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<ApartmentDto>>.Success(dtos);
@@ -146,7 +145,6 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentDto?>(entity);
         }
 
-        
         public async Task<ApartmentDto> CreateAsync(ApartmentCreateDto dto)
         {
             if (dto.Floor is null || dto.Floor <= 0)
@@ -182,7 +180,8 @@ namespace ApartaAPI.Services
 
             if (existingApartmentCode != null)
             {
-                throw new InvalidOperationException($"Mã căn hộ '{rawCode}' đã tồn tại trong tòa nhà này.");
+                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "mã căn hộ");
+                throw new InvalidOperationException(error.Message);
             }
 
             var now = DateTime.UtcNow;
@@ -192,7 +191,7 @@ namespace ApartaAPI.Services
             entity.BuildingId = buildingId;
             entity.Code = rawCode;
             entity.Floor = floor;
-            entity.Status = "Chưa Thuê";
+            entity.Status = "Còn Trống";
             entity.CreatedAt = now;
             entity.UpdatedAt = now;
 
@@ -202,7 +201,91 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentDto>(entity);
         }
 
-       
+        public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetByUserBuildingsAsync(string userId, ApartmentQueryParameters query)
+        {
+            if (query == null)
+            {
+                query = new ApartmentQueryParameters(null, null, null, null, null);
+            }
+
+            var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim().ToLowerInvariant();
+
+            var statusFilter = string.IsNullOrWhiteSpace(query.Status)
+                ? null
+                : query.Status.Trim().ToLowerInvariant();
+
+            var buildingIdFilter = string.IsNullOrWhiteSpace(query.BuildingId)
+                ? null
+                : query.BuildingId.Trim();
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            Expression<Func<Apartment, bool>> predicate = a =>
+                a.Building.StaffBuildingAssignments.Any(sba =>
+                    sba.UserId == userId &&
+                    sba.IsActive &&
+                    (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                )
+                &&
+                (buildingIdFilter == null || a.BuildingId == buildingIdFilter)
+                &&
+                (statusFilter == null || (a.Status != null && a.Status.ToLower() == statusFilter))
+                &&
+                (searchTerm == null ||
+                    (a.Code != null && a.Code.ToLower().Contains(searchTerm)) ||
+                    (a.Type != null && a.Type.ToLower().Contains(searchTerm))
+                );
+
+            var entities = await _repository.FindAsync(predicate);
+
+            if (entities == null)
+            {
+                entities = new List<Apartment>();
+            }
+
+            var validEntities = entities.Where(e => e != null).ToList();
+
+            IOrderedEnumerable<Apartment> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "code":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(a => a.Code)
+                        : validEntities.OrderBy(a => a.Code);
+                    break;
+
+                case "area":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(a => a.Area)
+                        : validEntities.OrderBy(a => a.Area);
+                    break;
+
+                case "floor":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(a => a.Floor)
+                        : validEntities.OrderBy(a => a.Floor);
+                    break;
+
+                default:
+                    sortedEntities = validEntities.OrderByDescending(a => a.CreatedAt);
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<ApartmentDto>>(sortedEntities);
+
+            if (!dtos.Any())
+            {
+                return ApiResponse<IEnumerable<ApartmentDto>>
+                    .Success(new List<ApartmentDto>(), ApiResponse.SM01_NO_RESULTS);
+            }
+
+            return ApiResponse<IEnumerable<ApartmentDto>>.Success(dtos);
+        }
+
         public async Task<IEnumerable<ApartmentDto>> CreateBulkAsync(ApartmentBulkCreateDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.BuildingId))
@@ -270,7 +353,7 @@ namespace ApartaAPI.Services
                     BuildingId = buildingId,
                     Code = item.Code,
                     Type = item.Type,
-                    Status = "Chưa Thuê",
+                    Status = "Còn Trống",
                     Area = item.Area,
                     Floor = item.Floor,
                     CreatedAt = now,
@@ -291,8 +374,8 @@ namespace ApartaAPI.Services
             var entity = await _repository.FirstOrDefaultAsync(a => a.ApartmentId == id);
             if (entity == null) return false;
 
-            if ("Đã Thuê".Equals(entity.Status, StringComparison.OrdinalIgnoreCase) ||
-                "Đã Trả Phòng".Equals(entity.Status, StringComparison.OrdinalIgnoreCase))
+            if ("Đã Bán".Equals(entity.Status, StringComparison.OrdinalIgnoreCase) ||
+                "Đã Đóng".Equals(entity.Status, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Không thể cập nhật căn hộ vì trạng thái hiện tại không cho phép.");
             }
@@ -330,7 +413,8 @@ namespace ApartaAPI.Services
 
                 if (existing != null)
                 {
-                    throw new InvalidOperationException($"Mã căn hộ '{newCode}' đã tồn tại trong tòa nhà này.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "mã căn hộ");
+                    throw new InvalidOperationException(error.Message);
                 }
 
                 entity.Code = newCode;
@@ -349,10 +433,6 @@ namespace ApartaAPI.Services
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
                 entity.Status = dto.Status;
-            }
-
-            if (dto.Floor.HasValue && dto.Floor.Value != entity.Floor)
-            {
             }
 
             entity.UpdatedAt = DateTime.UtcNow;

@@ -96,10 +96,8 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(
-                    new List<ApartmentMemberDto>(),
-                    "SM01"
-                );
+                return ApiResponse<IEnumerable<ApartmentMemberDto>>
+                    .Fail(ApiResponse.SM01_NO_RESULTS);
             }
 
             return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(dtos);
@@ -121,7 +119,8 @@ namespace ApartaAPI.Services
                 var existingMember = await _repository.FirstOrDefaultAsync(m => m.IdNumber == dto.IdNumber);
                 if (existingMember != null)
                 {
-                    throw new InvalidOperationException($"ID Number '{dto.IdNumber}' đã tồn tại.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+                    throw new InvalidOperationException(error.Message);
                 }
             }
 
@@ -130,7 +129,8 @@ namespace ApartaAPI.Services
                 var existingPhone = await _repository.FirstOrDefaultAsync(m => m.PhoneNumber == dto.PhoneNumber);
                 if (existingPhone != null)
                 {
-                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                    throw new InvalidOperationException(error.Message);
                 }
             }
 
@@ -176,7 +176,8 @@ namespace ApartaAPI.Services
 
                 if (existingMember != null)
                 {
-                    throw new InvalidOperationException($"ID Number '{dto.IdNumber}' đã tồn tại.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+                    throw new InvalidOperationException(error.Message);
                 }
             }
 
@@ -188,7 +189,8 @@ namespace ApartaAPI.Services
 
                 if (existingPhone != null)
                 {
-                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                    var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                    throw new InvalidOperationException(error.Message);
                 }
             }
 
@@ -199,7 +201,8 @@ namespace ApartaAPI.Services
             return await _repository.SaveChangesAsync();
         }
 
-        public async Task<ApiResponse<string>> UpdateFaceImageAsync( string memberId,IFormFile file, CancellationToken cancellationToken = default)
+        public async Task<ApiResponse<string>> UpdateFaceImageAsync(
+            string memberId, IFormFile file, CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
             {
@@ -209,7 +212,7 @@ namespace ApartaAPI.Services
             var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == memberId);
             if (entity == null)
             {
-                return ApiResponse<string>.Fail("Không tìm thấy thành viên hộ khẩu.");
+                return ApiResponse<string>.Fail(ApiResponse.SM01_NO_RESULTS);
             }
 
             try
@@ -229,16 +232,18 @@ namespace ApartaAPI.Services
                 entity.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.UpdateAsync(entity);
-                await _repository.SaveChangesAsync();   
+                await _repository.SaveChangesAsync();
 
-                return ApiResponse<string>.Success( uploadResult.SecureUrl, "Cập nhật ảnh thành viên thành công." );
+                return ApiResponse<string>.Success(
+                    uploadResult.SecureUrl,
+                    ApiResponse.SM03_UPDATE_SUCCESS
+                );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return ApiResponse<string>.Fail($"Lỗi khi upload ảnh: {ex.Message}");
+                return ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
-
 
         public async Task<bool> DeleteAsync(string id)
         {

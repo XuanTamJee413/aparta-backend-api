@@ -91,9 +91,20 @@ namespace ApartaAPI.Services
             if (endDay.HasValue && (endDay < 1 || endDay > 31))
                 return "Ngày kết thúc chốt số không hợp lệ (1-31).";
 
-            // Validate Logic Khoảng ngày
-            if (startDay.HasValue && endDay.HasValue && startDay >= endDay)
-                return "Ngày bắt đầu chốt số phải nhỏ hơn ngày kết thúc.";
+            // Validate Logic: Ngày kết thúc phải = Ngày bắt đầu + 2 (hoặc = 1 nếu vượt quá 31)
+            if (startDay.HasValue && endDay.HasValue)
+            {
+                int expectedEnd = startDay.Value + 2;
+                if (expectedEnd > 31)
+                {
+                    expectedEnd = 1; // Sang tháng sau
+                }
+                
+                if (endDay.Value != expectedEnd)
+                {
+                    return $"Ngày kết thúc chốt số phải bằng {expectedEnd} (Ngày bắt đầu + 2).";
+                }
+            }
 
             return null; // Hợp lệ
         }

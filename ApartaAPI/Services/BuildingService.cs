@@ -281,7 +281,7 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetRentedApartmentsByBuildingAsync(string buildingId)
         {
-            var query = new ApartmentQueryParameters(buildingId, "Đã thuê", null, null, null);
+            var query = new ApartmentQueryParameters(buildingId, "Đã Bán", null, null, null);
             return await _apartmentService.GetAllAsync(query);
         }
     }

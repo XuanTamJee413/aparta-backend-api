@@ -46,5 +46,10 @@ namespace ApartaAPI.DTOs.MeterReadings
         string? InvoiceItemId,
         string Status // "Đã ghi - Đã khóa", "Đã ghi", hoặc "Chưa ghi"
     );
+
+    public sealed record MeterReadingServiceDto(
+        string FeeType,
+        string CalculationMethod
+    );
 }
 

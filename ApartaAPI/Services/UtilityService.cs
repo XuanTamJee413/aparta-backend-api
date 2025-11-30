@@ -81,7 +81,7 @@ namespace ApartaAPI.Services
 		{
 			if (utilityDto.PeriodTime.HasValue && utilityDto.PeriodTime.Value < 1)
 			{
-				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 1.");
+				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 0.");
 			}
 
 			if (string.IsNullOrWhiteSpace(utilityDto.Name))
@@ -112,9 +112,9 @@ namespace ApartaAPI.Services
 				return null;
 			}
 
-			if (utilityDto.PeriodTime.HasValue && utilityDto.PeriodTime.Value <= 1)
+			if (utilityDto.PeriodTime.HasValue && utilityDto.PeriodTime.Value < 1)
 			{
-				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 1.");
+				throw new ArgumentException("Thời gian sử dụng (PeriodTime) phải lớn hơn 0.");
 			}
 
 			if (!string.IsNullOrWhiteSpace(utilityDto.Name))

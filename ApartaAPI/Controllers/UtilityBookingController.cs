@@ -42,19 +42,19 @@ namespace ApartaAPI.Controllers
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
 			var userId = GetCurrentUserId();
-			try
+
+			var response = await _bookingService.CreateBookingAsync(createDto, userId);
+
+			if (!response.Succeeded)
 			{
-				var result = await _bookingService.CreateBookingAsync(createDto, userId);
-				return CreatedAtAction(nameof(GetBookingById), new { id = result.UtilityBookingId }, result);
+				return BadRequest(response);
 			}
-			catch (ArgumentException ex) // Lỗi logic thời gian
-			{
-				return BadRequest(new { message = ex.Message });
-			}
-			catch (InvalidOperationException ex) // Lỗi trùng lặp hoặc không tồn tại
-			{
-				return Conflict(new { message = ex.Message }); // 409 Conflict
-			}
+
+			return CreatedAtAction(
+				nameof(GetBookingById),
+				new { id = response.Data!.UtilityBookingId },
+				response
+			);
 		}
 
 		// GET: api/utilitybookings/my

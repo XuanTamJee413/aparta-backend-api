@@ -6,6 +6,7 @@ using ApartaAPI.Services.Interfaces;
 using ApartaAPI.DTOs.PayOS;
 using ApartaAPI.DTOs.Common;
 using System;
+using System.Threading.Tasks;
 
 namespace ApartaAPI.Controllers;
 
@@ -152,8 +153,30 @@ public class PayosController : ControllerBase
     {
         try
         {
+            // Tìm payment record để lấy project settings
+            var orderCode = payload.data.orderCode ?? string.Empty;
+            var payment = await _paymentService.GetPaymentByOrderCodeAsync(orderCode);
+            
+            PayOSService payOSService = _payOSService; // Default fallback
+            
+            if (payment != null)
+            {
+                // Lấy project từ invoice để verify với đúng checksumKey
+                var project = await _paymentService.GetProjectFromPaymentAsync(payment.PaymentId);
+                if (project != null && !string.IsNullOrWhiteSpace(project.PayOSChecksumKey))
+                {
+                    // Tạo PayOSService với settings từ project để verify
+                    payOSService = PayOSService.CreateFromProject(
+                        project.PayOSClientId,
+                        project.PayOSApiKey,
+                        project.PayOSChecksumKey,
+                        _configuration
+                    );
+                }
+            }
+
             // Verify webhook signature to ensure it's from PayOS
-            if (!_payOSService.VerifyWebhookSignature(payload, signature))
+            if (!payOSService.VerifyWebhookSignature(payload, signature))
             {
                 return Unauthorized();
             }
@@ -162,9 +185,6 @@ public class PayosController : ControllerBase
             // PayOS returns code "00" when payment is successful
             if (payload.data.code == "00")
             {
-                // Find invoiceId from Payment record using orderCode
-                // We stored orderCode in Payment.PaymentCode when creating payment link
-                var orderCode = payload.data.orderCode ?? string.Empty;
                 
                 Console.WriteLine($"Webhook received: orderCode={orderCode}, code={payload.data.code}");
                 
@@ -188,6 +208,92 @@ public class PayosController : ControllerBase
         {
             Console.WriteLine($"Webhook error: {ex.Message}");
             return StatusCode(500, ex.Message);
+        }
+    }
+
+    // Validate PayOS credentials
+    [HttpPost("validate-credentials")]
+    [Authorize(Policy = "CanCreateProject")]
+    public async Task<ActionResult<ApiResponse<PayOSValidationResponse>>> ValidatePayOSCredentials([FromBody] PayOSValidationRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.ClientId) || 
+                string.IsNullOrWhiteSpace(request.ApiKey) || 
+                string.IsNullOrWhiteSpace(request.ChecksumKey))
+            {
+                return BadRequest(ApiResponse<PayOSValidationResponse>.Fail(
+                    ApiResponse.SM25_INVALID_INPUT,
+                    null,
+                    "Vui lòng nhập đầy đủ thông tin PayOS"
+                ));
+            }
+
+            // Tạo PayOSService với credentials được cung cấp
+            PayOSService testPayOSService;
+            try
+            {
+                testPayOSService = new PayOSService(request.ClientId, request.ApiKey, request.ChecksumKey);
+            }
+            catch (Exception ex)
+            {
+                return Ok(ApiResponse<PayOSValidationResponse>.Success(
+                    new PayOSValidationResponse(false, $"Lỗi khởi tạo PayOS: {ex.Message}"),
+                    "Validation failed"
+                ));
+            }
+
+            // Thử tạo một payment link test để verify credentials
+            // PayOS không có endpoint riêng để verify, nên ta sẽ thử tạo payment với số tiền nhỏ nhất
+            try
+            {
+                var testResult = await testPayOSService.CreatePaymentAsync(
+                    "test-validation",
+                    1000, // 1000 VND - số tiền tối thiểu
+                    "Test validation",
+                    "https://example.com/cancel",
+                    "https://example.com/return"
+                );
+
+                if (testResult.IsSuccess && testResult.Data != null)
+                {
+                    // Lấy thông tin tài khoản từ PayOS response
+                    // Note: PayOS trả về accountNumber và accountName, nhưng không có bankName
+                    // BankName có thể cần tra cứu từ BIN hoặc để user tự nhập
+                    return Ok(ApiResponse<PayOSValidationResponse>.Success(
+                        new PayOSValidationResponse(
+                            true, 
+                            "Tài khoản PayOS hợp lệ",
+                            null, // BankName - không có trong PayOS response, để user tự nhập
+                            testResult.Data.accountNumber, // Số tài khoản
+                            testResult.Data.accountName // Tên chủ tài khoản
+                        ),
+                        "Validation successful"
+                    ));
+                }
+                else
+                {
+                    return Ok(ApiResponse<PayOSValidationResponse>.Success(
+                        new PayOSValidationResponse(false, testResult.ErrorMessage ?? "Không thể xác thực tài khoản PayOS"),
+                        "Validation failed"
+                    ));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(ApiResponse<PayOSValidationResponse>.Success(
+                    new PayOSValidationResponse(false, $"Lỗi khi kiểm tra: {ex.Message}"),
+                    "Validation failed"
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<PayOSValidationResponse>.Fail(
+                ApiResponse.SM40_SYSTEM_ERROR,
+                null,
+                ex.Message
+            ));
         }
     }
 }

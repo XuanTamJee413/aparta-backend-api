@@ -97,9 +97,21 @@ namespace ApartaAPI.Services
                 return "Ngày bắt đầu chốt số không hợp lệ (1-31).";
             if (endDay.HasValue && (endDay < 1 || endDay > 31))
                 return "Ngày kết thúc chốt số không hợp lệ (1-31).";
-            // Validate Logic Khoảng ngày
-            if (startDay.HasValue && endDay.HasValue && startDay >= endDay)
-                return "Ngày bắt đầu chốt số phải nhỏ hơn ngày kết thúc.";
+
+            // Validate Logic: Ngày kết thúc phải = Ngày bắt đầu + 2 (hoặc = 1 nếu vượt quá 31)
+            if (startDay.HasValue && endDay.HasValue)
+            {
+                int expectedEnd = startDay.Value + 2;
+                if (expectedEnd > 31)
+                {
+                    expectedEnd = 1; // Sang tháng sau
+                }
+                
+                if (endDay.Value != expectedEnd)
+                {
+                    return $"Ngày kết thúc chốt số phải bằng {expectedEnd} (Ngày bắt đầu + 2).";
+                }
+            }
 
             return null; // Hợp lệ
         }
@@ -383,7 +395,7 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetRentedApartmentsByBuildingAsync(string buildingId)
         {
-            var query = new ApartmentQueryParameters(buildingId, "Đã thuê", null, null, null);
+            var query = new ApartmentQueryParameters(buildingId, "Đã Bán", null, null, null);
             return await _apartmentService.GetAllAsync(query);
         }
     }

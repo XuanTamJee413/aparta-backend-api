@@ -34,8 +34,13 @@ public class PaymentService : IPaymentService
     */
     public async Task<string?> CreatePaymentLinkAsync(string invoiceId, string baseUrl)
     {
-        // Get invoice
-        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId);
+        // Get invoice với thông tin project
+        var invoice = await _context.Invoices
+            .Include(i => i.Apartment)
+                .ThenInclude(a => a.Building)
+                    .ThenInclude(b => b.Project)
+            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+
         if (invoice == null)
         {
             Console.WriteLine($"Invoice not found: {invoiceId}");
@@ -55,13 +60,29 @@ public class PaymentService : IPaymentService
             return null;
         }
 
+        // Lấy project để lấy PayOS settings
+        var project = invoice.Apartment?.Building?.Project;
+        if (project == null)
+        {
+            Console.WriteLine($"Project not found for invoice: {invoiceId}");
+            throw new Exception("Không tìm thấy thông tin dự án cho hóa đơn này");
+        }
+
+        // Tạo PayOSService với settings từ project (fallback về config nếu project chưa có)
+        var payOSService = PayOSService.CreateFromProject(
+            project.PayOSClientId,
+            project.PayOSApiKey,
+            project.PayOSChecksumKey,
+            _configuration
+        );
+
         var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
         var cancelUrl = $"{baseUrl}/api/payos/payment/cancel";
         var returnUrl = $"{baseUrl}/api/payos/payment/success?invoiceId={invoiceId}";
         
-        Console.WriteLine($"Creating PayOS payment for invoice {invoiceId}, Amount: {invoice.Price}");
+        Console.WriteLine($"Creating PayOS payment for invoice {invoiceId}, Amount: {invoice.Price}, Project: {project.ProjectId}");
         
-        var paymentResult = await _payOSService.CreatePaymentAsync(
+        var paymentResult = await payOSService.CreatePaymentAsync(
             invoiceId,
             invoice.Price,
             invoice.Description ?? $"Thanh toán hóa đơn {invoiceId}",
@@ -147,6 +168,30 @@ public class PaymentService : IPaymentService
             }
             return false;
         }
+    }
+
+    /**
+    * Lấy payment record từ orderCode
+    */
+    public async Task<Payment?> GetPaymentByOrderCodeAsync(string orderCode)
+    {
+        return await _context.Payments
+            .FirstOrDefaultAsync(p => p.PaymentCode == orderCode);
+    }
+
+    /**
+    * Lấy project từ paymentId (thông qua invoice -> apartment -> building -> project)
+    */
+    public async Task<Project?> GetProjectFromPaymentAsync(string paymentId)
+    {
+        var payment = await _context.Payments
+            .Include(p => p.Invoice)
+                .ThenInclude(i => i.Apartment)
+                    .ThenInclude(a => a.Building)
+                        .ThenInclude(b => b.Project)
+            .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
+
+        return payment?.Invoice?.Apartment?.Building?.Project;
     }
 }
 

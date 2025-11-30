@@ -10,5 +10,7 @@ namespace ApartaAPI.Services.Interfaces
         Task<VehicleDto> CreateAsync(VehicleCreateDto dto);
         Task<bool> UpdateAsync(string id, VehicleUpdateDto dto);
         Task<bool> DeleteAsync(string id);
+        Task<ApiResponse<IEnumerable<VehicleDto>>> GetByUserBuildingsAsync( string userId, VehicleQueryParameters query);
+
     }
 }

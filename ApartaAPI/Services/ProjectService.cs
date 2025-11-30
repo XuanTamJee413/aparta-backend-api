@@ -59,7 +59,8 @@ namespace ApartaAPI.Services
             return Regex.Replace(result, @"\s+", " ").ToUpper();
         }
 
-        private string? ValidateProjectLogic(string? projectCode, string? name, string? bankAccountNumber)
+        private string? ValidateProjectLogic(string? projectCode, string? name, string? bankAccountNumber, 
+            string? payOSClientId = null, string? payOSApiKey = null, string? payOSChecksumKey = null)
         {
             if (!string.IsNullOrEmpty(projectCode))
             {
@@ -81,6 +82,19 @@ namespace ApartaAPI.Services
                     return "Số tài khoản ngân hàng không hợp lệ (chỉ được chứa số).";
                 if (bankAccountNumber.Length < 6 || bankAccountNumber.Length > 25)
                     return "Số tài khoản ngân hàng phải từ 6 đến 25 chữ số.";
+            }
+
+            // Validate PayOS: Nếu có nhập bất kỳ trường nào thì phải có đầy đủ 3 trường
+            bool hasAnyPayOS = !string.IsNullOrWhiteSpace(payOSClientId) || 
+                               !string.IsNullOrWhiteSpace(payOSApiKey) || 
+                               !string.IsNullOrWhiteSpace(payOSChecksumKey);
+            bool hasAllPayOS = !string.IsNullOrWhiteSpace(payOSClientId) && 
+                               !string.IsNullOrWhiteSpace(payOSApiKey) && 
+                               !string.IsNullOrWhiteSpace(payOSChecksumKey);
+
+            if (hasAnyPayOS && !hasAllPayOS)
+            {
+                return "Nếu cấu hình PayOS, vui lòng nhập đầy đủ 3 thông tin: Client ID, API Key và Checksum Key.";
             }
 
             return null;
@@ -137,6 +151,9 @@ namespace ApartaAPI.Services
                         p.BankName,
                         p.BankAccountNumber,
                         p.BankAccountName,
+                        p.PayOSClientId,
+                        p.PayOSApiKey,
+                        p.PayOSChecksumKey,
                         // 1. Đếm số căn hộ ĐÃ THUÊ
                         p.Buildings.SelectMany(b => b.Apartments).Count(a => a.Status == "Đã Thuê"),
                         // 2. Đếm số tòa nhà ACTIVE
@@ -177,6 +194,9 @@ namespace ApartaAPI.Services
                         p.BankName,
                         p.BankAccountNumber,
                         p.BankAccountName,
+                        p.PayOSClientId,
+                        p.PayOSApiKey,
+                        p.PayOSChecksumKey,
                         // Đếm số căn hộ ĐÃ THUÊ
                         p.Buildings.SelectMany(b => b.Apartments).Count(a => a.Status == "Đã Thuê"),
                         // Đếm số tòa nhà ACTIVE
@@ -201,7 +221,14 @@ namespace ApartaAPI.Services
         {
             try
             {
-                var errorMsg = ValidateProjectLogic(dto.ProjectCode, dto.Name, dto.BankAccountNumber);
+                var errorMsg = ValidateProjectLogic(
+                    dto.ProjectCode, 
+                    dto.Name, 
+                    dto.BankAccountNumber,
+                    dto.PayOSClientId,
+                    dto.PayOSApiKey,
+                    dto.PayOSChecksumKey
+                );
                 if (errorMsg != null) return ApiResponse<ProjectDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
 
                 var codeToCheck = dto.ProjectCode!.Trim();
@@ -245,7 +272,14 @@ namespace ApartaAPI.Services
                 var entity = await _repository.FirstOrDefaultAsync(p => p.ProjectId == id);
                 if (entity == null) return ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS);
 
-                var errorMsg = ValidateProjectLogic(null, dto.Name, dto.BankAccountNumber);
+                var errorMsg = ValidateProjectLogic(
+                    null, 
+                    dto.Name, 
+                    dto.BankAccountNumber,
+                    dto.PayOSClientId,
+                    dto.PayOSApiKey,
+                    dto.PayOSChecksumKey
+                );
                 if (errorMsg != null) return ApiResponse.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
 
                 var now = DateTime.UtcNow;

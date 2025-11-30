@@ -89,5 +89,22 @@ namespace ApartaAPI.Controllers
 			if (result == null) return NotFound();
 			return Ok(result);
 		}
+
+		// POST: api/tasks/unassign
+		[HttpPost("unassign")]
+		public async Task<IActionResult> UnassignTask([FromBody] TaskUnassignDto unassignDto)
+		{
+			try
+			{
+				// Bạn cần thêm UnassignTaskAsync vào Interface ITaskService trước nhé
+				var result = await _taskService.UnassignTaskAsync(unassignDto.TaskId, unassignDto.AssigneeUserId);
+				if (result) return Ok(new { message = "Đã gỡ nhân viên khỏi task." });
+				return BadRequest("Lỗi khi gỡ nhân viên.");
+			}
+			catch (ArgumentException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+		}
 	}
 }

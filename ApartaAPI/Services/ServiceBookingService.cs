@@ -173,10 +173,13 @@ namespace ApartaAPI.Services
 				string serviceName = serviceInfo?.Name ?? "Dịch vụ";
 
 				string description = $"Thực hiện: {serviceName}. Ghi chú KH: {existingBooking.ResidentNote}";
+				DateTime startTime = DateTime.Now;
+				DateTime endTime = existingBooking.BookingDate;
+				
 
 				// Gọi TaskService để tạo Task (Status = New)
 				// Hàm này bạn đã thêm ở bước trước trong ITaskService
-				await _taskService.CreateTaskFromBookingAsync(existingBooking.ServiceBookingId, description, operationStaffId);
+				await _taskService.CreateTaskFromBookingAsync(existingBooking.ServiceBookingId, description, startTime, endTime, operationStaffId);
 			}
 			// ------------------------------------
 

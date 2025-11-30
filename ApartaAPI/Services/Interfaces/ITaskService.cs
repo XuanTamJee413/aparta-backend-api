@@ -19,6 +19,8 @@ namespace ApartaAPI.Services.Interfaces
 		// Cập nhật trạng thái
 		Task<TaskDto?> UpdateTaskStatusAsync(string taskId, TaskUpdateStatusDto updateDto);
 
-		Task<TaskDto> CreateTaskFromBookingAsync(string bookingId, string description, string operationStaffId);
+		Task<TaskDto> CreateTaskFromBookingAsync(string bookingId, string description, DateTime startTime, DateTime endTime, string operationStaffId);
+
+		Task<bool> UnassignTaskAsync(string taskId, string assigneeUserId);
 	}
 }

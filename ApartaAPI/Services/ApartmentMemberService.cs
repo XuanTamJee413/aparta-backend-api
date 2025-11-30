@@ -1,10 +1,16 @@
 ﻿using AutoMapper;
+using ApartaAPI.DTOs.ApartmentMembers;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
-using ApartaAPI.DTOs.ApartmentMembers;
-using ApartaAPI.DTOs.Common;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ApartaAPI.Services
 {
@@ -12,15 +18,18 @@ namespace ApartaAPI.Services
     {
         private readonly IRepository<ApartmentMember> _repository;
         private readonly IRepository<Apartment> _apartmentRepository;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
 
         public ApartmentMemberService(
             IRepository<ApartmentMember> repository,
             IRepository<Apartment> apartmentRepository,
+            ICloudinaryService cloudinaryService,
             IMapper mapper)
         {
             _repository = repository;
             _apartmentRepository = apartmentRepository;
+            _cloudinaryService = cloudinaryService;
             _mapper = mapper;
         }
 
@@ -47,6 +56,8 @@ namespace ApartaAPI.Services
             Expression<Func<ApartmentMember, bool>> predicate = m =>
                 (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value) &&
 
+                (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId) &&
+
                 (
                     searchTerm == null
                     ||
@@ -61,7 +72,9 @@ namespace ApartaAPI.Services
 
             var entities = await _repository.FindAsync(predicate);
 
-            var validEntities = entities.Where(m => m != null).ToList();
+            var validEntities = entities
+                .Where(m => m != null)
+                .ToList();
 
             IOrderedEnumerable<ApartmentMember> sortedEntities;
             bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
@@ -83,7 +96,10 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-                return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(new List<ApartmentMemberDto>(), "SM01");
+                return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(
+                    new List<ApartmentMemberDto>(),
+                    "SM01"
+                );
             }
 
             return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(dtos);
@@ -95,7 +111,10 @@ namespace ApartaAPI.Services
             return _mapper.Map<ApartmentMemberDto?>(entity);
         }
 
-        public async Task<ApartmentMemberDto> CreateAsync(ApartmentMemberCreateDto dto)
+        public async Task<ApartmentMemberDto> CreateAsync(
+            ApartmentMemberCreateDto dto,
+            IFormFile? faceImageFile = null,
+            CancellationToken cancellationToken = default)
         {
             if (!string.IsNullOrWhiteSpace(dto.IdNumber))
             {
@@ -106,13 +125,37 @@ namespace ApartaAPI.Services
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            {
+                var existingPhone = await _repository.FirstOrDefaultAsync(m => m.PhoneNumber == dto.PhoneNumber);
+                if (existingPhone != null)
+                {
+                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                }
+            }
+
             var now = DateTime.UtcNow;
+
             var entity = _mapper.Map<ApartmentMember>(dto);
 
             entity.ApartmentMemberId = Guid.NewGuid().ToString("N");
-
             entity.CreatedAt ??= now;
             entity.UpdatedAt = now;
+
+            if (faceImageFile != null && faceImageFile.Length > 0)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(
+                    faceImageFile,
+                    folder: "aparta/apartment-members",
+                    cancellationToken: cancellationToken
+                );
+
+                entity.FaceImageUrl = uploadResult.SecureUrl;
+            }
+            else if (!string.IsNullOrWhiteSpace(dto.FaceImageUrl))
+            {
+                entity.FaceImageUrl = dto.FaceImageUrl;
+            }
 
             await _repository.AddAsync(entity);
             await _repository.SaveChangesAsync();
@@ -137,12 +180,65 @@ namespace ApartaAPI.Services
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            {
+                var existingPhone = await _repository.FirstOrDefaultAsync(
+                    m => m.PhoneNumber == dto.PhoneNumber && m.ApartmentMemberId != id
+                );
+
+                if (existingPhone != null)
+                {
+                    throw new InvalidOperationException($"Số điện thoại '{dto.PhoneNumber}' đã tồn tại.");
+                }
+            }
+
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(entity);
             return await _repository.SaveChangesAsync();
         }
+
+        public async Task<ApiResponse<string>> UpdateFaceImageAsync( string memberId,IFormFile file, CancellationToken cancellationToken = default)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return ApiResponse<string>.Fail(ApiResponse.SM25_INVALID_INPUT);
+            }
+
+            var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == memberId);
+            if (entity == null)
+            {
+                return ApiResponse<string>.Fail("Không tìm thấy thành viên hộ khẩu.");
+            }
+
+            try
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(
+                    file,
+                    folder: "aparta/apartment-members",
+                    cancellationToken: cancellationToken
+                );
+
+                if (string.IsNullOrWhiteSpace(uploadResult.SecureUrl))
+                {
+                    return ApiResponse<string>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+                }
+
+                entity.FaceImageUrl = uploadResult.SecureUrl;
+                entity.UpdatedAt = DateTime.UtcNow;
+
+                await _repository.UpdateAsync(entity);
+                await _repository.SaveChangesAsync();   
+
+                return ApiResponse<string>.Success( uploadResult.SecureUrl, "Cập nhật ảnh thành viên thành công." );
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<string>.Fail($"Lỗi khi upload ảnh: {ex.Message}");
+            }
+        }
+
 
         public async Task<bool> DeleteAsync(string id)
         {

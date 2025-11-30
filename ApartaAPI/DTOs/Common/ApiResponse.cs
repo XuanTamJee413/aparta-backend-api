@@ -170,7 +170,7 @@
 		public const string SM55_ALREADY_CANCELLED = "Đơn này đã bị hủy hoặc từ chối trước đó.";
 
 		// SM56: Đặt trước tối thiểu 30p
-		public const string SM56_BOOKING_MIN_TIME = "Bạn cần đặt trước ít nhất 30 phút.";
+		public const string SM56_BOOKING_MIN_TIME = "Bạn cần đặt trước ít nhất 1 tiếng.";
 
 		public static string GetMessageFromCode(string code)
         {

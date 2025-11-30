@@ -34,10 +34,10 @@ namespace ApartaAPI.Services
 				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM44_SERVICE_NOT_FOUND);
 			}
 
-			//if (createDto.BookingDate < DateTime.UtcNow.AddMinutes(30))
-			//{
-			//	return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM56_BOOKING_MIN_TIME);
-			//}
+			if (createDto.BookingDate < DateTime.UtcNow.AddMinutes(60))
+			{
+				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM56_BOOKING_MIN_TIME);
+			}
 
 			if (createDto.BookingDate >= createDto.BookedAt)
 			{

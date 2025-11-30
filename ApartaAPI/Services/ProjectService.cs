@@ -52,26 +52,26 @@ namespace ApartaAPI.Services
             IOrderedEnumerable<Project> sortedEntities;
             bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
 
-            switch (query.SortBy?.ToLowerInvariant())
-            {
-                case "numapartments":
-                    sortedEntities = isDescending
-                        ? entities.OrderByDescending(p => p.NumApartments)
-                        : entities.OrderBy(p => p.NumApartments);
-                    break;
-                case "numbuildings":
-                    sortedEntities = isDescending
-                        ? entities.OrderByDescending(p => p.NumBuildings)
-                        : entities.OrderBy(p => p.NumBuildings);
-                    break;
-                default:
-                    // Mặc định sort theo CreatedAt (mới nhất trước)
-                    sortedEntities = entities.OrderByDescending(p => p.CreatedAt);
-                    break;
-            }
+            //switch (query.SortBy?.ToLowerInvariant())
+            //{
+            //    case "numapartments":
+            //        sortedEntities = isDescending
+            //            ? entities.OrderByDescending(p => p.NumApartments)
+            //            : entities.OrderBy(p => p.NumApartments);
+            //        break;
+            //    case "numbuildings":
+            //        sortedEntities = isDescending
+            //            ? entities.OrderByDescending(p => p.NumBuildings)
+            //            : entities.OrderBy(p => p.NumBuildings);
+            //        break;
+            //    default:
+            //        // Mặc định sort theo CreatedAt (mới nhất trước)
+            //        sortedEntities = entities.OrderByDescending(p => p.CreatedAt);
+            //        break;
+            //}
 
-            var dtos = _mapper.Map<IEnumerable<ProjectDto>>(sortedEntities);
-
+            //var dtos = _mapper.Map<IEnumerable<ProjectDto>>(sortedEntities);
+            var dtos = _mapper.Map<IEnumerable<ProjectDto>>(entities);
             // SRS 2.1.3 - 2A: Trả về SM01 khi không có kết quả
             if (!dtos.Any())
             {

@@ -172,7 +172,10 @@
 		// SM56: Đặt trước tối thiểu 30p
 		public const string SM56_BOOKING_MIN_TIME = "Bạn cần đặt trước ít nhất 1 tiếng.";
 
-		public static string GetMessageFromCode(string code)
+        // SM57: Gia hạn thành công
+        public const string SM57_SUBSCRIPTION_EXTENDED = "Gia hạn gói dịch vụ thành công.";
+
+        public static string GetMessageFromCode(string code)
         {
             return code switch
             {
@@ -232,7 +235,8 @@
 				SM54_CANCEL_EXPIRED => SM54_CANCEL_EXPIRED,
 				SM55_ALREADY_CANCELLED => SM55_ALREADY_CANCELLED,
 				SM56_BOOKING_MIN_TIME => SM56_BOOKING_MIN_TIME,
-				_ => code
+                SM57_SUBSCRIPTION_EXTENDED => SM57_SUBSCRIPTION_EXTENDED,
+                _ => code
             };
         }
 

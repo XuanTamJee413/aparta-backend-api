@@ -288,7 +288,7 @@ namespace ApartaAPI.Services
                 bool isDeactivating = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
                 if (isDeactivating)
                 {
-                    // 1. Hủy Subscription đang chạy (nếu có)
+                    // Hủy Subscription đang chạy (nếu có)
                     var activeSub = await _subscriptionRepository.FirstOrDefaultAsync(
                         s => s.ProjectId == id && s.Status == "Active" && s.ExpiredAt > now
                     );
@@ -299,18 +299,7 @@ namespace ApartaAPI.Services
                         activeSub.UpdatedAt = now;
                     }
 
-                    // 2. Vô hiệu hóa Project Admin
-                    if (!string.IsNullOrEmpty(entity.AdminId))
-                    {
-                        var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == entity.AdminId);
-                        if (adminUser != null)
-                        {
-                            adminUser.Status = "Inactive";
-                            adminUser.UpdatedAt = now;
-                        }
-                    }
-
-                    // 3. Vô hiệu hóa Cư dân (User linked to Apartment in Project)
+                    // Vô hiệu hóa Cư dân (User linked to Apartment in Project)
                     var residentUsers = await _context.Users
                         .Where(u => u.Apartment != null && u.Apartment.Building.ProjectId == id && u.Status == "Active")
                         .ToListAsync();
@@ -321,7 +310,7 @@ namespace ApartaAPI.Services
                         user.UpdatedAt = now;
                     }
 
-                    // 4. Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment)
+                    // Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment)
                     var staffAssignments = await _context.StaffBuildingAssignments
                         .Where(sba => sba.Building.ProjectId == id && sba.IsActive == true)
                         .ToListAsync();
@@ -338,19 +327,7 @@ namespace ApartaAPI.Services
                 bool isActivating = dto.IsActive.HasValue && dto.IsActive.Value == true && entity.IsActive == false;
                 if (isActivating)
                 {
-                    // 1. Kích hoạt lại Project Admin
-                    if (!string.IsNullOrEmpty(entity.AdminId))
-                    {
-                        var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == entity.AdminId);
-                        // Chỉ kích hoạt lại nếu đang Inactive (tránh ghi đè trạng thái khác nếu có)
-                        if (adminUser != null && adminUser.Status == "Inactive")
-                        {
-                            adminUser.Status = "Active";
-                            adminUser.UpdatedAt = now;
-                        }
-                    }
-
-                    // 2. Kích hoạt lại Cư dân (Residents)
+                    // Kích hoạt lại Cư dân (Residents)
                     // Chỉ tìm những người đang Inactive thuộc dự án này
                     var inactiveResidents = await _context.Users
                         .Where(u => u.Apartment != null &&
@@ -364,7 +341,7 @@ namespace ApartaAPI.Services
                         user.UpdatedAt = now;
                     }
 
-                    // 3. Phân công nhân viên (Assignments): KHÔNG TỰ ĐỘNG PHỤC HỒI
+                    // Phân công nhân viên (Assignments): KHÔNG TỰ ĐỘNG PHỤC HỒI
                     // Lý do: Nhân viên có thể đã nghỉ hoặc chuyển dự án khác trong thời gian dự án này đóng băng.
                     // Quản lý sẽ cần phân công lại thủ công.
                 }

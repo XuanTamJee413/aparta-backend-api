@@ -21,17 +21,20 @@ namespace ApartaAPI.Services
         private readonly IRepository<Project> _projectRepository;
         private readonly IProjectService _projectService; // [Inject] Để gọi Reactivate
         private readonly IMapper _mapper;
+        private readonly ApartaDbContext _context;
 
         public SubscriptionService(
             IRepository<Subscription> repository,
             IRepository<Project> projectRepository,
             IProjectService projectService,
-            IMapper mapper)
+            IMapper mapper,
+            ApartaDbContext context)
         {
             _repository = repository;
             _projectRepository = projectRepository;
             _projectService = projectService;
             _mapper = mapper;
+            _context = context;
         }
 
         // --- HELPER VALIDATION ---
@@ -83,44 +86,121 @@ namespace ApartaAPI.Services
                     ? null
                     : query.Status.Trim().ToLowerInvariant();
 
-                var createdAtEndInclusive = query.CreatedAtEnd?.Date.AddDays(1).AddTicks(-1);
+                var dateType = string.IsNullOrWhiteSpace(query.DateType)
+                    ? "created"
+                    : query.DateType.Trim().ToLowerInvariant();
 
-                Expression<Func<Subscription, bool>> predicate = s =>
-                    (statusFilter == null || s.Status.ToLower() == statusFilter) &&
-                    (!query.CreatedAtStart.HasValue || (s.CreatedAt.HasValue && s.CreatedAt.Value.Date >= query.CreatedAtStart.Value.Date)) &&
-                    (!createdAtEndInclusive.HasValue || (s.CreatedAt.HasValue && s.CreatedAt.Value <= createdAtEndInclusive.Value));
-
-                var allEntities = await _repository.FindAsync(predicate);
-                var totalCount = allEntities.Count();
-
-                IOrderedEnumerable<Subscription> orderedEntities;
+                // [LOGIC MỚI 1]: Nếu đang lọc riêng "Draft", bắt buộc dùng ngày tạo.
+                // Vì Draft không có ngày bắt đầu/hết hạn có ý nghĩa.
                 if (statusFilter == "draft")
                 {
-                    orderedEntities = allEntities.OrderByDescending(s => s.CreatedAt);
+                    dateType = "created";
                 }
-                else
+
+                var toDateInclusive = query.ToDate?.Date.AddDays(1).AddTicks(-1);
+
+                var queryable = _context.Subscriptions
+                    .Include(s => s.Project)
+                    .AsNoTracking();
+
+                // 1. Áp dụng Status Filter
+                if (statusFilter != null)
                 {
-                    orderedEntities = allEntities.OrderByDescending(s => s.ExpiredAt);
+                    if (statusFilter == "all")
+                    {
+                        // Nếu chọn "All" -> Lấy tất cả trạng thái NGOẠI TRỪ 'Draft'
+                        queryable = queryable.Where(s => s.Status != "Draft");
+                    }
+                    else
+                    {
+                        // Lọc chính xác (Active, Expired, Cancelled, hoặc Draft)
+                        queryable = queryable.Where(s => s.Status.ToLower() == statusFilter);
+                    }
                 }
 
-                var paginatedEntities = orderedEntities
-                                        .Skip(query.Skip)
-                                        .Take(query.Take)
-                                        .ToList();
+                // 2. Áp dụng Date Filter
+                if (query.FromDate.HasValue || toDateInclusive.HasValue)
+                {
+                    switch (dateType)
+                    {
+                        case "payment": // Ngày thanh toán
+                                        // Chỉ lấy những thằng đã có ngày thanh toán
+                            queryable = queryable.Where(s => s.PaymentDate.HasValue);
 
-                var dtos = _mapper.Map<IEnumerable<SubscriptionDto>>(paginatedEntities);
-                var paginatedResult = new PaginatedResult<SubscriptionDto>(dtos, totalCount);
+                            if (query.FromDate.HasValue)
+                                queryable = queryable.Where(s => s.PaymentDate >= query.FromDate.Value);
+                            if (toDateInclusive.HasValue)
+                                queryable = queryable.Where(s => s.PaymentDate <= toDateInclusive.Value);
+                            break;
+
+                        case "expired": // Ngày hết hạn
+                                        // [LOGIC MỚI 2]: Tự động loại bỏ Draft
+                            queryable = queryable.Where(s => s.Status != "Draft");
+
+                            if (query.FromDate.HasValue)
+                                queryable = queryable.Where(s => s.ExpiredAt >= query.FromDate.Value);
+                            if (toDateInclusive.HasValue)
+                                queryable = queryable.Where(s => s.ExpiredAt <= toDateInclusive.Value);
+                            break;
+
+                        case "start": // Ngày bắt đầu (ExpiredAt - NumMonths)
+                                      // [LOGIC MỚI 2]: Tự động loại bỏ Draft -> Chặn lỗi SQL Overflow 100%
+                            queryable = queryable.Where(s => s.Status != "Draft");
+
+                            if (query.FromDate.HasValue)
+                                queryable = queryable.Where(s => s.ExpiredAt.AddMonths(-s.NumMonths) >= query.FromDate.Value);
+                            if (toDateInclusive.HasValue)
+                                queryable = queryable.Where(s => s.ExpiredAt.AddMonths(-s.NumMonths) <= toDateInclusive.Value);
+                            break;
+
+                        case "created": // Ngày tạo
+                        default:
+                            if (query.FromDate.HasValue)
+                                queryable = queryable.Where(s => s.CreatedAt >= query.FromDate.Value);
+                            if (toDateInclusive.HasValue)
+                                queryable = queryable.Where(s => s.CreatedAt <= toDateInclusive.Value);
+                            break;
+                    }
+                }
+
+                var totalCount = await queryable.CountAsync();
 
                 if (totalCount == 0)
                 {
-                    return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(paginatedResult, ApiResponse.SM01_NO_RESULTS);
+                    return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(
+                        new PaginatedResult<SubscriptionDto>(new List<SubscriptionDto>(), 0),
+                        ApiResponse.SM01_NO_RESULTS
+                    );
                 }
+
+                // Sorting
+                if (statusFilter == "draft" || dateType == "created")
+                {
+                    queryable = queryable.OrderByDescending(s => s.CreatedAt);
+                }
+                else if (dateType == "payment")
+                {
+                    queryable = queryable.OrderByDescending(s => s.PaymentDate);
+                }
+                else // expired hoặc start
+                {
+                    queryable = queryable.OrderByDescending(s => s.ExpiredAt);
+                }
+
+                var entities = await queryable
+                    .Skip(query.Skip)
+                    .Take(query.Take)
+                    .ToListAsync();
+
+                var dtos = _mapper.Map<IEnumerable<SubscriptionDto>>(entities);
+                var paginatedResult = new PaginatedResult<SubscriptionDto>(dtos, totalCount);
 
                 return ApiResponse<PaginatedResult<SubscriptionDto>>.Success(paginatedResult);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return ApiResponse<PaginatedResult<SubscriptionDto>>.Fail("An unexpected error occurred while fetching subscriptions.");
+                Console.WriteLine(ex.ToString());
+                return ApiResponse<PaginatedResult<SubscriptionDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
 
@@ -128,7 +208,11 @@ namespace ApartaAPI.Services
         {
             try
             {
-                var entity = await _repository.FirstOrDefaultAsync(s => s.SubscriptionId == id);
+                var entity = await _context.Subscriptions
+                    .Include(s => s.Project)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SubscriptionId == id);
+
                 if (entity == null)
                 {
                     return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM01_NO_RESULTS);
@@ -136,8 +220,9 @@ namespace ApartaAPI.Services
                 var dto = _mapper.Map<SubscriptionDto>(entity);
                 return ApiResponse<SubscriptionDto>.Success(dto);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
@@ -217,8 +302,6 @@ namespace ApartaAPI.Services
                                 null, // PayOSChecksumKey
                                 true  // IsActive
                             ));
-                            
-                            project.IsActive = true;
                         }
                     }
 
@@ -246,8 +329,9 @@ namespace ApartaAPI.Services
                 var resultDto = _mapper.Map<SubscriptionDto>(entity);
                 return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? ApiResponse.SM57_SUBSCRIPTION_EXTENDED : ApiResponse.SM04_CREATE_SUCCESS);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
@@ -263,7 +347,7 @@ namespace ApartaAPI.Services
                 // Chỉ cho phép sửa Draft
                 if (entity.Status.ToLowerInvariant() != "draft")
                 {
-                    return ApiResponse<SubscriptionDto>.Fail("Chỉ có thể chỉnh sửa các bản nháp.");
+                    return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, "Chỉ có thể chỉnh sửa các bản nháp.");
                 }
 
                 // Validation
@@ -287,7 +371,6 @@ namespace ApartaAPI.Services
 
                 if (dto.IsApproved)
                 {
-                    // === LOGIC NETFLIX (STACKING) ===
                     // Tìm mốc thời gian hết hạn xa nhất (trừ bản ghi hiện tại)
                     var activeSub = (await _repository.FindAsync(s =>
                             s.ProjectId == entity.ProjectId &&
@@ -350,8 +433,9 @@ namespace ApartaAPI.Services
                 var resultDto = _mapper.Map<SubscriptionDto>(entity);
                 return ApiResponse<SubscriptionDto>.Success(resultDto, dto.IsApproved ? ApiResponse.SM57_SUBSCRIPTION_EXTENDED : ApiResponse.SM03_UPDATE_SUCCESS);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ApiResponse<SubscriptionDto>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
@@ -365,7 +449,7 @@ namespace ApartaAPI.Services
 
                 if (entity.Status.ToLowerInvariant() != "draft")
                 {
-                    return ApiResponse.Fail("Chỉ có thể xóa các bản nháp.");
+                    return ApiResponse.Fail(ApiResponse.SM21_DELETION_FAILED);
                 }
 
                 await _repository.RemoveAsync(entity);
@@ -373,8 +457,9 @@ namespace ApartaAPI.Services
 
                 return ApiResponse.SuccessWithCode(ApiResponse.SM05_DELETION_SUCCESS, "Subscription");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
                 return ApiResponse.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }

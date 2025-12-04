@@ -14,6 +14,7 @@ using ApartaAPI.DTOs.Proposals;
 using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.StaffAssignments;
 using ApartaAPI.DTOs.Subscriptions;
+using ApartaAPI.DTOs.User;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.VisitLogs;
@@ -210,6 +211,22 @@ namespace ApartaAPI.Profiles
             CreateMap<ContractCreateDto, Contract>();
             CreateMap<ContractUpdateDto, Contract>()
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Thêm vào constructor MappingProfile
+            CreateMap<User, UserAccountDto>()
+                .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role != null ? src.Role.RoleName : "unknown"))
+                // Chuẩn hóa Status về chữ thường ngay khi map
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status != null ? src.Status.ToLower() : "inactive"))
+                .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment != null ? src.Apartment.Code : null))
+                // AssignedBuildingCodes sẽ được map thủ công trong Service vì logic phức tạp
+                .ForMember(dest => dest.AssignedBuildingCodes, opt => opt.Ignore());
+
+            CreateMap<StaffCreateDto, User>()
+                // Bỏ qua các trường sẽ được gen tự động trong Service
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
 
         }
     }

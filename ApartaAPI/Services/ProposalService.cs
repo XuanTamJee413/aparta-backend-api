@@ -87,7 +87,7 @@ namespace ApartaAPI.Services
         // ============================
         public async Task<ApiResponse<PagedList<ProposalDto>>> GetProposalsForStaffAsync(string staffId,ProposalQueryParams query)
         {
-            var source = _proposalRepo.GetStaffProposalsQuery(staffId);
+            var source = _proposalRepo.GetStaffAssignedProposalsAsync(staffId);
 
             // 1. Filtering by Status (combobox)
             if (!string.IsNullOrWhiteSpace(query.Status))

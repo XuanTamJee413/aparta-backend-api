@@ -5,9 +5,11 @@ using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
+using ApartaAPI.Utils.Helper;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -25,6 +27,8 @@ public class InvoiceService : IInvoiceService
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly ICloudinaryService? _cloudinaryService;
+    private readonly IMailService _mailService;
+    private readonly ILogger<InvoiceService>? _logger;
 
     public InvoiceService(
         ApartaDbContext context,
@@ -35,7 +39,9 @@ public class InvoiceService : IInvoiceService
         IRepository<InvoiceItem> invoiceItemRepo,
         IMapper mapper,
         IConfiguration configuration,
-        ICloudinaryService? cloudinaryService = null)
+        IMailService mailService,
+        ICloudinaryService? cloudinaryService = null,
+        ILogger<InvoiceService>? logger = null)
     {
         _context = context;
         _invoiceRepo = invoiceRepo;
@@ -46,6 +52,8 @@ public class InvoiceService : IInvoiceService
         _mapper = mapper;
         _configuration = configuration;
         _cloudinaryService = cloudinaryService;
+        _mailService = mailService;
+        _logger = logger;
     }
 
     /**
@@ -263,7 +271,7 @@ public class InvoiceService : IInvoiceService
             // Lấy danh sách căn hộ đang thuê để tạo hóa đơn
             var apartments = await _context.Apartments
                 .Include(a => a.ApartmentMembers)
-                .Where(a => a.BuildingId == request.BuildingId && a.Status == "Đã thuê")
+                .Where(a => a.BuildingId == request.BuildingId && a.Status == "Đã bán")
                 .ToListAsync();
 
             if (!apartments.Any())
@@ -274,9 +282,9 @@ public class InvoiceService : IInvoiceService
 
             var apartmentIds = apartments.Select(a => a.ApartmentId).ToList();
 
-            // Lấy toàn bộ bảng giá của tòa nhà (bao gồm mọi phương thức tính)
+            // Lấy bảng giá của tòa nhà (loại trừ ONE_TIME vì đây là phí thu một lần, không phải phí hàng tháng)
             var priceQuotations = await _context.PriceQuotations
-                .Where(pq => pq.BuildingId == request.BuildingId)
+                .Where(pq => pq.BuildingId == request.BuildingId && pq.CalculationMethod != "ONE_TIME")
                 .ToListAsync();
 
             if (!priceQuotations.Any())
@@ -739,6 +747,127 @@ public class InvoiceService : IInvoiceService
         {
             await transaction.RollbackAsync();
             return (false, ApiResponse.SM40_SYSTEM_ERROR);
+        }
+    }
+
+    
+    //Gửi email thông báo hóa đơn cho từng resident
+     
+    public async Task<(int SentCount, int FailedCount)> SendInvoiceEmailsToResidentsAsync(string buildingId, string billingPeriod)
+    {
+        try
+        {
+            // Lấy danh sách invoices vừa tạo cho building này trong billing period
+            // Sử dụng join để tránh lỗi navigation property trong Where clause
+            var invoiceIds = await _context.Invoices
+                .Join(
+                    _context.Apartments,
+                    invoice => invoice.ApartmentId,
+                    apartment => apartment.ApartmentId,
+                    (invoice, apartment) => new { Invoice = invoice, Apartment = apartment }
+                )
+                .Where(x => 
+                    x.Apartment.BuildingId == buildingId &&
+                    x.Invoice.Description != null &&
+                    x.Invoice.Description.Contains($"BillingPeriod: {billingPeriod}") &&
+                    x.Invoice.Status == "PENDING" &&
+                    x.Invoice.FeeType == "MONTHLY_BILLING")
+                .Select(x => x.Invoice.InvoiceId)
+                .ToListAsync();
+
+            if (!invoiceIds.Any())
+            {
+                _logger?.LogInformation(
+                    "SendInvoiceEmailsToResidentsAsync: No invoices found to send emails for building {BuildingId} ({BillingPeriod}).",
+                    buildingId,
+                    billingPeriod);
+                return (0, 0);
+            }
+
+            // Lấy đầy đủ thông tin invoices với navigation properties
+            var invoices = await _context.Invoices
+                .Where(i => invoiceIds.Contains(i.InvoiceId))
+                .Include(i => i.Apartment)
+                    .ThenInclude(a => a.Users)
+                        .ThenInclude(u => u.Role)
+                .ToListAsync();
+
+            if (!invoices.Any())
+            {
+                _logger?.LogInformation(
+                    "SendInvoiceEmailsToResidentsAsync: No invoices found to send emails for building {BuildingId} ({BillingPeriod}).",
+                    buildingId,
+                    billingPeriod);
+                return (0, 0);
+            }
+
+            int emailSentCount = 0;
+            int emailFailedCount = 0;
+
+            foreach (var invoice in invoices)
+            {
+                try
+                {
+                    // Lấy resident email từ apartment users (ưu tiên user có role "resident")
+                    var resident = invoice.Apartment.Users
+                        .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident")
+                        ?? invoice.Apartment.Users.FirstOrDefault();
+
+                    if (resident == null || string.IsNullOrWhiteSpace(resident.Email))
+                    {
+                        _logger?.LogWarning(
+                            "SendInvoiceEmailsToResidentsAsync: No resident email found for invoice {InvoiceId} (Apartment {ApartmentId}).",
+                            invoice.InvoiceId,
+                            invoice.ApartmentId);
+                        emailFailedCount++;
+                        continue;
+                    }
+
+                    // Tạo nội dung email từ template
+                    var subject = $"Thông báo hóa đơn tháng {billingPeriod} - {invoice.Apartment.Code}";
+                    var htmlMessage = EmailTemplateHelper.GetInvoiceNotificationEmailTemplate(
+                        resident.Name,
+                        invoice.Apartment.Code,
+                        billingPeriod,
+                        invoice.InvoiceId,
+                        invoice.Price,
+                        invoice.StartDate,
+                        invoice.EndDate);
+
+                    // Gửi email
+                    await _mailService.SendEmailAsync(resident.Email, subject, htmlMessage);
+                    emailSentCount++;
+
+                    _logger?.LogInformation(
+                        "SendInvoiceEmailsToResidentsAsync: Sent invoice email to {Email} for invoice {InvoiceId}.",
+                        resident.Email,
+                        invoice.InvoiceId);
+                }
+                catch (Exception ex)
+                {
+                    emailFailedCount++;
+                    _logger?.LogError(ex,
+                        "SendInvoiceEmailsToResidentsAsync: Failed to send email for invoice {InvoiceId}.",
+                        invoice.InvoiceId);
+                }
+            }
+
+            _logger?.LogInformation(
+                "SendInvoiceEmailsToResidentsAsync: Sent {SentCount} emails, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
+                emailSentCount,
+                emailFailedCount,
+                buildingId,
+                billingPeriod);
+
+            return (emailSentCount, emailFailedCount);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex,
+                "SendInvoiceEmailsToResidentsAsync: Error while sending invoice emails for building {BuildingId} ({BillingPeriod}).",
+                buildingId,
+                billingPeriod);
+            return (0, 0);
         }
     }
 

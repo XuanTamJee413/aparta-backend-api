@@ -54,12 +54,12 @@ public class MonthlyBillingJob : BackgroundService
         _logger.LogInformation("MonthlyBillingJob is stopping.");
     }
 
-	// Thực thi logic nghiệp vụ:
+	// Chayj định kỳ 
     private async Task DoWork(CancellationToken stoppingToken)
     {
 		var now = DateTime.Now;
 		var today = now.Day; 
-		var dayToTrigger = today -1;// ngày sau khi kết thúc  "reading window end"
+		var dayToTrigger = today;// ngày sau khi kết thúc  "reading window end"
 
         if (dayToTrigger <= 0)
         {
@@ -72,8 +72,8 @@ public class MonthlyBillingJob : BackgroundService
         _logger.LogInformation("MonthlyBillingJob running for billing period {BillingPeriod} targeting reading window end day {DayToTrigger}.", billingPeriod, dayToTrigger);
 
         using var scope = _scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApartaDbContext>();
         var invoiceService = scope.ServiceProvider.GetRequiredService<IInvoiceService>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApartaDbContext>();
 
         var buildings = await dbContext.Buildings
             // Chỉ lấy các tòa nhà đang hoạt động và có ngày kết thúc cửa sổ bằng dayToTrigger
@@ -107,6 +107,15 @@ public class MonthlyBillingJob : BackgroundService
                         result.ProcessedCount,
                         building.BuildingId,
                         billingPeriod);
+
+                    // Gửi email thông báo cho từng resident sau khi tạo invoice thành công
+                    var emailResult = await invoiceService.SendInvoiceEmailsToResidentsAsync(building.BuildingId, billingPeriod);
+                    _logger.LogInformation(
+                        "MonthlyBillingJob: Sent {SentCount} emails, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
+                        emailResult.SentCount,
+                        emailResult.FailedCount,
+                        building.BuildingId,
+                        billingPeriod);
                 }
                 else
                 {
@@ -131,7 +140,7 @@ public class MonthlyBillingJob : BackgroundService
     private static TimeSpan GetDelayUntilNextRun()
     {
 		var now = DateTime.Now;
-		var nextRun = new DateTime(now.Year, now.Month, now.Day, 7, 0 , 0); // Mốc 07:00 hôm nay
+		var nextRun = new DateTime(now.Year, now.Month, now.Day, 23, 48 , 0); // Mốc 07:00 hôm nay
 
         if (now >= nextRun)
         {

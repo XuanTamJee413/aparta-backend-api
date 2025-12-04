@@ -1351,7 +1351,15 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-        });
+
+			entity.Property(e => e.OpenTime)
+		        .HasColumnType("time")       
+		        .HasColumnName("open_time"); 
+
+			entity.Property(e => e.CloseTime)
+				.HasColumnType("time")
+				.HasColumnName("close_time");
+		});
 
         modelBuilder.Entity<UtilityBooking>(entity =>
         {

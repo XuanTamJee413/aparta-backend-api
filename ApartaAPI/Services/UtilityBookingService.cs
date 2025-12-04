@@ -59,31 +59,29 @@ namespace ApartaAPI.Services
 				}
 			}
 
-			var openTime = new TimeSpan(6, 0, 0);
-			var closeTime = new TimeSpan(22, 0, 0);
 
-			if (createDto.BookingDate.TimeOfDay < openTime)
+			if (createDto.BookingDate.TimeOfDay < utility.OpenTime)
 			{
-				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM49_OPENING_HOURS_INVALID);
+				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM49_OPENING_HOURS_INVALID.Replace("{hours}", utility.OpenTime.ToString()));
 			}
 
-			if (createDto.BookedAt.TimeOfDay > closeTime)
+			if (createDto.BookedAt.TimeOfDay > utility.CloseTime)
 			{
-				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM50_CLOSING_HOURS_INVALID);
+				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM50_CLOSING_HOURS_INVALID.Replace("{hours}", utility.CloseTime.ToString()));
 			}
 
 			var allBookings = await _bookingRepository.GetAllAsync();
 
-			int pendingOnTargetDate = allBookings.Count(b =>
-				b.ResidentId == residentId &&
-				b.Status == "Pending" &&
-				b.BookingDate.Date == createDto.BookingDate.Date
-			);
+			//int pendingOnTargetDate = allBookings.Count(b =>
+			//	b.ResidentId == residentId &&
+			//	b.Status == "Pending" &&
+			//	b.BookingDate.Date == createDto.BookingDate.Date
+			//);
 
-			if (pendingOnTargetDate >= 1)
-			{
-				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM51_PENDING_LIMIT_EXCEEDED);
-			}
+			//if (pendingOnTargetDate >= 1)
+			//{
+			//	return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM51_PENDING_LIMIT_EXCEEDED);
+			//}
 
 			var userBookings = allBookings.Where(b => b.ResidentId == residentId).ToList();
 			int bookingsOnDay = userBookings.Count(b =>
@@ -122,7 +120,7 @@ namespace ApartaAPI.Services
 				ResidentId = residentId,
 				BookingDate = createDto.BookingDate,
 				BookedAt = createDto.BookedAt,
-				Status = "Pending",
+				Status = "Approved",
 				ResidentNote = createDto.ResidentNote,
 				CreatedAt = DateTime.UtcNow,
 				UpdatedAt = DateTime.UtcNow

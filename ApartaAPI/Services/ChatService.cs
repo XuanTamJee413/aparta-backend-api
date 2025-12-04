@@ -1,8 +1,11 @@
 ﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.Chat;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApartaAPI.Services
@@ -12,15 +15,17 @@ namespace ApartaAPI.Services
         private readonly ApartaDbContext _context; // Dùng cho logic nghiệp vụ ngoài Chat
         private readonly IInteractionRepository _interactionRepo;
         private readonly IMessageRepository _messageRepo;
+        private readonly IMapper _mapper; // [CẬP NHẬT] Inject Mapper
 
         public ChatService(
             ApartaDbContext context,
             IInteractionRepository interactionRepo,
-            IMessageRepository messageRepo)
+            IMessageRepository messageRepo, IMapper mapper)
         {
             _context = context;
             _interactionRepo = interactionRepo;
             _messageRepo = messageRepo;
+            _mapper = mapper;
         }
 
         // ===================================================================
@@ -129,37 +134,46 @@ namespace ApartaAPI.Services
         // ===================================================================
         // LOGIC 3: LẤY LỊCH SỬ TIN NHẮN (LOAD MORE)
         // ===================================================================
-        public async Task<IEnumerable<MessageDetailDto>> GetMessageHistoryAsync(
+        public async Task<PagedList<MessageDetailDto>> GetMessageHistoryAsync(
             string interactionId,
             string currentUserId,
-            int pageNumber,
-            int pageSize)
+            ChatQueryParameters queryParams)
         {
-            // Kiểm tra quyền truy cập (Người dùng có thuộc Interaction này không?)
+            // 1. Kiểm tra quyền truy cập (Bảo mật)
             var interaction = await _context.Interactions.FindAsync(interactionId);
             if (interaction == null || (interaction.ResidentId != currentUserId && interaction.StaffId != currentUserId))
             {
                 throw new UnauthorizedAccessException("Không có quyền truy cập vào cuộc hội thoại này.");
             }
 
-            int skip = (pageNumber - 1) * pageSize;
-            var messages = await _messageRepo.GetMessagesAsync(interactionId, skip, pageSize);
-
-            // Đánh dấu là đã đọc (Mark as Read)
-            if (pageNumber == 1) // Chỉ đánh dấu khi người dùng mở lần đầu (hoặc load trang đầu)
+            // 2. Đánh dấu đã đọc (Giữ nguyên logic cũ)
+            if (queryParams.PageNumber == 1)
             {
                 await _messageRepo.MarkAsReadAsync(interactionId, currentUserId);
             }
 
-            // Chuyển đổi sang DTO
-            return messages.Select(m => new MessageDetailDto
-            {
-                MessageId = m.MessageId,
-                SenderId = m.SenderId,
-                Content = m.Content,
-                SentAt = m.SentAt,
-                IsRead = m.IsRead
-            });
+            // 3. Xây dựng Query (Chưa execute vào DB)
+            var query = _context.Messages.AsNoTracking()
+                .Where(m => m.InteractionId == interactionId)
+                .OrderByDescending(m => m.SentAt); // Lấy tin mới nhất trước
+
+            // 4. Đếm tổng số (Query 1)
+            var totalCount = await query.CountAsync();
+
+            // 5. Phân trang & Map DTO trực tiếp (Query 2)
+            var items = await query
+                .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
+                .OrderBy(m => m.SentAt) // Đảo ngược lại để hiển thị từ cũ -> mới trên UI
+                .ProjectTo<MessageDetailDto>(_mapper.ConfigurationProvider) // Dùng AutoMapper
+                .ToListAsync();
+
+            // 6. Trả về PagedList
+            return new PagedList<MessageDetailDto>(
+                items,
+                totalCount,
+                queryParams.PageNumber,
+                queryParams.PageSize);
         }
 
         // ===================================================================
@@ -265,7 +279,8 @@ namespace ApartaAPI.Services
                     UserId = u.UserId,
                     FullName = u.Name,
                     AvatarUrl = u.AvatarUrl,
-                    Role = u.Role.RoleName
+                    Role = u.Role.RoleName,
+                    ApartmentCode = u.Apartment != null ? u.Apartment.Code : null
                 })
                 .Distinct() // Loại bỏ trùng lặp nếu có
                 .OrderBy(p => p.FullName)

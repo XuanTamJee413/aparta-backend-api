@@ -2,6 +2,7 @@
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Services.Interfaces;
 using ApartaAPI.Utils.Helper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,8 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "ManagerAccess")]
+
     public class PriceQuotationsController : ControllerBase
     {
         private readonly IPriceQuotationService _priceQuotationService;

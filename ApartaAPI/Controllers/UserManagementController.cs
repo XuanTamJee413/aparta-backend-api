@@ -2,14 +2,16 @@
 using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.User;
 using ApartaAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization; // [MỚI]
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // [MỚI] Yêu cầu đăng nhập mặc định
+    [Authorize]
     public class UserManagementController : ControllerBase
     {
         private readonly IUserManagementService _userService;
@@ -21,106 +23,107 @@ namespace ApartaAPI.Controllers
             _roleService = roleService;
         }
 
-        // GET: api/Roles
-        [HttpGet]
+        // GET: api/UserManagement/roles
+        [HttpGet("roles")]
         public async Task<ActionResult<ApiResponse<IEnumerable<RoleDto>>>> GetRoles()
         {
             var response = await _roleService.GetAllRolesAsync();
             return Ok(response);
         }
-        // 1. GET Staffs - Chỉ Admin được xem
+
+        // 1. GET Staffs
         [HttpGet("staffs")]
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetStaffs([FromQuery] UserQueryParams queryParams)
         {
-            var result = await _userService.GetStaffAccountsAsync(queryParams);
-            return Ok(result);
+            var response = await _userService.GetStaffAccountsAsync(queryParams);
+            return Ok(response);
         }
 
-        // 2. GET Residents - Admin và Manager được xem
+        // 2. GET Residents
         [HttpGet("residents")]
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetResidents([FromQuery] UserQueryParams queryParams)
         {
-            var result = await _userService.GetResidentAccountsAsync(queryParams);
-            return Ok(result);
+            var response = await _userService.GetResidentAccountsAsync(queryParams);
+            return Ok(response);
         }
 
-        // 3. CREATE Staff - Chỉ Manager tạo
+        // 3. CREATE Staff
         [HttpPost("staffs")]
+        [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<UserAccountDto>>> CreateStaff([FromBody] StaffCreateDto createDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT));
             }
-            try
-            {
-                var newUser = await _userService.CreateStaffAccountAsync(createDto);
 
-                return CreatedAtAction(
-                    nameof(GetStaffs),
-                    new { id = newUser.UserId },
-                    ApiResponse<UserAccountDto>.SuccessWithCode(newUser, ApiResponse.SM04_CREATE_SUCCESS, "Nhân viên"));
-            }
-            catch (InvalidOperationException ex)
+            var response = await _userService.CreateStaffAccountAsync(createDto);
+
+            if (!response.Succeeded)
             {
-                // Xử lý lỗi logic (trùng email/phone)
-                return Conflict(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, null, ex.Message));
+                if (response.Message == ApiResponse.SM16_DUPLICATE_CODE)
+                    return Conflict(response);
+
+                return BadRequest(response);
             }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, ex.Message));
-            }
+
+            return CreatedAtAction(nameof(GetStaffs), new { id = response.Data!.UserId }, response);
         }
 
-        // 4. TOGGLE Status - Admin/Manager quản lý
+        // 4. TOGGLE Status
         [HttpPut("{userId}/status")]
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<UserAccountDto>>> ToggleStatus(string userId, [FromBody] StatusUpdateDto dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT));
-            }
-            try
+
+            var response = await _userService.ToggleUserStatusAsync(userId, dto);
+
+            if (!response.Succeeded)
             {
-                var updatedUser = await _userService.ToggleUserStatusAsync(userId, dto);
-                return Ok(ApiResponse<UserAccountDto>.Success(updatedUser, ApiResponse.SM03_UPDATE_SUCCESS));
+                if (response.Message == ApiResponse.SM01_NO_RESULTS) return NotFound(response);
+                return BadRequest(response);
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM01_NO_RESULTS, null, ex.Message));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, ex.Message));
-            }
+            return Ok(response);
         }
 
-        // 5. UPDATE Assignments - Chỉ Manager điều phối nhân viên
+        // 5. UPDATE Assignments
         [HttpPut("staffs/{staffId}/assignments")]
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse>> UpdateStaffAssignments(string staffId, [FromBody] AssignmentUpdateDto dto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ApiResponse.Fail(ApiResponse.SM25_INVALID_INPUT));
+
+            var response = await _userService.UpdateStaffAssignmentAsync(staffId, dto);
+
+            if (!response.Succeeded)
+            {
+                if (response.Message == ApiResponse.SM01_NO_RESULTS) return NotFound(response);
+                return StatusCode(500, response);
+            }
+            return Ok(response);
+        }
+        // Thêm vào class UserManagementController
+
+        // 6. RESET PASSWORD (Admin/Manager force reset cho Staff)
+        [HttpPost("staffs/{id}/reset-password")]
+        [Authorize(Policy = "ManagerAccess")]
+        public async Task<ActionResult<ApiResponse>> ResetStaffPassword(string id)
+        {
+            // Không cần validate ModelState vì không có Body
+            var response = await _userService.ResetStaffPasswordAsync(id);
+
+            if (!response.Succeeded)
+            {
+                if (response.Message == ApiResponse.SM01_NO_RESULTS) return NotFound(response);
+                return BadRequest(response);
             }
 
-            try
-            {
-                await _userService.UpdateStaffAssignmentAsync(staffId, dto);
-                return Ok(ApiResponse.Success(ApiResponse.SM06_TASK_ASSIGN_SUCCESS));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS, null, ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ApiResponse.Fail(ApiResponse.SM40_SYSTEM_ERROR, null, ex.Message));
-            }
+            return Ok(response);
         }
     }
 }

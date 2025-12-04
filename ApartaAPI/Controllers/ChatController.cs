@@ -1,4 +1,5 @@
 ﻿using ApartaAPI.DTOs.Chat;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Hubs;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chatService;
@@ -71,26 +73,33 @@ namespace ApartaAPI.Controllers
         // GET: api/Chat/interactions/{interactionId}/messages?pageNumber=1&pageSize=10
         // ===================================================================
         [HttpGet("interactions/{interactionId}/messages")]
-        public async Task<ActionResult<IEnumerable<MessageDetailDto>>> GetMessages(
+        public async Task<ActionResult<ApiResponse<PagedList<MessageDetailDto>>>> GetMessages(
             string interactionId,
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10) // Mặc định lấy 10 tin nhắn mới nhất
+            [FromQuery] ChatQueryParameters queryParams) // [CHUẨN HÓA] Dùng Object param
         {
             try
             {
                 var currentUserId = User.FindFirst("id")?.Value;
-                if (currentUserId == null) return Unauthorized();
+                if (currentUserId == null) return Unauthorized(ApiResponse.Fail("User ID not found."));
 
-                var messages = await _chatService.GetMessageHistoryAsync(interactionId, currentUserId, pageNumber, pageSize);
-                return Ok(messages);
+                // Gọi Service đã refactor
+                var pagedMessages = await _chatService.GetMessageHistoryAsync(interactionId, currentUserId, queryParams);
+
+                // [CHUẨN HÓA] Trả về ApiResponse
+                if (pagedMessages.TotalCount == 0)
+                {
+                    return Ok(ApiResponse<PagedList<MessageDetailDto>>.Success(pagedMessages, ApiResponse.SM01_NO_RESULTS));
+                }
+
+                return Ok(ApiResponse<PagedList<MessageDetailDto>>.Success(pagedMessages));
             }
             catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return NotFound("Cuộc hội thoại không tồn tại.");
+                return StatusCode(500, ApiResponse.Fail(ApiResponse.SM40_SYSTEM_ERROR, null, ex.Message));
             }
         }
 

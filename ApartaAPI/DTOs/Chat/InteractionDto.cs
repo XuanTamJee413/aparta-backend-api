@@ -8,6 +8,8 @@ namespace ApartaAPI.DTOs.Chat
         public string FullName { get; set; } = null!;
         public string? AvatarUrl { get; set; }
         public string Role { get; set; } = null!;
+
+        public string? ApartmentCode { get; set; }
     }
     public class InteractionListDto
     {

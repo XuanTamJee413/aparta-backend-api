@@ -10,7 +10,6 @@ namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly ApartaDbContext _context;
@@ -22,7 +21,6 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Dashboard/statistics
         [HttpGet("statistics")]
-        [Authorize(Roles = "admin,manager")]
         [ProducesResponseType(typeof(ApiResponse<DashboardStatisticsDto>), 200)]
         public async Task<ActionResult<ApiResponse<DashboardStatisticsDto>>> GetStatistics()
         {
@@ -161,7 +159,6 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Dashboard/apartment-status-by-project
         [HttpGet("apartment-status-by-project")]
-        [Authorize(Roles = "admin,manager")]
         [ProducesResponseType(typeof(ApiResponse<List<ProjectApartmentStatusDto>>), 200)]
         public async Task<ActionResult<ApiResponse<List<ProjectApartmentStatusDto>>>> GetApartmentStatusByProject()
         {
@@ -206,7 +203,6 @@ namespace ApartaAPI.Controllers
 
         // GET: api/Dashboard/revenue-by-project?year=2024
         [HttpGet("revenue-by-project")]
-        [Authorize(Roles = "admin,manager")]
         [ProducesResponseType(typeof(ApiResponse<List<ProjectRevenueDto>>), 200)]
         public async Task<ActionResult<ApiResponse<List<ProjectRevenueDto>>>> GetRevenueByProject([FromQuery] int? year = null)
         {
@@ -271,6 +267,35 @@ namespace ApartaAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResponse<List<ProjectRevenueDto>>.Fail($"Lỗi khi lấy thống kê: {ex.Message}"));
+            }
+        }
+
+        // GET: api/Dashboard/available-years
+        [HttpGet("available-years")]
+        [ProducesResponseType(typeof(ApiResponse<List<int>>), 200)]
+        public async Task<ActionResult<ApiResponse<List<int>>>> GetAvailableYears()
+        {
+            try
+            {
+                // Lấy danh sách các năm có invoice đã thanh toán
+                var years = await _context.Invoices
+                    .Where(i => i.Status == "paid" && i.CreatedAt.HasValue)
+                    .Select(i => i.CreatedAt.Value.Year)
+                    .Distinct()
+                    .OrderByDescending(y => y)
+                    .ToListAsync();
+
+                // Nếu không có năm nào, trả về năm hiện tại
+                if (!years.Any())
+                {
+                    years.Add(DateTime.UtcNow.Year);
+                }
+
+                return Ok(ApiResponse<List<int>>.Success(years, "Lấy danh sách năm thành công."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<List<int>>.Fail($"Lỗi khi lấy danh sách năm: {ex.Message}"));
             }
         }
     }

@@ -48,8 +48,7 @@
         // SM14: Khai báo khách/ở tạm thành công
         public const string SM14_DECLARATION_SUCCESS = "Khai báo khách/ở tạm thành công.";
 
-        // SM
-        // : Thanh toán thất bại (dùng chung cho lỗi thanh toán và lỗi hệ thống)
+        // SM15: Thanh toán thất bại (dùng chung cho lỗi thanh toán và lỗi hệ thống)
         public const string SM15_PAYMENT_FAILED = "Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.";
 
         // SM16: Mã trùng lặp (với {fieldName} - dùng chung cho BuildingCode, ProjectCode, SubscriptionCode, RoleName, Phone, Email, StaffCode)
@@ -172,7 +171,10 @@
 		// SM56: Đặt trước tối thiểu 30p
 		public const string SM56_BOOKING_MIN_TIME = "Bạn cần đặt trước ít nhất 1 tiếng.";
 
-		public static string GetMessageFromCode(string code)
+        // SM57: Gia hạn thành công
+        public const string SM57_SUBSCRIPTION_EXTENDED = "Gia hạn gói dịch vụ thành công.";
+
+        public static string GetMessageFromCode(string code)
         {
             return code switch
             {
@@ -232,7 +234,8 @@
 				SM54_CANCEL_EXPIRED => SM54_CANCEL_EXPIRED,
 				SM55_ALREADY_CANCELLED => SM55_ALREADY_CANCELLED,
 				SM56_BOOKING_MIN_TIME => SM56_BOOKING_MIN_TIME,
-				_ => code
+                SM57_SUBSCRIPTION_EXTENDED => SM57_SUBSCRIPTION_EXTENDED,
+                _ => code
             };
         }
 

@@ -47,7 +47,6 @@ namespace ApartaAPI.Controllers
         public async Task<ActionResult<VehicleDto>> GetVehicle(string id)
         {
             var vehicle = await _service.GetByIdAsync(id);
-            if (vehicle == null) return NotFound();
             return Ok(vehicle);
         }
 
@@ -71,7 +70,6 @@ namespace ApartaAPI.Controllers
         public async Task<IActionResult> PutVehicle(string id, [FromBody] VehicleUpdateDto request)
         {
             var updated = await _service.UpdateAsync(id, request);
-            if (!updated) return NotFound();
             return Ok(); 
         }
 

@@ -103,6 +103,86 @@ namespace ApartaAPI.Services
             return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(dtos);
         }
 
+        public async Task<ApiResponse<IEnumerable<ApartmentMemberDto>>> GetByUserBuildingsAsync(string userId,ApartmentMemberQueryParameters query)
+        {
+            var rawSearch = string.IsNullOrWhiteSpace(query.SearchTerm)
+                ? null
+                : query.SearchTerm.Trim();
+
+            var searchTerm = rawSearch?.ToLowerInvariant();
+
+            List<string>? apartmentIdsByCode = null;
+            if (searchTerm != null)
+            {
+                var matchedApartments = await _apartmentRepository.FindAsync(a =>
+                    a.Code != null && a.Code.ToLower().Contains(searchTerm));
+
+                apartmentIdsByCode = matchedApartments
+                    .Where(a => a != null && a.ApartmentId != null)
+                    .Select(a => a.ApartmentId)
+                    .ToList();
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            Expression<Func<ApartmentMember, bool>> predicate = m =>
+                m.Apartment != null &&
+                m.Apartment.Building.StaffBuildingAssignments.Any(sba =>
+                    sba.UserId == userId &&
+                    sba.IsActive &&
+                    (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                )
+
+                && (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value)
+
+                && (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId)
+
+                && (
+                    searchTerm == null
+                    ||
+                    (m.Name != null && m.Name.ToLower().Contains(searchTerm))
+                    ||
+                    (m.PhoneNumber != null && m.PhoneNumber.ToLower().Contains(searchTerm))
+                    ||
+                    (m.IdNumber != null && m.IdNumber.ToLower().Contains(searchTerm))
+                    ||
+                    (apartmentIdsByCode != null && apartmentIdsByCode.Contains(m.ApartmentId))
+                );
+
+            var entities = await _repository.FindAsync(predicate);
+
+            var validEntities = entities
+                .Where(m => m != null)
+                .ToList();
+
+            IOrderedEnumerable<ApartmentMember> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "name":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(m => m.Name ?? string.Empty)
+                        : validEntities.OrderBy(m => m.Name ?? string.Empty);
+                    break;
+
+                default:
+                    sortedEntities = validEntities.OrderBy(m => m.Name ?? string.Empty);
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<ApartmentMemberDto>>(sortedEntities);
+
+            if (!dtos.Any())
+            {
+                return ApiResponse<IEnumerable<ApartmentMemberDto>>
+                    .Fail(ApiResponse.SM01_NO_RESULTS);
+            }
+
+            return ApiResponse<IEnumerable<ApartmentMemberDto>>.Success(dtos);
+        }
+
+
         public async Task<ApartmentMemberDto?> GetByIdAsync(string id)
         {
             var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == id);

@@ -244,6 +244,11 @@ namespace ApartaAPI.Extensions
                     ctx.User.IsInRole("manager") ||
                     ctx.User.HasClaim("permission", "staffassignment.update")
                 ));
+
+                // Policy cho User Management
+                options.AddPolicy("CanManageStaff", policy => policy.RequireRole("admin")); // Chỉ Admin quản lý nhân viên
+                options.AddPolicy("CanViewResidents", policy => policy.RequireRole("admin", "manager")); // Admin & Manager xem cư dân
+                options.AddPolicy("CanUpdateUserStatus", policy => policy.RequireRole("admin", "manager"));
             });
 
             return services;

@@ -18,28 +18,26 @@ namespace ApartaAPI.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Proposal>> GetStaffAssignedProposalsAsync(string staffId)
+        public IQueryable<Proposal> GetStaffAssignedProposalsAsync(string staffId)
         {
-            // 1. Lấy danh sách các tòa nhà mà staff đang phụ trách (IsActive = true)
-            var buildingIds = await _context.Set<StaffBuildingAssignment>()
+            var buildingIds = _context.Set<StaffBuildingAssignment>()
                 .Where(sba => sba.UserId == staffId && sba.IsActive)
-                .Select(sba => sba.BuildingId)
-                .ToListAsync();
-            return await _dbSet
+                .Select(sba => sba.BuildingId);
+
+            return _dbSet
                 .Include(p => p.Resident)
-                .ThenInclude(u => u.Apartment) // Load Apartment của Resident để check BuildingId
+                .ThenInclude(u => u.Apartment)
                 .Where(p =>
-                    p.OperationStaffId == staffId ||
-                    (
+                    p.OperationStaffId == staffId || (
                         p.Status == "Pending" &&
                         p.Resident.ApartmentId != null &&
                         buildingIds.Contains(p.Resident.Apartment.BuildingId)
                     )
                 )
-                .Include(p => p.OperationStaff) 
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+                .Include(p => p.OperationStaff)
+                .OrderByDescending(p => p.CreatedAt);
         }
+
 
         public async Task<Proposal?> GetProposalDetailsAsync(string proposalId)
         {

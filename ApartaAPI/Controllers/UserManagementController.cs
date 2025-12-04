@@ -1,55 +1,52 @@
-﻿/* --- File: Controllers/UserManagementController.cs --- */
-
-using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.DTOs.Common;
+using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.User;
 using ApartaAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization; // [MỚI]
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // [MỚI] Yêu cầu đăng nhập mặc định
     public class UserManagementController : ControllerBase
     {
         private readonly IUserManagementService _userService;
-        public UserManagementController(IUserManagementService userService)
+        private readonly IRoleService _roleService;
+
+        public UserManagementController(IUserManagementService userService, IRoleService roleService)
         {
             _userService = userService;
+            _roleService = roleService;
         }
 
-        // ===================================
-        // 1. STAFF MANAGEMENT (LẤY DANH SÁCH)
-        // GET: api/UserManagement/staffs?pageNumber=1...
-        // ===================================
+        // GET: api/Roles
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<IEnumerable<RoleDto>>>> GetRoles()
+        {
+            var response = await _roleService.GetAllRolesAsync();
+            return Ok(response);
+        }
+        // 1. GET Staffs - Chỉ Admin được xem
         [HttpGet("staffs")]
+        [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetStaffs([FromQuery] UserQueryParams queryParams)
         {
             var result = await _userService.GetStaffAccountsAsync(queryParams);
-            // Service đã trả về ApiResponse<PagedList<T>>, chỉ cần Ok(result)
             return Ok(result);
         }
 
-        // ===================================
-        // 2. RESIDENT MANAGEMENT (LẤY DANH SÁCH)
-        // GET: api/UserManagement/residents?pageNumber=1...
-        // ===================================
+        // 2. GET Residents - Admin và Manager được xem
         [HttpGet("residents")]
+        [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetResidents([FromQuery] UserQueryParams queryParams)
         {
             var result = await _userService.GetResidentAccountsAsync(queryParams);
             return Ok(result);
         }
 
-        // ===================================
-        // 3. TẠO STAFF MỚI
-        // POST: api/UserManagement/staffs
-        // ===================================
+        // 3. CREATE Staff - Chỉ Manager tạo
         [HttpPost("staffs")]
         public async Task<ActionResult<ApiResponse<UserAccountDto>>> CreateStaff([FromBody] StaffCreateDto createDto)
         {
@@ -61,36 +58,25 @@ namespace ApartaAPI.Controllers
             {
                 var newUser = await _userService.CreateStaffAccountAsync(createDto);
 
-                // Trả về 201 Created với ApiResponse thành công
                 return CreatedAtAction(
                     nameof(GetStaffs),
                     new { id = newUser.UserId },
-                    ApiResponse<UserAccountDto>.SuccessWithCode(newUser, ApiResponse.SM04_CREATE_SUCCESS, "User"));
+                    ApiResponse<UserAccountDto>.SuccessWithCode(newUser, ApiResponse.SM04_CREATE_SUCCESS, "Nhân viên"));
             }
             catch (InvalidOperationException ex)
             {
-                // Xử lý lỗi trùng lặp (Email/Phone) từ Service
-                if (ex.Message.Contains("Email đã tồn tại."))
-                {
-                    return Conflict(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email"));
-                }
-                if (ex.Message.Contains("Số điện thoại đã tồn tại."))
-                {
-                    return Conflict(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Phone"));
-                }
-                return BadRequest(ApiResponse<UserAccountDto>.Fail(ex.Message));
+                // Xử lý lỗi logic (trùng email/phone)
+                return Conflict(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, null, ex.Message));
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ApiResponse<UserAccountDto>.Fail(ex.Message));
+                return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, ex.Message));
             }
         }
 
-        // ===================================
-        // 4. ACTIVE/DEACTIVE TÀI KHOẢN (Chung cho Staff/Resident)
-        // PUT: api/UserManagement/{userId}/status
-        // ===================================
+        // 4. TOGGLE Status - Admin/Manager quản lý
         [HttpPut("{userId}/status")]
+        [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<UserAccountDto>>> ToggleStatus(string userId, [FromBody] StatusUpdateDto dto)
         {
             if (!ModelState.IsValid)
@@ -99,28 +85,22 @@ namespace ApartaAPI.Controllers
             }
             try
             {
-                // Service trả về UserAccountDto, Controller bọc lại
                 var updatedUser = await _userService.ToggleUserStatusAsync(userId, dto);
-
-                if (updatedUser == null) return NotFound(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM01_NO_RESULTS));
-
                 return Ok(ApiResponse<UserAccountDto>.Success(updatedUser, ApiResponse.SM03_UPDATE_SUCCESS));
             }
-            catch (KeyNotFoundException)
+            catch (KeyNotFoundException ex)
             {
-                return NotFound(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM01_NO_RESULTS));
+                return NotFound(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM01_NO_RESULTS, null, ex.Message));
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ApiResponse<UserAccountDto>.Fail(ex.Message));
+                return BadRequest(ApiResponse<UserAccountDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, ex.Message));
             }
         }
 
-        // ===================================
-        // 5. CHUYỂN VỊ TRÍ LÀM VIỆC (Staff)
-        // PUT: api/UserManagement/staffs/{staffId}/assignments
-        // ===================================
+        // 5. UPDATE Assignments - Chỉ Manager điều phối nhân viên
         [HttpPut("staffs/{staffId}/assignments")]
+        [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse>> UpdateStaffAssignments(string staffId, [FromBody] AssignmentUpdateDto dto)
         {
             if (!ModelState.IsValid)
@@ -131,21 +111,15 @@ namespace ApartaAPI.Controllers
             try
             {
                 await _userService.UpdateStaffAssignmentAsync(staffId, dto);
-
-                // Trả về OK với thông báo thành công chuẩn hóa
-                return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
+                return Ok(ApiResponse.Success(ApiResponse.SM06_TASK_ASSIGN_SUCCESS));
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ApiResponse.Fail($"Lỗi: {ex.Message}")); // Dùng NotFound nếu là lỗi ID không tồn tại
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ApiResponse.Fail($"Lỗi: {ex.Message}"));
+                return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS, null, ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse.Fail($"Lỗi hệ thống: {ex.Message}"));
+                return StatusCode(500, ApiResponse.Fail(ApiResponse.SM40_SYSTEM_ERROR, null, ex.Message));
             }
         }
     }

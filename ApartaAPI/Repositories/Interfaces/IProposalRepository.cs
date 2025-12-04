@@ -8,7 +8,7 @@ namespace ApartaAPI.Repositories.Interfaces
         Task<IEnumerable<Proposal>> GetResidentProposalsAsync(string residentId);
 
         // Staff: Lấy tất cả Proposal chưa xử lý mà Staff này phụ trách
-        Task<IEnumerable<Proposal>> GetStaffAssignedProposalsAsync(string staffId);
+        IQueryable<Proposal> GetStaffAssignedProposalsAsync(string staffId);
 
         // Staff: Lấy Proposal chi tiết (cần Include Resident)
         Task<Proposal?> GetProposalDetailsAsync(string proposalId);

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +30,26 @@ namespace ApartaAPI.Controllers
             var apiResponse = await _service.GetAllAsync(query);
             return Ok(apiResponse);
         }
+
+        [HttpGet("my-buildings")]
+        [Authorize(Policy = "CanReadMember")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentMemberDto>>>> GetApartmentMembersByMyBuildings( [FromQuery] ApartmentMemberQueryParameters query)
+        {
+            var userId =
+                User.FindFirst("id")?.Value
+                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(
+                    ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập.")
+                );
+            }
+
+            var apiResponse = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(apiResponse);
+        }
+
 
         [HttpGet("{id}")]
         [Authorize(Policy = "CanReadMember")]

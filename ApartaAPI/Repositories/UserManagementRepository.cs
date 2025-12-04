@@ -1,10 +1,8 @@
-﻿/* --- File: Repositories/UserManagementRepository.cs --- */
-
-using ApartaAPI.Data;
-using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.User;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
+using ApartaAPI.DTOs.Common; // Using PagedList from Common
 using Microsoft.EntityFrameworkCore;
 
 namespace ApartaAPI.Repositories
@@ -19,65 +17,72 @@ namespace ApartaAPI.Repositories
 
         public async Task<PagedList<User>> GetPagedUsersAsync(UserQueryParams queryParams, List<string> rolesToInclude)
         {
-            // TRUY VẤN NÂNG CAO TẠM THỜI ĐỂ TEST CASE-INSENSITIVE CHO ROLE
-            var query = _context.Users
-                .Where(u => !u.IsDeleted && u.Role != null && rolesToInclude.Select(r => r.ToLower()).Contains(u.Role.RoleName.ToLower()));
-            // Lọc theo Status
+            // 1. Query cơ bản
+            var query = _context.Users.AsNoTracking()
+                .Include(u => u.Role) // Quan trọng để map RoleName
+                .Include(u => u.Apartment) // Quan trọng để map ApartmentCode cho resident
+                .Where(u => !u.IsDeleted);
+
+            // 2. Filter theo Role List
+            if (rolesToInclude != null && rolesToInclude.Any())
+            {
+                // Chuyển role input về lower để so sánh chính xác
+                var lowerRoles = rolesToInclude.Select(r => r.ToLower()).ToList();
+                query = query.Where(u => u.Role != null && lowerRoles.Contains(u.Role.RoleName.ToLower()));
+            }
+
+            // 3. Filter params
             if (!string.IsNullOrEmpty(queryParams.Status))
             {
-                query = query.Where(u => u.Status.ToLower() == queryParams.Status.ToLower());
+                var s = queryParams.Status.Trim().ToLower();
+                query = query.Where(u => u.Status.ToLower() == s);
             }
 
-            // Tìm kiếm theo SearchTerm
             if (!string.IsNullOrEmpty(queryParams.SearchTerm))
             {
-                var search = queryParams.SearchTerm.ToLower();
-                query = query.Where(u => u.Name.ToLower().Contains(search) ||
-                                                         u.Email!.ToLower().Contains(search) ||
-                                                         u.Phone!.ToLower().Contains(search) ||
-
-                                              (u.StaffCode != null && u.StaffCode.ToLower().Contains(search)));
+                var search = queryParams.SearchTerm.Trim().ToLower();
+                query = query.Where(u =>
+                    u.Name.ToLower().Contains(search) ||
+                    (u.Email != null && u.Email.ToLower().Contains(search)) ||
+                    (u.Phone != null && u.Phone.Contains(search)) ||
+                    (u.StaffCode != null && u.StaffCode.ToLower().Contains(search)) ||
+                    (u.Apartment != null && u.Apartment.Code.ToLower().Contains(search)) // Tìm cả theo mã căn hộ
+                );
             }
 
-            // Sắp xếp (Sort) - Cần đảm bảo cột tồn tại
-            if (!string.IsNullOrEmpty(queryParams.SortColumn) && !string.IsNullOrEmpty(queryParams.SortDirection))
+            // 4. Sorting
+            if (!string.IsNullOrEmpty(queryParams.SortColumn))
             {
-                // Logic sắp xếp phức tạp nên được xử lý thông qua method mở rộng hoặc thư viện bên ngoài.
-                // Ở đây, ta chỉ sắp xếp theo CreatedAt làm mặc định
-                if (queryParams.SortDirection.ToLower() == "desc")
-                    query = query.OrderByDescending(u => u.CreatedAt);
-                else
-                    query = query.OrderBy(u => u.CreatedAt);
+                bool isDesc = queryParams.SortDirection?.ToLower() == "desc";
+                switch (queryParams.SortColumn.ToLower())
+                {
+                    case "name": query = isDesc ? query.OrderByDescending(u => u.Name) : query.OrderBy(u => u.Name); break;
+                    case "email": query = isDesc ? query.OrderByDescending(u => u.Email) : query.OrderBy(u => u.Email); break;
+                    default: query = query.OrderByDescending(u => u.CreatedAt); break;
+                }
             }
             else
             {
                 query = query.OrderByDescending(u => u.CreatedAt);
             }
 
-            // Phân trang: THAY THẾ logic CreateAsync bằng cách thực hiện phân trang thủ công
-            var source = query.Include(u => u.Role).AsNoTracking();
-
-            // 1. Đếm tổng số lượng
-            var totalCount = await source.CountAsync();
-
-            // 2. Lấy dữ liệu phân trang
-            var items = await source
+            // 5. Paging
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
                 .Take(queryParams.PageSize)
                 .ToListAsync();
 
-            // 3. Khởi tạo và trả về PagedList
             return new PagedList<User>(items, totalCount, queryParams.PageNumber, queryParams.PageSize);
         }
 
         public async Task<List<StaffBuildingAssignment>> GetStaffAssignmentsAsync(string userId)
         {
             return await _context.StaffBuildingAssignments
-                .Where(sba => sba.UserId == userId)
-                .Include(sba => sba.Building)
                 .AsNoTracking()
-
-    .ToListAsync();
+                .Where(sba => sba.UserId == userId && sba.IsActive) // Chỉ lấy assignment đang Active
+                .Include(sba => sba.Building)
+                .ToListAsync();
         }
     }
 }

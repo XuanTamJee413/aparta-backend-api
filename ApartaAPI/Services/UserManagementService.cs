@@ -1,18 +1,12 @@
-﻿/* --- File: Services/UserManagementService.cs --- */
-
-using ApartaAPI.Data;
+﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.User;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
+using ApartaAPI.Utils.Helper;
 using AutoMapper;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
-using System.Collections;
 
 namespace ApartaAPI.Services
 {
@@ -22,74 +16,56 @@ namespace ApartaAPI.Services
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<StaffBuildingAssignment> _sbaRepo;
         private readonly IRepository<Role> _roleRepo;
-        private readonly IMapper _mapper;
+        private readonly IMapper _mapper; // [MỚI] Inject Mapper
         private readonly ApartaDbContext _context;
+        private readonly IMailService _mailService;
+        private readonly IConfiguration _configuration;
         public UserManagementService(
             IUserManagementRepository userManagementRepo,
             IRepository<User> userRepo,
             IRepository<StaffBuildingAssignment> sbaRepo,
             IRepository<Role> roleRepo,
             IMapper mapper,
-            ApartaDbContext context)
+            ApartaDbContext context, IMailService mailService,
+            IConfiguration configuration)
         {
-            _userManagementRepo
-                = userManagementRepo;
+            _userManagementRepo = userManagementRepo;
             _userRepo = userRepo;
             _sbaRepo = sbaRepo;
             _roleRepo = roleRepo;
             _mapper = mapper;
             _context = context;
+            _mailService = mailService;
+            _configuration = configuration;
         }
 
-        // ===================================
-        // 1. LẤY DANH SÁCH STAFF/RESIDENT (Chuyển Status về chữ thường)
-        // ===================================
+        // Helper nội bộ xử lý logic chung
         private async Task<PagedList<UserAccountDto>> GetAccountsByRoleInternalAsync(UserQueryParams queryParams, List<string> roles)
         {
+            // 1. Lấy dữ liệu phân trang từ Repo
             var pagedUsers = await _userManagementRepo.GetPagedUsersAsync(queryParams, roles);
-            var userDtos = new List<UserAccountDto>();
 
-            foreach (var user in pagedUsers.Items)
+            // 2. Dùng AutoMapper map sang DTO (nhanh và gọn hơn vòng lặp thủ công)
+            var userDtos = _mapper.Map<List<UserAccountDto>>(pagedUsers.Items);
+
+            // 3. Xử lý logic phụ (Map thêm BuildingCodes hoặc ApartmentCode)
+            // Vì AutoMapper khó xử lý query async trong profile, ta xử lý ở đây
+            foreach (var dto in userDtos)
             {
-                var dto = new UserAccountDto
+                // Vì DTO đã có UserId, ta dùng nó để query thêm info
+                if (roles.Contains("resident"))
                 {
-                    UserId = user.UserId,
-                    Name
-                        = user.Name,
-                    Email = user.Email,
-                    Phone = user.Phone,
-                    RoleName = user.Role?.RoleName ??
-                        "unknown",
-                    // FIX: CHUẨN HÓA LÚC LẤY RA VỀ CHỮ THƯỜNG
-                    Status = user.Status?.ToLowerInvariant() ?? "inactive",
-                    StaffCode = user.StaffCode,
-                    CreatedAt = user.CreatedAt,
-                    IsDeleted = user.IsDeleted,
-
-                };
-
-                if (roles.Contains("resident")) // Resident
-                {
-                    // Lấy mã căn hộ cho Resident
-                    if (user.ApartmentId != null)
-                    {
-
-                        var apartment = await _context.Apartments.AsNoTracking().FirstOrDefaultAsync(a => a.ApartmentId == user.ApartmentId);
-                        dto.ApartmentCode = apartment?.Code;
-                    }
+                    // ApartmentCode đã được Map trong Profile nếu User.Apartment được Include
+                    // Nếu Repo chưa Include Apartment thì cần check lại Repo
                 }
-                else // Staff/Admin
+                else
                 {
-                    // Lấy danh sách Building Codes cho Staff
-
-                    var assignments = await _userManagementRepo.GetStaffAssignmentsAsync(user.UserId);
+                    // Lấy danh sách tòa nhà phụ trách cho Staff
+                    var assignments = await _userManagementRepo.GetStaffAssignmentsAsync(dto.UserId);
                     dto.AssignedBuildingCodes = assignments.Select(a => a.Building.BuildingCode).ToList();
                 }
-
-                userDtos.Add(dto);
             }
 
-            // PagedList<UserAccountDto> cần được tạo từ list và thông tin phân trang của pagedUsers
             return new PagedList<UserAccountDto>(userDtos, pagedUsers.TotalCount, pagedUsers.PageNumber, pagedUsers.PageSize);
         }
 
@@ -97,14 +73,15 @@ namespace ApartaAPI.Services
         {
             try
             {
-                var staffRoles = new List<string> { "admin", "manager", "staff", "operation_staff", "finance_staff", "maintenance_staff", "custom" };
-                var result = await GetAccountsByRoleInternalAsync(queryParams, staffRoles);
+                // [FIX LỖI CŨ] Chỉ lấy các role thực sự là nhân viên, LOẠI BỎ Admin/Manager
+                var staffRoles = new List<string> { "staff", "operation_staff", "finance_staff", "maintenance_staff", "custom" };
 
-                return ApiResponse<PagedList<UserAccountDto>>.Success(result, result.TotalCount == 0 ? ApiResponse.SM01_NO_RESULTS : "Lấy danh sách nhân viên thành công.");
+                var result = await GetAccountsByRoleInternalAsync(queryParams, staffRoles);
+                return ApiResponse<PagedList<UserAccountDto>>.Success(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[FATAL ERROR] Lỗi hệ thống khi tải Staff: {ex.ToString()}");
+                // Log error here
                 return ApiResponse<PagedList<UserAccountDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
@@ -115,133 +92,142 @@ namespace ApartaAPI.Services
             {
                 var residentRoles = new List<string> { "resident" };
                 var result = await GetAccountsByRoleInternalAsync(queryParams, residentRoles);
-
-                return ApiResponse<PagedList<UserAccountDto>>.Success(result, result.TotalCount == 0 ? ApiResponse.SM01_NO_RESULTS : "Lấy danh sách cư dân thành công.");
+                return ApiResponse<PagedList<UserAccountDto>>.Success(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[FATAL ERROR] Lỗi hệ thống khi tải Resident: {ex.ToString()}");
                 return ApiResponse<PagedList<UserAccountDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
             }
         }
 
-        // ===================================
-        // 2. THÊM STAFF MỚI (Chuẩn hóa Status khi lưu)
-        // ===================================
         public async Task<UserAccountDto> CreateStaffAccountAsync(StaffCreateDto createDto)
         {
-            // 1. Kiểm tra tồn tại Role
+            // 1. Validate
             var role = await _roleRepo.GetByIdAsync(createDto.RoleId);
             if (role == null) throw new ArgumentException("Role ID không hợp lệ.");
-            // 2. Kiểm tra trùng Email/Phone
+
             if (await _userRepo.FirstOrDefaultAsync(u => u.Email == createDto.Email) != null)
-            {
                 throw new InvalidOperationException("Email đã tồn tại.");
-            }
 
             if (await _userRepo.FirstOrDefaultAsync(u => u.Phone == createDto.Phone) != null)
-            {
                 throw new InvalidOperationException("Số điện thoại đã tồn tại.");
-            }
-            // 3. Tạo User Model
-            var newUser = _mapper.Map<User>(createDto);
-            newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(createDto.Password);
+
+            // 2. Map & Create
+            var newUser = _mapper.Map<User>(createDto); // Dùng AutoMapper
             newUser.UserId = Guid.NewGuid().ToString();
-            // FIX: LƯU TRẠNG THÁI VỀ CHỮ THƯỜNG
+            newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(createDto.Password);
             newUser.Status = "active";
             newUser.IsFirstLogin = true;
+            newUser.CreatedAt = DateTime.UtcNow;
+            newUser.UpdatedAt = DateTime.UtcNow;
 
-            var createdUser = await _userRepo.AddAsync(newUser);
-            // 4. Trả về DTO (Service sẽ chuẩn hóa trạng thái khi gọi GetAccountsByRoleInternalAsync)
+            await _userRepo.AddAsync(newUser);
+            if (!string.IsNullOrWhiteSpace(newUser.Email))
+            {
+                try
+                {
+                    var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+
+                    // Sử dụng EmailTemplateHelper vừa tạo
+                    var htmlMessage = EmailTemplateHelper.GetStaffWelcomeEmailTemplate(
+                        newUser.Name,
+                        newUser.Phone ?? "",
+                        newUser.Email,
+                        createDto.Password, // Gửi mật khẩu thô để họ đăng nhập lần đầu
+                        frontendUrl
+                    );
+
+                    // Gọi MailService (đã được cấu hình SMTP trong Program.cs)
+                    await _mailService.SendEmailAsync(
+                        newUser.Email,
+                        "Thông tin tài khoản Nhân viên - Aparta System",
+                        htmlMessage
+                    );
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nhưng không chặn luồng tạo user
+                    Console.WriteLine($"[Warning] Không thể gửi email cho Staff mới: {ex.Message}");
+                }
+            }
+            // 3. Return DTO
+            // Tạo role list tạm để gọi hàm hiển thị kết quả chuẩn xác
             var roles = new List<string> { role.RoleName };
-            var tempQueryParams = new UserQueryParams { PageNumber = 1, PageSize = 1, SearchTerm = createdUser.Phone };
+            var tempQuery = new UserQueryParams { PageNumber = 1, PageSize = 1, SearchTerm = newUser.Phone };
+            var pagedResult = await GetAccountsByRoleInternalAsync(tempQuery, roles);
 
-            var pagedResult = await GetAccountsByRoleInternalAsync(tempQueryParams, roles);
-
-            if (!pagedResult.Items.Any()) throw new KeyNotFoundException("User vừa tạo không tìm thấy.");
-
-            return pagedResult.Items.First();
+            return pagedResult.Items.FirstOrDefault() ?? _mapper.Map<UserAccountDto>(newUser);
         }
 
-        // ===================================
-        // 3. CẬP NHẬT TRẠNG THÁI (Chuẩn hóa Status khi lưu)
-        // ===================================
         public async Task<UserAccountDto> ToggleUserStatusAsync(string userId, StatusUpdateDto dto)
         {
             var user = await _userRepo.GetByIdAsync(userId);
             if (user == null) throw new KeyNotFoundException("User không tồn tại.");
 
-            // FIX: Chuẩn hóa input status về chữ thường
-            var newStatusLower = dto.Status.ToLowerInvariant();
+            var newStatus = dto.Status.Trim().ToLowerInvariant();
+            if (newStatus != "active" && newStatus != "inactive")
+                throw new ArgumentException("Trạng thái chỉ chấp nhận 'Active' hoặc 'Inactive'.");
 
-            if (newStatusLower != "active" && newStatusLower != "inactive")
-            {
-                throw new ArgumentException("Trạng thái không hợp lệ. Chỉ chấp nhận 'Active' hoặc 'Inactive'.");
-            }
-
-            // FIX: LƯU TRẠNG THÁI VỀ CHỮ THƯỜNG
-            user.Status = newStatusLower;
+            user.Status = newStatus;
             user.UpdatedAt = DateTime.UtcNow;
-
             await _userRepo.UpdateAsync(user);
 
-            var updatedUserWithRole = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == userId);
+            // Fetch lại để có role info cho việc map DTO trả về
+            var updatedUser = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == userId);
 
-            if (updatedUserWithRole == null) throw new KeyNotFoundException("User không tồn tại.");
-
-            var roles = new List<string> { updatedUserWithRole!.Role.RoleName };
-            var tempQueryParams = new UserQueryParams { PageNumber = 1, PageSize = 1, SearchTerm = updatedUserWithRole.Phone };
-
-            var pagedResult = await GetAccountsByRoleInternalAsync(tempQueryParams, roles);
-
-            if (!pagedResult.Items.Any()) throw new KeyNotFoundException("User không tồn tại hoặc bị xóa.");
+            // Re-use logic lấy DTO chuẩn
+            var roles = new List<string> { updatedUser!.Role.RoleName };
+            var tempQuery = new UserQueryParams { PageNumber = 1, PageSize = 1, SearchTerm = updatedUser.Phone };
+            var pagedResult = await GetAccountsByRoleInternalAsync(tempQuery, roles);
 
             return pagedResult.Items.First();
         }
 
-        // ===================================
-        // 4. CHUYỂN VỊ TRÍ STAFF (ASSIGNMENT) (Giữ nguyên)
-        // ===================================
         public async System.Threading.Tasks.Task UpdateStaffAssignmentAsync(string staffId, AssignmentUpdateDto updateDto)
         {
-            // ... (Logic giữ nguyên)
             var staff = await _userRepo.GetByIdAsync(staffId);
-            if (staff == null) throw new ArgumentException($"Staff ID '{staffId}' không tồn tại.");
+            if (staff == null) throw new KeyNotFoundException($"Staff ID '{staffId}' không tồn tại.");
 
-            var now = DateTime.UtcNow;
-
-            // 1. Xóa tất cả các Assignment cũ
-            var oldAssignments = await _sbaRepo.FindAsync(sba => sba.UserId == staffId);
-            foreach (var assignment in oldAssignments)
+            // Logic transaction để đảm bảo toàn vẹn dữ liệu
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                await _sbaRepo.RemoveAsync(assignment);
-            }
-            await _sbaRepo.SaveChangesAsync();
-
-            // 2. Thêm các Assignment mới
-            foreach (var buildingId in updateDto.BuildingIds)
-            {
-                var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
-                if (building == null)
+                // 1. Xóa assignments cũ
+                var oldAssignments = await _sbaRepo.FindAsync(sba => sba.UserId == staffId);
+                foreach (var item in oldAssignments)
                 {
-                    throw new KeyNotFoundException($"Building ID '{buildingId}' không tồn tại. Không thể phân công.");
+                    await _sbaRepo.RemoveAsync(item);
                 }
 
-                var newAssignment = new StaffBuildingAssignment
+                // 2. Thêm assignments mới
+                var now = DateTime.UtcNow;
+                foreach (var buildingId in updateDto.BuildingIds)
                 {
+                    var building = await _context.Buildings.FirstOrDefaultAsync(b => b.BuildingId == buildingId);
+                    if (building == null) throw new KeyNotFoundException($"Building ID '{buildingId}' không tồn tại.");
 
-                    UserId = staffId,
-                    BuildingId = buildingId,
-                    AssignmentStartDate = DateOnly.FromDateTime(DateTime.Today),
-                    ScopeOfWork = updateDto.ScopeOfWork,
-                    IsActive = true,
-                    CreatedAt = now,
-                    UpdatedAt = now
+                    var newAssignment = new StaffBuildingAssignment
+                    {
+                        AssignmentId = Guid.NewGuid().ToString(),
+                        UserId = staffId,
+                        BuildingId = buildingId,
+                        AssignmentStartDate = DateOnly.FromDateTime(now),
+                        ScopeOfWork = updateDto.ScopeOfWork,
+                        IsActive = true,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    };
+                    await _sbaRepo.AddAsync(newAssignment);
+                }
 
-                };
-                await _sbaRepo.AddAsync(newAssignment);
+                await _sbaRepo.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
-            await _sbaRepo.SaveChangesAsync();
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }

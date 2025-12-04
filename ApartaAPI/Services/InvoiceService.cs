@@ -282,7 +282,7 @@ public class InvoiceService : IInvoiceService
 
             var apartmentIds = apartments.Select(a => a.ApartmentId).ToList();
 
-            // Lấy bảng giá của tòa nhà (loại trừ ONE_TIME vì đây là phí thu một lần, không phải phí hàng tháng)
+            // Lấy bảng giá của tòa nhà (loại trừ ONE_TIME)
             var priceQuotations = await _context.PriceQuotations
                 .Where(pq => pq.BuildingId == request.BuildingId && pq.CalculationMethod != "ONE_TIME")
                 .ToListAsync();

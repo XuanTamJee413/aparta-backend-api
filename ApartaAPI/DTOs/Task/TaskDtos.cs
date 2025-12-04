@@ -4,8 +4,20 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.DTOs.Tasks
 {
-    // 1. DTO để tạo Task mới
-    public sealed record TaskCreateDto(
+
+	public sealed record TaskAssigneeDto(
+		string UserId,
+		string Name,
+		string Phone
+	);
+
+	public sealed record TaskUnassignDto(
+		[Required] string TaskId,
+		[Required] string AssigneeUserId
+	);
+
+	// 1. DTO để tạo Task mới
+	public sealed record TaskCreateDto(
         string? ServiceBookingId, 
         [Required] string Type,   
         [Required] string Description,
@@ -37,9 +49,10 @@ namespace ApartaAPI.DTOs.Tasks
         DateTime? StartDate,
         DateTime? EndDate,
         DateTime? CreatedAt,
-        string? AssigneeUserId, 
-        string? AssigneeName,
-        DateTime? AssignedDate
-    );
+        List<TaskAssigneeDto> Assignees,
+		DateTime? AssignedDate,
+		string? AssigneeNote
+	);
+
 
 }

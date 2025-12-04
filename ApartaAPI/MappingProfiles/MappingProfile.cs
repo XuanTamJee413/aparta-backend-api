@@ -1,6 +1,5 @@
 ﻿using ApartaAPI.DTOs.ApartmentMembers;
 using ApartaAPI.DTOs.Apartments;
-using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
@@ -15,7 +14,6 @@ using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.StaffAssignments;
 using ApartaAPI.DTOs.Subscriptions;
 using ApartaAPI.DTOs.User;
-using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.Vehicles;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
@@ -47,7 +45,9 @@ namespace ApartaAPI.Profiles
                 .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<Subscription, SubscriptionDto>();
+            CreateMap<Subscription, SubscriptionDto>()
+                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Project.Name))
+                .ForMember(dest => dest.ProjectCode, opt => opt.MapFrom(src => src.Project.ProjectCode));
 
             CreateMap<SubscriptionCreateOrUpdateDto, Subscription>()
                 .ForMember(dest => dest.SubscriptionId, opt => opt.Ignore())

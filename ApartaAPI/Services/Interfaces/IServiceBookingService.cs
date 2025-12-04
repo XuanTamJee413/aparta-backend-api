@@ -13,6 +13,7 @@ namespace ApartaAPI.Services.Interfaces
 		Task<PagedList<ServiceBookingDto>> GetAllBookingsAsync(ServiceQueryParameters parameters);
 
 		// Tương tự UpdateServiceAsync
-		Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto);
+		Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto, string operationStaffId);
+
 	}
 }

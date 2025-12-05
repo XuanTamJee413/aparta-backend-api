@@ -1200,6 +1200,9 @@ public partial class ApartaDbContext : DbContext
 			entity.Property(e => e.AssigneeNote)
 	            .HasMaxLength(255)
 	            .HasColumnName("assignee_note");
+			entity.Property(e => e.VerifyNote)
+		        .HasMaxLength(255) 
+		        .HasColumnName("verify_note");
 
 			entity.HasOne(d => d.OperationStaff).WithMany(p => p.Tasks)
                 .HasForeignKey(d => d.OperationStaffId)

@@ -106,10 +106,14 @@ namespace ApartaAPI.Controllers
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email && !u.IsDeleted);
 
-            // Trả về Ok ngay cả khi không tìm thấy user để tránh dò user
+            // Nếu email không tồn tại trong hệ thống thì thông báo lỗi và không gửi mail
             if (user == null)
             {
-                return Ok(ApiResponse.Success("Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu."));
+                return BadRequest(ApiResponse.Fail(
+                    ApiResponse.SM13_ACCOUNT_NOT_FOUND,
+                    fieldName: "email",
+                    customMessage: "Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại."
+                ));
             }
 
             // Tạo token reset

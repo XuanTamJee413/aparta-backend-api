@@ -76,3 +76,8 @@ public class InvoiceDetailDto
     public List<InvoiceItemDto> Items { get; set; } = new List<InvoiceItemDto>();
 }
 
+public class UpdateInvoiceEndDateDto
+{
+    public DateOnly EndDate { get; set; }
+}
+

@@ -246,6 +246,41 @@ public class InvoiceController : ControllerBase
         }
     }
 
+    // Cập nhật ngày kết thúc thanh toán cho hóa đơn quá hạn
+    [HttpPut("{id}/update-end-date")]
+    [Authorize(Policy = "CanReadInvoiceItem")]
+    public async Task<ActionResult<ApiResponse<object>>> UpdateInvoiceEndDate(string id, [FromBody] UpdateInvoiceEndDateDto dto)
+    {
+        try
+        {
+            if (dto == null)
+            {
+                return BadRequest(ApiResponse<object>.Fail(ApiResponse.SM25_INVALID_INPUT));
+            }
+
+            var userId = User.FindFirst("id")?.Value ??
+                         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<object>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
+            }
+
+            var (success, message) = await _invoiceService.UpdateInvoiceEndDateAsync(id, dto.EndDate, userId);
+
+            if (!success)
+            {
+                return BadRequest(ApiResponse<object>.Fail(message));
+            }
+
+            return Ok(ApiResponse<object>.Success(null, message));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<object>.Fail(ApiResponse.SM40_SYSTEM_ERROR));
+        }
+    }
+
 
 }
 

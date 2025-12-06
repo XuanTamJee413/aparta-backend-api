@@ -400,5 +400,128 @@ namespace ApartaAPI.Services
             await _contractRepository.SaveChangesAsync();
             return true;
         }
+
+        public async Task<ApiResponse<IEnumerable<ContractDto>>> GetByUserBuildingsAsync(string userId, ContractQueryParameters query)
+        {
+            if (query == null)
+            {
+                query = new ContractQueryParameters(null, null, null);
+            }
+
+            var apartmentIdFilter = string.IsNullOrWhiteSpace(query.ApartmentId)
+                ? null
+                : query.ApartmentId.Trim();
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            // filter: hợp đồng mà căn hộ thuộc building mà user được gán (và assignment đang active)
+            Expression<Func<Contract, bool>> predicate = c =>
+                c.Apartment != null &&
+                c.Apartment.Building.StaffBuildingAssignments.Any(sba =>
+                    sba.UserId == userId &&
+                    sba.IsActive &&
+                    (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                )
+                && (apartmentIdFilter == null || c.ApartmentId == apartmentIdFilter);
+
+            var entities = await _contractRepository.FindAsync(predicate);
+
+            if (entities == null)
+            {
+                entities = new List<Contract>();
+            }
+
+            var validEntities = entities.Where(e => e != null).ToList();
+
+            if (!validEntities.Any())
+            {
+                return ApiResponse<IEnumerable<ContractDto>>.Success(
+                    new List<ContractDto>(),
+                    ApiResponse.SM01_NO_RESULTS
+                );
+            }
+
+            IOrderedEnumerable<Contract> sortedEntities;
+            bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
+
+            switch (query.SortBy?.ToLowerInvariant())
+            {
+                case "startdate":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(c => c.StartDate)
+                        : validEntities.OrderBy(c => c.StartDate);
+                    break;
+                case "enddate":
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(c => c.EndDate)
+                        : validEntities.OrderBy(c => c.EndDate);
+                    break;
+                default:
+                    sortedEntities = validEntities.OrderByDescending(c => c.CreatedAt);
+                    break;
+            }
+
+            var sortedList = sortedEntities.ToList();
+
+            var apartmentIds = sortedList
+                .Select(c => c.ApartmentId)
+                .Distinct()
+                .ToList();
+
+            var apartments = await _apartmentRepository.FindAsync(a => apartmentIds.Contains(a.ApartmentId));
+            var apartmentDict = (apartments ?? Enumerable.Empty<Apartment>())
+                .GroupBy(a => a.ApartmentId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var ownerMembers = await _apartmentMemberRepository.FindAsync(
+                m => apartmentIds.Contains(m.ApartmentId)
+                     && m.IsOwner == true
+                     && m.Status == "Đã Bán"
+            );
+            var ownerDict = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
+                .GroupBy(m => m.ApartmentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.CreatedAt).FirstOrDefault()
+                );
+
+            var users = await _userRepository.FindAsync(
+                u => apartmentIds.Contains(u.ApartmentId) && !u.IsDeleted
+            );
+            var userDict = (users ?? Enumerable.Empty<User>())
+                .GroupBy(u => u.ApartmentId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(x => x.CreatedAt).FirstOrDefault()
+                );
+
+            var dtos = sortedList.Select(c =>
+            {
+                apartmentDict.TryGetValue(c.ApartmentId, out var apt);
+                ownerDict.TryGetValue(c.ApartmentId, out var owner);
+                userDict.TryGetValue(c.ApartmentId, out var user);
+
+                var displayName = owner?.Name ?? user?.Name;
+                var displayPhone = owner?.PhoneNumber ?? user?.Phone;
+                var displayEmail = user?.Email;
+
+                return new ContractDto
+                {
+                    ContractId = c.ContractId,
+                    ApartmentId = c.ApartmentId,
+                    ApartmentCode = apt?.Code,
+                    OwnerName = displayName,
+                    OwnerPhoneNumber = displayPhone,
+                    OwnerEmail = displayEmail,
+                    Image = c.Image,
+                    StartDate = c.StartDate,
+                    EndDate = c.EndDate,
+                    CreatedAt = c.CreatedAt
+                };
+            }).ToList();
+
+            return ApiResponse<IEnumerable<ContractDto>>.Success(dtos);
+        }
+
     }
 }

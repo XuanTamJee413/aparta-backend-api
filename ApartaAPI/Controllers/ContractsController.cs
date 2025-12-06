@@ -103,5 +103,19 @@ namespace ApartaAPI.Controllers
             return File(pdfBytes, "application/pdf", fileName);
         }
 
+        [HttpGet("my-buildings")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ContractDto>>>> GetContractsByMyBuildings([FromQuery] ContractQueryParameters query)
+        {
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập."));
+            }
+
+            var response = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(response);
+        }
+
     }
 }

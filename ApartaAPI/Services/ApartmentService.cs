@@ -169,7 +169,7 @@ namespace ApartaAPI.Services
             if (!rawCode.StartsWith(prefix, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
-                    $"Mã căn hộ phải có dạng {buildingCode}-{floor}xx. " +
+                    $"Mã căn hộ phải có dạng Mã Tòa Nhà-TầngXX. " +
                     $"Ví dụ: {buildingCode}-{floor}01, {buildingCode}-{floor}02..."
                 );
             }

@@ -10,5 +10,7 @@ namespace ApartaAPI.Services.Interfaces
         Task<ContractDto> CreateAsync(ContractCreateDto dto); 
         Task<bool> UpdateAsync(string id, ContractUpdateDto dto);
         Task<bool> DeleteAsync(string id);
+        Task<ApiResponse<IEnumerable<ContractDto>>> GetByUserBuildingsAsync(string userId, ContractQueryParameters query);
+
     }
 }

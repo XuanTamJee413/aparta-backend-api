@@ -118,5 +118,20 @@ namespace ApartaAPI.Controllers
             return Ok(response);
         }
 
+        [HttpGet("my-buildings")]
+        [Authorize(Policy = "CanReadBuilding")]
+        public async Task<ActionResult<ApiResponse<PaginatedResult<BuildingDto>>>> GetBuildingsByMyBuildings([FromQuery] BuildingQueryParameters query)
+        {
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("AUTH01", "Không xác định được tài khoản đăng nhập."));
+            }
+
+            var response = await _service.GetByUserBuildingsAsync(userId, query);
+            return Ok(response);
+        }
+
     }
 }

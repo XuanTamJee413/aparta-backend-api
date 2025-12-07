@@ -326,64 +326,62 @@ namespace ApartaAPI.Services
 
             var now = DateTime.UtcNow;
 
-            // === [LOGIC 1] DEACTIVATE: Chuyển từ Active -> Inactive ===
-            bool isDeactivating = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
-
-            if (isDeactivating)
+            if (dto.IsActive != null) 
             {
-                // 1. Vô hiệu hóa Cư dân (User linked to Apartment in THIS Building)
-                // Tìm users có Apartment thuộc tòa nhà này và đang Active
-                var residentUsers = await _context.Users
-                    .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Active")
-                    .ToListAsync();
+                // === [LOGIC 1] DEACTIVATE: Chuyển từ Active -> Inactive ===
+                bool isDeactivating = dto.IsActive.HasValue && dto.IsActive.Value == false && entity.IsActive == true;
 
-                foreach (var user in residentUsers)
+                if (isDeactivating)
                 {
-                    user.Status = "Inactive";
-                    user.UpdatedAt = now;
+                    // 1. Vô hiệu hóa Cư dân (User linked to Apartment in THIS Building)
+                    // Tìm users có Apartment thuộc tòa nhà này và đang Active
+                    var residentUsers = await _context.Users
+                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Active")
+                        .ToListAsync();
+
+                    foreach (var user in residentUsers)
+                    {
+                        user.Status = "Inactive";
+                        user.UpdatedAt = now;
+                    }
+
+                    // 2. Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment for THIS Building)
+                    var staffAssignments = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.BuildingId == id && sba.IsActive == true)
+                        .ToListAsync();
+
+                    foreach (var assignment in staffAssignments)
+                    {
+                        assignment.IsActive = false;
+                        assignment.AssignmentEndDate = DateOnly.FromDateTime(now);
+                        assignment.UpdatedAt = now;
+                    }
                 }
 
-                // 2. Vô hiệu hóa Phân công nhân viên (StaffBuildingAssignment for THIS Building)
-                var staffAssignments = await _context.StaffBuildingAssignments
-                    .Where(sba => sba.BuildingId == id && sba.IsActive == true)
-                    .ToListAsync();
+                // === [LOGIC 2] ACTIVATE: Chuyển từ Inactive -> Active (MỚI THÊM) ===
+                bool isActivating = dto.IsActive.HasValue && dto.IsActive.Value == true && entity.IsActive == false;
 
-                foreach (var assignment in staffAssignments)
+                if (isActivating)
                 {
-                    assignment.IsActive = false;
-                    assignment.AssignmentEndDate = DateOnly.FromDateTime(now);
-                    assignment.UpdatedAt = now;
-                }
-            }
+                    // 1. Khôi phục Cư dân: Tìm các User thuộc tòa nhà đang 'Inactive' và chuyển về 'Active'
+                    var inactiveResidents = await _context.Users
+                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Inactive")
+                        .ToListAsync();
 
-            // === [LOGIC 2] ACTIVATE: Chuyển từ Inactive -> Active (MỚI THÊM) ===
-            bool isActivating = dto.IsActive.HasValue && dto.IsActive.Value == true && entity.IsActive == false;
+                    foreach (var user in inactiveResidents)
+                    {
+                        user.Status = "Active";
+                        user.UpdatedAt = now;
+                    }
 
-            if (isActivating)
-            {
-                // 1. Khôi phục Cư dân: Tìm các User thuộc tòa nhà đang 'Inactive' và chuyển về 'Active'
-                var inactiveResidents = await _context.Users
-                    .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Inactive")
-                    .ToListAsync();
-
-                foreach (var user in inactiveResidents)
-                {
-                    user.Status = "Active";
-                    user.UpdatedAt = now;
+                    // 2. Phân công nhân viên: KHÔNG TÁC ĐỘNG (Theo yêu cầu)
+                    // Nhân viên sẽ cần được phân công lại thủ công nếu cần.
                 }
 
-                // 2. Phân công nhân viên: KHÔNG TÁC ĐỘNG (Theo yêu cầu)
-                // Nhân viên sẽ cần được phân công lại thủ công nếu cần.
-            }
-
-            // Map data từ DTO sang Entity (chỉ các trường khác null)
-            _mapper.Map(dto, entity);
-
-            // Cập nhật IsActive nếu có trong DTO
-            if (dto.IsActive.HasValue)
-            {
                 entity.IsActive = dto.IsActive.Value;
             }
+
+            _mapper.Map(dto, entity);
 
             entity.UpdatedAt = now;
 
@@ -398,5 +396,68 @@ namespace ApartaAPI.Services
             var query = new ApartmentQueryParameters(buildingId, "Đã Bán", null, null, null);
             return await _apartmentService.GetAllAsync(query);
         }
+
+        public async Task<ApiResponse<PaginatedResult<BuildingDto>>> GetByUserBuildingsAsync(string userId, BuildingQueryParameters query)
+        {
+            try
+            {
+                var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm) ? null : query.SearchTerm.Trim().ToLower();
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+                // Lấy các tòa nhà mà userId được gán và assignment còn hiệu lực
+                var queryable = _context.Buildings
+                    .AsNoTracking()
+                    .Where(b => b.StaffBuildingAssignments.Any(sba =>
+                        sba.UserId == userId &&
+                        sba.IsActive &&
+                        (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                    ));
+
+                if (searchTerm != null)
+                {
+                    queryable = queryable.Where(b =>
+                        (b.Name != null && b.Name.ToLower().Contains(searchTerm)) ||
+                        (b.BuildingCode != null && b.BuildingCode.ToLower().Contains(searchTerm))
+                    );
+                }
+
+                var totalCount = await queryable.CountAsync();
+
+                var items = await queryable
+                    .OrderBy(b => b.BuildingCode)
+                    .Skip(query.Skip)
+                    .Take(query.Take)
+                    .Select(b => new BuildingDto(
+                        b.BuildingId,
+                        b.ProjectId,
+                        b.BuildingCode,
+                        b.Name,
+                        b.Apartments.Count(),
+                        b.Apartments.SelectMany(a => a.ApartmentMembers).Count(),
+                        b.TotalFloors,
+                        b.TotalBasements,
+                        b.TotalArea,
+                        b.HandoverDate,
+                        (b.HandoverDate.HasValue && b.HandoverDate.Value.AddYears(5) >= DateOnly.FromDateTime(DateTime.Now))
+                            ? "Còn bảo hành" : "Hết bảo hành",
+                        b.ReceptionPhone,
+                        b.Description,
+                        b.ReadingWindowStart,
+                        b.ReadingWindowEnd,
+                        b.CreatedAt,
+                        b.UpdatedAt,
+                        b.IsActive
+                    ))
+                    .ToListAsync();
+
+                var result = new PaginatedResult<BuildingDto>(items, totalCount);
+                return ApiResponse<PaginatedResult<BuildingDto>>.Success(result);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<PaginatedResult<BuildingDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+            }
+        }
+
     }
 }

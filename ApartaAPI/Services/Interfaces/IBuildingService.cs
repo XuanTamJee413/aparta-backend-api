@@ -13,5 +13,7 @@ namespace ApartaAPI.Services.Interfaces
         Task<ApiResponse<BuildingDto>> CreateAsync(BuildingCreateDto dto);
         Task<ApiResponse> UpdateAsync(string id, BuildingUpdateDto dto);
         Task<ApiResponse<IEnumerable<ApartmentDto>>> GetRentedApartmentsByBuildingAsync(string buildingId);
+        Task<ApiResponse<PaginatedResult<BuildingDto>>> GetByUserBuildingsAsync(string userId, BuildingQueryParameters query);
+
     }
 }

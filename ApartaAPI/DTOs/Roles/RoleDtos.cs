@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.DTOs.Roles
 {
@@ -16,14 +15,12 @@ namespace ApartaAPI.DTOs.Roles
     // DTO để tạo Role Custom
     public sealed record RoleCreateDto
     {
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Tên Role phải từ 3 đến 100 ký tự")]
         public string RoleName { get; init; } = null!;
     }
 
     // DTO để cập nhật Role Custom
     public sealed record RoleUpdateDto
     {
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Tên Role phải từ 3 đến 100 ký tự")]
         public string RoleName { get; init; } = null!;
     }
 
@@ -38,7 +35,6 @@ namespace ApartaAPI.DTOs.Roles
     // DTO để gán Permissions cho Role
     public sealed record PermissionAssignmentDto
     {
-        [Required]
         public List<string> PermissionIds { get; init; } = new List<string>();
     }
 }

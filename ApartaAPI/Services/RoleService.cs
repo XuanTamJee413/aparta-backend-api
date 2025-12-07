@@ -30,6 +30,23 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
+        // --- 1. VALIDATE LOGIC ---
+        private string? ValidateRoleLogic(string? roleName)
+        {
+            // Validate Tên Role
+            if (roleName != null)
+            {
+                if (string.IsNullOrWhiteSpace(roleName))
+                    return "Tên Role không được để trống.";
+                
+                var cleanName = roleName.Trim();
+                if (cleanName.Length < 3 || cleanName.Length > 100)
+                    return "Tên Role phải từ 3 đến 100 ký tự.";
+            }
+
+            return null;
+        }
+
         // --- Quản lý Roles ---
 
         public async Task<ApiResponse<IEnumerable<RoleDto>>> GetAllRolesAsync()
@@ -52,6 +69,13 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<RoleDto>> CreateRoleAsync(RoleCreateDto dto)
         {
+            // Validate logic
+            var errorMsg = ValidateRoleLogic(dto.RoleName);
+            if (errorMsg != null)
+            {
+                return ApiResponse<RoleDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
+            }
+
             var existing = await _roleRepo.FirstOrDefaultAsync(r => r.RoleName == dto.RoleName);
             if (existing != null)
             {
@@ -85,6 +109,13 @@ namespace ApartaAPI.Services
             if (role.IsSystemDefined)
             {
                 return ApiResponse.Fail(ApiResponse.SM24_SYSTEM_ROLES_IMMUTABLE);
+            }
+
+            // Validate logic
+            var errorMsg = ValidateRoleLogic(dto.RoleName);
+            if (errorMsg != null)
+            {
+                return ApiResponse.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
             }
 
             // LOGIC CUSTOM: Kiểm tra trùng lặp tên nếu đổi tên

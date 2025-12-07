@@ -144,31 +144,34 @@ namespace ApartaAPI.Services
 
                 // 4. Sorting (Sắp xếp)
                 bool isDesc = query.SortOrder?.ToLower() == "desc";
+                IOrderedQueryable<Building> orderedQuery;
                 if (!string.IsNullOrWhiteSpace(query.SortBy))
                 {
                     switch (query.SortBy.ToLower())
                     {
                         case "buildingcode":
-                            queryable = isDesc ? queryable.OrderByDescending(b => b.BuildingCode) : queryable.OrderBy(b => b.BuildingCode);
+                            orderedQuery = isDesc ? queryable.OrderByDescending(b => b.BuildingCode) : queryable.OrderBy(b => b.BuildingCode);
                             break;
                         case "name":
-                            queryable = isDesc ? queryable.OrderByDescending(b => b.Name) : queryable.OrderBy(b => b.Name);
+                            orderedQuery = isDesc ? queryable.OrderByDescending(b => b.Name) : queryable.OrderBy(b => b.Name);
                             break;
                         case "totalfloors":
-                            queryable = isDesc ? queryable.OrderByDescending(b => b.TotalFloors) : queryable.OrderBy(b => b.TotalFloors);
+                            orderedQuery = isDesc ? queryable.OrderByDescending(b => b.TotalFloors) : queryable.OrderBy(b => b.TotalFloors);
                             break;
                         case "handoverdate":
-                            queryable = isDesc ? queryable.OrderByDescending(b => b.HandoverDate) : queryable.OrderBy(b => b.HandoverDate);
+                            orderedQuery = isDesc ? queryable.OrderByDescending(b => b.HandoverDate) : queryable.OrderBy(b => b.HandoverDate);
                             break;
                         default:
-                            queryable = isDesc ? queryable.OrderByDescending(b => b.CreatedAt) : queryable.OrderBy(b => b.CreatedAt);
+                            orderedQuery = isDesc ? queryable.OrderByDescending(b => b.CreatedAt) : queryable.OrderBy(b => b.CreatedAt);
                             break;
                     }
                 }
                 else
                 {
-                    queryable = queryable.OrderByDescending(b => b.CreatedAt);
+                    orderedQuery = queryable.OrderByDescending(b => b.CreatedAt);
                 }
+
+                queryable = orderedQuery.ThenByDescending(b => b.CreatedAt);
 
                 var totalCount = await queryable.CountAsync();
                 var items = await queryable
@@ -396,5 +399,68 @@ namespace ApartaAPI.Services
             var query = new ApartmentQueryParameters(buildingId, "Đã Bán", null, null, null);
             return await _apartmentService.GetAllAsync(query);
         }
+
+        public async Task<ApiResponse<PaginatedResult<BuildingDto>>> GetByUserBuildingsAsync(string userId, BuildingQueryParameters query)
+        {
+            try
+            {
+                var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm) ? null : query.SearchTerm.Trim().ToLower();
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+                // Lấy các tòa nhà mà userId được gán và assignment còn hiệu lực
+                var queryable = _context.Buildings
+                    .AsNoTracking()
+                    .Where(b => b.StaffBuildingAssignments.Any(sba =>
+                        sba.UserId == userId &&
+                        sba.IsActive &&
+                        (sba.AssignmentEndDate == null || sba.AssignmentEndDate >= today)
+                    ));
+
+                if (searchTerm != null)
+                {
+                    queryable = queryable.Where(b =>
+                        (b.Name != null && b.Name.ToLower().Contains(searchTerm)) ||
+                        (b.BuildingCode != null && b.BuildingCode.ToLower().Contains(searchTerm))
+                    );
+                }
+
+                var totalCount = await queryable.CountAsync();
+
+                var items = await queryable
+                    .OrderBy(b => b.BuildingCode)
+                    .Skip(query.Skip)
+                    .Take(query.Take)
+                    .Select(b => new BuildingDto(
+                        b.BuildingId,
+                        b.ProjectId,
+                        b.BuildingCode,
+                        b.Name,
+                        b.Apartments.Count(),
+                        b.Apartments.SelectMany(a => a.ApartmentMembers).Count(),
+                        b.TotalFloors,
+                        b.TotalBasements,
+                        b.TotalArea,
+                        b.HandoverDate,
+                        (b.HandoverDate.HasValue && b.HandoverDate.Value.AddYears(5) >= DateOnly.FromDateTime(DateTime.Now))
+                            ? "Còn bảo hành" : "Hết bảo hành",
+                        b.ReceptionPhone,
+                        b.Description,
+                        b.ReadingWindowStart,
+                        b.ReadingWindowEnd,
+                        b.CreatedAt,
+                        b.UpdatedAt,
+                        b.IsActive
+                    ))
+                    .ToListAsync();
+
+                var result = new PaginatedResult<BuildingDto>(items, totalCount);
+                return ApiResponse<PaginatedResult<BuildingDto>>.Success(result);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<PaginatedResult<BuildingDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+            }
+        }
+
     }
 }

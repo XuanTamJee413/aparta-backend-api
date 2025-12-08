@@ -33,51 +33,59 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<PaginatedResult<StaffAssignmentDto>>> GetAssignmentsAsync(StaffAssignmentQueryParameters query)
         {
-            var source = _assignmentRepo.GetAssignmentsQuery();
-
-            source = source.Where(x =>
-                x.User.Role.RoleName != "admin" &&
-                x.User.Role.RoleName != "manager" &&
-                x.User.Role.RoleName != "resident"
-            );
-
-            // 1. [MỚI] Xử lý Search Term
-            if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+            try
             {
-                var term = query.SearchTerm.Trim();
+                var source = _assignmentRepo.GetAssignmentsQuery();
+
                 source = source.Where(x =>
-                    EF.Functions.Collate(x.User.Name, "SQL_Latin1_General_CP1_CI_AI").Contains(term) ||
-                    (x.User.StaffCode != null && EF.Functions.Collate(x.User.StaffCode, "SQL_Latin1_General_CP1_CI_AI").Contains(term)) ||
-                    (x.Position != null && EF.Functions.Collate(x.Position, "SQL_Latin1_General_CP1_CI_AI").Contains(term))
+                    x.User.Role.RoleName != "admin" &&
+                    x.User.Role.RoleName != "manager" &&
+                    x.User.Role.RoleName != "resident"
                 );
+
+                // 1. [MỚI] Xử lý Search Term
+                if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+                {
+                    var term = query.SearchTerm.Trim();
+                    source = source.Where(x =>
+                        EF.Functions.Collate(x.User.Name, "SQL_Latin1_General_CP1_CI_AI").Contains(term) ||
+                        (x.User.StaffCode != null && EF.Functions.Collate(x.User.StaffCode, "SQL_Latin1_General_CP1_CI_AI").Contains(term)) ||
+                        (x.Position != null && EF.Functions.Collate(x.Position, "SQL_Latin1_General_CP1_CI_AI").Contains(term))
+                    );
+                }
+
+                // 2. Các filter cũ
+                if (!string.IsNullOrEmpty(query.BuildingId))
+                    source = source.Where(x => x.BuildingId == query.BuildingId);
+
+                if (!string.IsNullOrEmpty(query.UserId))
+                    source = source.Where(x => x.UserId == query.UserId);
+
+                if (query.IsActive.HasValue)
+                    source = source.Where(x => x.IsActive == query.IsActive.Value);
+
+                // Sort mặc định
+                source = source.OrderByDescending(x => x.CreatedAt);
+
+                var totalCount = await source.CountAsync();
+                var items = await source
+                    .Skip((query.PageNumber - 1) * query.PageSize)
+                    .Take(query.PageSize)
+                    .ProjectTo<StaffAssignmentDto>(_mapper.ConfigurationProvider)
+                    .ToListAsync();
+
+                var pagedResult = new PaginatedResult<StaffAssignmentDto>(items, totalCount);
+
+                if (totalCount == 0)
+                    return ApiResponse<PaginatedResult<StaffAssignmentDto>>.Success(pagedResult, ApiResponse.SM01_NO_RESULTS);
+
+                return ApiResponse<PaginatedResult<StaffAssignmentDto>>.Success(pagedResult);
             }
-
-            // 2. Các filter cũ
-            if (!string.IsNullOrEmpty(query.BuildingId))
-                source = source.Where(x => x.BuildingId == query.BuildingId);
-
-            if (!string.IsNullOrEmpty(query.UserId))
-                source = source.Where(x => x.UserId == query.UserId);
-
-            if (query.IsActive.HasValue)
-                source = source.Where(x => x.IsActive == query.IsActive.Value);
-
-            // Sort mặc định
-            source = source.OrderByDescending(x => x.CreatedAt);
-
-            var totalCount = await source.CountAsync();
-            var items = await source
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ProjectTo<StaffAssignmentDto>(_mapper.ConfigurationProvider)
-                .ToListAsync();
-
-            var pagedResult = new PaginatedResult<StaffAssignmentDto>(items, totalCount);
-
-            if (totalCount == 0)
-                return ApiResponse<PaginatedResult<StaffAssignmentDto>>.Success(pagedResult, ApiResponse.SM01_NO_RESULTS);
-
-            return ApiResponse<PaginatedResult<StaffAssignmentDto>>.Success(pagedResult);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return ApiResponse<PaginatedResult<StaffAssignmentDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+            }
         }
 
         public async Task<ApiResponse<StaffAssignmentDto>> AssignStaffAsync(StaffAssignmentCreateDto dto, string managerId)

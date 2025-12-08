@@ -72,6 +72,23 @@ public class InvoiceService : IInvoiceService
             .Where(i => i.ApartmentId == user.ApartmentId)
             .ToListAsync();
 
+        // Tự động cập nhật status sang OVERDUE nếu invoice quá hạn
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var hasChanges = false;
+        foreach (var invoice in invoices)
+        {
+            if (invoice.Status == "PENDING" && invoice.EndDate < today)
+            {
+                invoice.Status = "OVERDUE";
+                invoice.UpdatedAt = DateTime.UtcNow;
+                hasChanges = true;
+            }
+        }
+        if (hasChanges)
+        {
+            await _context.SaveChangesAsync();
+        }
+
         // Map to DTOs with resident name
         var result = invoices.Select(invoice =>
         {
@@ -163,6 +180,23 @@ public class InvoiceService : IInvoiceService
             .OrderByDescending(i => i.StartDate) // Newest period first
             .ToListAsync();
 
+        // Tự động cập nhật status sang OVERDUE nếu invoice quá hạn
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var hasChanges = false;
+        foreach (var invoice in invoices)
+        {
+            if (invoice.Status == "PENDING" && invoice.EndDate < today)
+            {
+                invoice.Status = "OVERDUE";
+                invoice.UpdatedAt = DateTime.UtcNow;
+                hasChanges = true;
+            }
+        }
+        if (hasChanges)
+        {
+            await _context.SaveChangesAsync();
+        }
+
         var result = invoices.Select(invoice =>
         {
             var dto = _mapper.Map<InvoiceDto>(invoice);
@@ -218,6 +252,15 @@ public class InvoiceService : IInvoiceService
         if (invoice == null)
         {
             return null;
+        }
+
+        // Tự động cập nhật status sang OVERDUE nếu invoice quá hạn
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (invoice.Status == "PENDING" && invoice.EndDate < today)
+        {
+            invoice.Status = "OVERDUE";
+            invoice.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
         }
 
         // Sử dụng AutoMapper để map Invoice -> InvoiceDetailDto
@@ -293,18 +336,50 @@ public class InvoiceService : IInvoiceService
                 return (true, ApiResponse.SM20_NO_CHANGES, 0);
             }
 
-            // Chuẩn bị các hóa đơn PENDING đã có sẵn cùng kỳ để tái sử dụng
+            // Kiểm tra các hóa đơn đã có sẵn cùng kỳ (cả PENDING và PAID)
             var existingInvoices = await _context.Invoices
                 .Where(i =>
                     apartmentIds.Contains(i.ApartmentId) &&
-                    i.Status == "PENDING" &&
                     i.Description != null &&
                     i.Description.Contains($"BillingPeriod: {billingPeriod}"))
                 .Include(i => i.InvoiceItems)
                 .ToListAsync();
 
-            // Gom nhóm theo căn hộ để tra cứu nhanh hóa đơn hiện tại
-            var invoiceLookup = existingInvoices
+            // Gom nhóm theo căn hộ để kiểm tra từng căn hộ
+            var invoicesByApartment = existingInvoices
+                .GroupBy(i => i.ApartmentId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Kiểm tra và lọc các căn hộ đã có invoice PAID → bỏ qua không tạo lại
+            var apartmentsToProcess = new List<string>();
+            var skippedPaidCount = 0;
+            
+            foreach (var apartmentId in apartmentIds)
+            {
+                if (invoicesByApartment.TryGetValue(apartmentId, out var apartmentInvoices))
+                {
+                    // Nếu có invoice PAID cho căn hộ này → bỏ qua
+                    if (apartmentInvoices.Any(i => i.Status == "PAID"))
+                    {
+                        skippedPaidCount++;
+                        continue;
+                    }
+                }
+                apartmentsToProcess.Add(apartmentId);
+            }
+
+            // Nếu tất cả căn hộ đã có invoice PAID → không tạo gì cả
+            if (apartmentsToProcess.Count == 0)
+            {
+                await transaction.RollbackAsync();
+                return (false, $"Tất cả căn hộ đã có hóa đơn đã thanh toán cho kỳ {billingPeriod}. Không thể tạo lại.", 0);
+            }
+
+            // Gom nhóm các hóa đơn PENDING theo căn hộ để tái sử dụng (chỉ cho các căn hộ chưa PAID)
+            var pendingInvoices = existingInvoices
+                .Where(i => i.Status == "PENDING" && apartmentsToProcess.Contains(i.ApartmentId))
+                .ToList();
+            var invoiceLookup = pendingInvoices
                 .GroupBy(i => i.ApartmentId)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(inv => inv.CreatedAt ?? DateTime.MinValue).First());
 
@@ -325,7 +400,10 @@ public class InvoiceService : IInvoiceService
 
             int processedCount = 0;
 
-            foreach (var apartment in apartments)
+            // Chỉ xử lý các căn hộ chưa có invoice PAID
+            var apartmentsToProcessList = apartments.Where(a => apartmentsToProcess.Contains(a.ApartmentId)).ToList();
+
+            foreach (var apartment in apartmentsToProcessList)
             {
                 if (!invoiceLookup.TryGetValue(apartment.ApartmentId, out var invoice))
                 {
@@ -746,6 +824,64 @@ public class InvoiceService : IInvoiceService
         catch (Exception)
         {
             await transaction.RollbackAsync();
+            return (false, ApiResponse.SM40_SYSTEM_ERROR);
+        }
+    }
+
+    /**
+     * Cập nhật ngày kết thúc thanh toán cho hóa đơn quá hạn
+     */
+    public async Task<(bool Success, string Message)> UpdateInvoiceEndDateAsync(string invoiceId, DateOnly newEndDate, string userId)
+    {
+        try
+        {
+            var invoice = await _invoiceRepo.FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+            if (invoice == null)
+            {
+                return (false, ApiResponse.SM01_NO_RESULTS);
+            }
+
+            // Chỉ cho phép cập nhật ngày kết thúc thanh toán cho hóa đơn quá hạn hoặc pending
+            if (invoice.Status != "OVERDUE" && invoice.Status != "PENDING")
+            {
+                return (false, "Chỉ có thể cập nhật ngày kết thúc thanh toán cho hóa đơn quá hạn hoặc chờ thanh toán.");
+            }
+
+            // Kiểm tra ngày mới phải sau ngày hiện tại
+            if (newEndDate <= invoice.EndDate)
+            {
+                return (false, "Ngày kết thúc thanh toán mới phải sau ngày kết thúc hiện tại.");
+            }
+
+            // Cập nhật ngày kết thúc thanh toán
+            invoice.EndDate = newEndDate;
+            invoice.UpdatedAt = DateTime.UtcNow;
+
+            // Tự động cập nhật status dựa trên ngày mới
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (newEndDate < today)
+            {
+                // Ngày mới vẫn quá hạn -> giữ hoặc chuyển sang OVERDUE
+                if (invoice.Status != "OVERDUE")
+                {
+                    invoice.Status = "OVERDUE";
+                }
+            }
+            else
+            {
+                // Ngày mới chưa quá hạn -> chuyển về PENDING nếu đang là OVERDUE
+                if (invoice.Status == "OVERDUE")
+                {
+                    invoice.Status = "PENDING";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return (true, "Cập nhật ngày kết thúc thanh toán thành công.");
+        }
+        catch (Exception)
+        {
             return (false, ApiResponse.SM40_SYSTEM_ERROR);
         }
     }

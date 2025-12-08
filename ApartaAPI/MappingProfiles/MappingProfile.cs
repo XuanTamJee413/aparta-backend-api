@@ -46,6 +46,13 @@ namespace ApartaAPI.Profiles
                 .ForMember(dest => dest.BuildingCode, opt => opt.Ignore())
                 .ForMember(dest => dest.BuildingId, opt => opt.Ignore())
                 .ForMember(dest => dest.ProjectId, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore())
+                .ForMember(dest => dest.TotalFloors, opt => opt.MapFrom((src, dest) => src.TotalFloors ?? dest.TotalFloors))
+                .ForMember(dest => dest.TotalBasements, opt => opt.MapFrom((src, dest) => src.TotalBasements ?? dest.TotalBasements))
+                .ForMember(dest => dest.ReadingWindowStart, opt => opt.MapFrom((src, dest) => src.ReadingWindowStart ?? dest.ReadingWindowStart))
+                .ForMember(dest => dest.ReadingWindowEnd, opt => opt.MapFrom((src, dest) => src.ReadingWindowEnd ?? dest.ReadingWindowEnd))
+                .ForMember(dest => dest.TotalArea, opt => opt.MapFrom((src, dest) => src.TotalArea ?? dest.TotalArea))
+                .ForMember(dest => dest.HandoverDate, opt => opt.MapFrom((src, dest) => src.HandoverDate ?? dest.HandoverDate))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<Subscription, SubscriptionDto>()

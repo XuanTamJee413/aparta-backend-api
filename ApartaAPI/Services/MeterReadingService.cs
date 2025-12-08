@@ -179,7 +179,9 @@ namespace ApartaAPI.Services
             foreach (var readingDto in readings)
             {
                 //format: yyyy-MM
-                var billingPeriod = readingDto.ReadingDate.ToString("yyyy-MM");
+                // billingPeriod = tháng trước của ReadingDate (vì ghi chỉ số cuối kỳ)
+                var readingDate = readingDto.ReadingDate;
+                var billingPeriod = readingDate.AddMonths(-1).ToString("yyyy-MM");
 
                 // Sử dụng method CheckMeterReadingExistsAsync để kiểm tra
                 var checkResult = await CheckMeterReadingExistsAsync(apartmentId, readingDto.FeeType, billingPeriod);

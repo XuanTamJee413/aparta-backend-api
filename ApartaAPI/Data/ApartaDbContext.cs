@@ -38,8 +38,6 @@ public partial class ApartaDbContext : DbContext
 
     public virtual DbSet<Message> Messages { get; set; }
 
-    public virtual DbSet<Meter> Meters { get; set; }
-
     public virtual DbSet<MeterReading> MeterReadings { get; set; }
 
     public virtual DbSet<News> News { get; set; }
@@ -519,31 +517,6 @@ public partial class ApartaDbContext : DbContext
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Message_Sender");
-        });
-
-        modelBuilder.Entity<Meter>(entity =>
-        {
-            entity.HasKey(e => e.MeterId).HasName("PK__METER__6647C3157098003C");
-
-            entity.ToTable("METER");
-
-            entity.Property(e => e.MeterId)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("meter_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasColumnName("status");
-            entity.Property(e => e.Type)
-                .HasMaxLength(50)
-                .HasColumnName("type");
-            entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<MeterReading>(entity =>

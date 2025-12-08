@@ -190,7 +190,42 @@ namespace ApartaAPI.Utils.Helper
     </body>
     </html>";
         }
-    }
+
+		public static string GetStaffPasswordResetEmailTemplate(string staffName, string newPassword, string frontendUrl)
+		{
+			return $@"
+<html>
+<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+        <h2 style='color: #d9534f; text-align: center;'>Thông báo Đặt lại Mật khẩu</h2>
+        
+        <p>Xin chào <strong>{staffName}</strong>,</p>
+        
+        <p>Quản trị viên hệ thống <strong>Aparta</strong> vừa thực hiện đặt lại mật khẩu cho tài khoản của bạn.</p>
+        
+        <div style='background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #d9534f;'>
+            <p style='margin: 0;'><strong>Mật khẩu mới của bạn:</strong></p>
+            <p style='margin: 10px 0; font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #333;'>{newPassword}</p>
+        </div>
+
+        <p>Vui lòng đăng nhập và đổi mật khẩu ngay lập tức để đảm bảo an toàn.</p>
+
+        <div style='text-align: center; margin-top: 30px;'>
+            <a href='{frontendUrl}/login' 
+                style='background-color: #d9534f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>
+                Đăng nhập ngay
+            </a>
+        </div>
+
+        <p style='margin-top: 30px; font-size: 12px; color: #777; text-align: center;'>
+            Đây là email tự động, vui lòng không trả lời.<br>
+            © 2025 Aparta System
+        </p>
+    </div>
+</body>
+</html>";
+		}
+	}
 }
 
 

@@ -140,7 +140,7 @@ public class MonthlyBillingJob : BackgroundService
     private static TimeSpan GetDelayUntilNextRun()
     {
 		var now = DateTime.Now;
-		var nextRun = new DateTime(now.Year, now.Month, now.Day, 14, 37 , 0); // Mốc 07:00 hôm nay
+		var nextRun = new DateTime(now.Year, now.Month, now.Day, 8, 27 , 0); // Mốc 07:00 hôm nay
 
         if (now >= nextRun)
         {

@@ -336,18 +336,50 @@ public class InvoiceService : IInvoiceService
                 return (true, ApiResponse.SM20_NO_CHANGES, 0);
             }
 
-            // Chuẩn bị các hóa đơn PENDING đã có sẵn cùng kỳ để tái sử dụng
+            // Kiểm tra các hóa đơn đã có sẵn cùng kỳ (cả PENDING và PAID)
             var existingInvoices = await _context.Invoices
                 .Where(i =>
                     apartmentIds.Contains(i.ApartmentId) &&
-                    i.Status == "PENDING" &&
                     i.Description != null &&
                     i.Description.Contains($"BillingPeriod: {billingPeriod}"))
                 .Include(i => i.InvoiceItems)
                 .ToListAsync();
 
-            // Gom nhóm theo căn hộ để tra cứu nhanh hóa đơn hiện tại
-            var invoiceLookup = existingInvoices
+            // Gom nhóm theo căn hộ để kiểm tra từng căn hộ
+            var invoicesByApartment = existingInvoices
+                .GroupBy(i => i.ApartmentId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Kiểm tra và lọc các căn hộ đã có invoice PAID → bỏ qua không tạo lại
+            var apartmentsToProcess = new List<string>();
+            var skippedPaidCount = 0;
+            
+            foreach (var apartmentId in apartmentIds)
+            {
+                if (invoicesByApartment.TryGetValue(apartmentId, out var apartmentInvoices))
+                {
+                    // Nếu có invoice PAID cho căn hộ này → bỏ qua
+                    if (apartmentInvoices.Any(i => i.Status == "PAID"))
+                    {
+                        skippedPaidCount++;
+                        continue;
+                    }
+                }
+                apartmentsToProcess.Add(apartmentId);
+            }
+
+            // Nếu tất cả căn hộ đã có invoice PAID → không tạo gì cả
+            if (apartmentsToProcess.Count == 0)
+            {
+                await transaction.RollbackAsync();
+                return (false, $"Tất cả căn hộ đã có hóa đơn đã thanh toán cho kỳ {billingPeriod}. Không thể tạo lại.", 0);
+            }
+
+            // Gom nhóm các hóa đơn PENDING theo căn hộ để tái sử dụng (chỉ cho các căn hộ chưa PAID)
+            var pendingInvoices = existingInvoices
+                .Where(i => i.Status == "PENDING" && apartmentsToProcess.Contains(i.ApartmentId))
+                .ToList();
+            var invoiceLookup = pendingInvoices
                 .GroupBy(i => i.ApartmentId)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(inv => inv.CreatedAt ?? DateTime.MinValue).First());
 
@@ -368,7 +400,10 @@ public class InvoiceService : IInvoiceService
 
             int processedCount = 0;
 
-            foreach (var apartment in apartments)
+            // Chỉ xử lý các căn hộ chưa có invoice PAID
+            var apartmentsToProcessList = apartments.Where(a => apartmentsToProcess.Contains(a.ApartmentId)).ToList();
+
+            foreach (var apartment in apartmentsToProcessList)
             {
                 if (!invoiceLookup.TryGetValue(apartment.ApartmentId, out var invoice))
                 {

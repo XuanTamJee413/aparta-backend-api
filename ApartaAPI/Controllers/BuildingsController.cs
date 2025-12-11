@@ -119,7 +119,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet("my-buildings")]
-        [Authorize(Policy = "CanReadBuilding")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PaginatedResult<BuildingDto>>>> GetBuildingsByMyBuildings([FromQuery] BuildingQueryParameters query)
         {
             var userId = User.FindFirst("id")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

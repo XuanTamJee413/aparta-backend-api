@@ -14,23 +14,89 @@ namespace ApartaAPI.Services
     public class VisitLogService : IVisitLogService
     {
         private readonly IVisitLogRepository _repository;
+        private readonly IRepository<StaffBuildingAssignment> _assignmentRepo;
+        private readonly IRepository<User> _userRepo;
         private readonly IMapper _mapper;
 
-        public VisitLogService(IVisitLogRepository repository, IMapper mapper)
+        public VisitLogService(IVisitLogRepository repository, IRepository<StaffBuildingAssignment> assignmentRepo, IRepository<User> userRepo, IMapper mapper)
         {
             _repository = repository;
+            _userRepo = userRepo;
             _mapper = mapper;
+            _assignmentRepo = assignmentRepo;
         }
         // get all nhung da joij bang visitor va apartment
-        public async Task<PagedList<VisitLogStaffViewDto>> GetStaffViewLogsAsync(VisitorQueryParameters queryParams)
+        public async Task<PagedList<VisitLogStaffViewDto>> GetStaffViewLogsAsync(VisitorQueryParameters queryParams, string userId)
         {
             var query = _repository.GetStaffViewLogsQuery();
 
+            // Lấy danh sách tòa nhà Staff đang quản lý
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var assignedBuildingIds = await _assignmentRepo.FindAsync(x =>
+                x.UserId == userId &&
+                x.IsActive == true &&
+                (x.AssignmentEndDate == null || x.AssignmentEndDate >= today)
+            );
+            var allowedBuildingIds = assignedBuildingIds.Select(x => x.BuildingId).ToList();
+
+            // STAFF BẮT BUỘC PHẢI CÓ QUYỀN QUẢN LÝ MỚI XEM ĐƯỢC
+            if (!allowedBuildingIds.Any())
+            {
+                return new PagedList<VisitLogStaffViewDto>(new List<VisitLogStaffViewDto>(), 0, queryParams.PageNumber, queryParams.PageSize);
+            }
+
+            // Filter cứng: Chỉ xem được tòa nhà mình quản lý
+            query = query.Where(v => allowedBuildingIds.Contains(v.Apartment.BuildingId));
+
+            // Filter mềm: Nếu chọn cụ thể 1 tòa trong combobox
+            if (!string.IsNullOrEmpty(queryParams.BuildingId))
+            {
+                if (!allowedBuildingIds.Contains(queryParams.BuildingId))
+                {
+                    return new PagedList<VisitLogStaffViewDto>(new List<VisitLogStaffViewDto>(), 0, queryParams.PageNumber, queryParams.PageSize);
+                }
+                query = query.Where(v => v.Apartment.BuildingId == queryParams.BuildingId);
+            }
+
+            // Gọi hàm chung để xử lý Search/Sort/Paging
+            return await ApplyCommonQueryLogic(query, queryParams);
+        }
+
+        // ==========================================================
+        // Chỉ lấy theo Apartment của Resident
+        // ==========================================================
+        public async Task<PagedList<VisitLogStaffViewDto>> GetResidentHistoryAsync(VisitorQueryParameters queryParams, string userId)
+        {
+            // Lấy thông tin User để tìm ApartmentId
+            var user = await _userRepo.GetByIdAsync(userId);
+
+            // Nếu không tìm thấy user hoặc user chưa được gán vào căn hộ nào -> Rỗng
+            if (user == null || string.IsNullOrEmpty(user.ApartmentId))
+            {
+                return new PagedList<VisitLogStaffViewDto>(new List<VisitLogStaffViewDto>(), 0, queryParams.PageNumber, queryParams.PageSize);
+            }
+
+            var query = _repository.GetStaffViewLogsQuery();
+
+            // RESIDENT BẮT BUỘC CHỈ XEM ĐƯỢC CĂN HỘ CỦA MÌNH
+            query = query.Where(v => v.ApartmentId == user.ApartmentId);
+
+            // Gọi hàm chung để xử lý Search/Sort/Paging
+            return await ApplyCommonQueryLogic(query, queryParams);
+        }
+
+        // ==========================================================
+        // HELPER: Hàm chung xử lý Search, Sort, Paging (Tránh lặp code)
+        // ==========================================================
+        private async Task<PagedList<VisitLogStaffViewDto>> ApplyCommonQueryLogic(IQueryable<VisitLog> query, VisitorQueryParameters queryParams)
+        {
+            // Filter theo ApartmentId (Optional cho Staff, nhưng Resident đã bị filter cứng ở trên rồi nên dòng này ko ảnh hưởng sai)
             if (!string.IsNullOrEmpty(queryParams.ApartmentId))
             {
                 query = query.Where(v => v.ApartmentId == queryParams.ApartmentId);
             }
 
+            // Search Term
             if (!string.IsNullOrEmpty(queryParams.SearchTerm))
             {
                 var searchTermLower = queryParams.SearchTerm.ToLower();
@@ -40,6 +106,7 @@ namespace ApartaAPI.Services
                 );
             }
 
+            // Sorting
             if (!string.IsNullOrEmpty(queryParams.SortColumn))
             {
                 Expression<Func<VisitLog, object>> keySelector = queryParams.SortColumn.ToLower() switch
@@ -50,30 +117,22 @@ namespace ApartaAPI.Services
                     _ => v => v.CheckinTime
                 };
                 bool isDescending = queryParams.SortDirection?.ToLower() == "desc";
-                query = isDescending
-                    ? query.OrderByDescending(keySelector)
-                    : query.OrderBy(keySelector);
+                query = isDescending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
             }
             else
             {
                 query = query.OrderByDescending(vl => vl.CheckinTime);
             }
 
+            // Paging
             var dtoQuery = query.ProjectTo<VisitLogStaffViewDto>(_mapper.ConfigurationProvider);
-
             var totalCount = await dtoQuery.CountAsync();
-
             var items = await dtoQuery
                 .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
                 .Take(queryParams.PageSize)
                 .ToListAsync();
 
-            return new PagedList<VisitLogStaffViewDto>(
-                items,
-                totalCount,
-                queryParams.PageNumber,
-                queryParams.PageSize
-            );
+            return new PagedList<VisitLogStaffViewDto>(items, totalCount, queryParams.PageNumber, queryParams.PageSize);
         }
         // check-in
         public async Task<bool> CheckInAsync(string id)

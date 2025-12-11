@@ -104,7 +104,8 @@ namespace ApartaAPI.Profiles
                 .ForMember(
                     dest => dest.VisitorIdNumber,
                     opt => opt.MapFrom(src => src.Visitor.IdNumber)
-                );
+                ).ForMember(dest => dest.VisitorPhone, opt => opt.MapFrom(src => src.Visitor.Phone));
+
             CreateMap<VisitorCreateDto, Visitor>();
             CreateMap<VisitorCreateDto, VisitLog>()
                 .ForMember(dest => dest.VisitorId, opt => opt.Ignore())

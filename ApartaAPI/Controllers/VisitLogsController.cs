@@ -61,5 +61,25 @@ namespace ApartaAPI.Controllers
 
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
+
+        // DELETE: api/VisitLogs/{id}
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "CanReadVisitor")] // Hoặc Policy phù hợp
+        public async Task<ActionResult<ApiResponse>> DeleteVisitLog(string id)
+        {
+            var success = await _service.DeleteLogAsync(id);
+            if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+            return Ok(ApiResponse.Success(ApiResponse.SM05_DELETION_SUCCESS));
+        }
+
+        // PUT: api/VisitLogs/{id}/info
+        [HttpPut("{id}/info")]
+        [Authorize(Policy = "CanReadVisitor")]
+        public async Task<ActionResult<ApiResponse>> UpdateVisitLog(string id, [FromBody] VisitLogUpdateDto dto)
+        {
+            var success = await _service.UpdateLogAsync(id, dto);
+            if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+            return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
+        }
     }
 }

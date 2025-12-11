@@ -16,8 +16,7 @@ namespace ApartaAPI.DTOs.Visitors
         [StringLength(100, ErrorMessage = "Họ tên không quá 100 ký tự")]
         public string FullName { get; set; } = null!;
 
-        [RegularExpression(@"^[0-9]*$", ErrorMessage = "Số điện thoại chỉ được chứa số")]
-        [StringLength(15, ErrorMessage = "Số điện thoại không quá 15 ký tự")]
+        [RegularExpression(@"^[0-9]{10,13}$", ErrorMessage = "Số điện thoại phải từ 10 đến 13 số")]
         public string? Phone { get; set; }
 
         [Required(ErrorMessage = "CCCD/Hộ chiếu là bắt buộc")]

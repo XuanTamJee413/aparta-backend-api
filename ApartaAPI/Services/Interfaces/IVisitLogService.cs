@@ -11,5 +11,7 @@ namespace ApartaAPI.Services.Interfaces
         // check-in check-out
         Task<bool> CheckInAsync(string id);
         Task<bool> CheckOutAsync(string id);
+        Task<bool> DeleteLogAsync(string id);
+        Task<bool> UpdateLogAsync(string id, VisitLogUpdateDto dto);
     }
 }

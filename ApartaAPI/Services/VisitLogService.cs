@@ -105,5 +105,38 @@ namespace ApartaAPI.Services
             await _repository.UpdateAsync(visitLog);
             return await _repository.SaveChangesAsync();
         }
+
+        public async Task<bool> DeleteLogAsync(string id)
+        {
+            // Chỉ xóa Log, KHÔNG xóa Visitor 
+            return await _repository.DeleteAsync(id);
+        }
+
+        public async Task<bool> UpdateLogAsync(string id, VisitLogUpdateDto dto)
+        {
+            var log = await _repository.GetByIdWithVisitorAsync(id);
+
+            if (log == null) return false;
+
+            //  cập nhật Visitor
+            if (log.Visitor != null)
+            {
+                if (!string.IsNullOrEmpty(dto.FullName)) log.Visitor.FullName = dto.FullName;
+                if (!string.IsNullOrEmpty(dto.Phone)) log.Visitor.Phone = dto.Phone;
+                if (!string.IsNullOrEmpty(dto.IdNumber)) log.Visitor.IdNumber = dto.IdNumber;
+            }
+
+            //  cập nhật Log
+            if (!string.IsNullOrEmpty(dto.Purpose)) log.Purpose = dto.Purpose;
+
+            if (!string.IsNullOrEmpty(dto.CheckinTime) && DateTime.TryParse(dto.CheckinTime, out var newTime))
+            {
+                log.CheckinTime = newTime.ToUniversalTime();
+            }
+
+            await _repository.UpdateAsync(log);
+
+            return true;
+        }
     }
 }

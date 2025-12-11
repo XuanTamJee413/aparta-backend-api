@@ -18,5 +18,11 @@ namespace ApartaAPI.Repositories
                 .Where(v => v.Status != "Deleted")
                 .AsQueryable();
         }
+        public async Task<VisitLog?> GetByIdWithVisitorAsync(string id)
+        {
+            return await _dbSet
+                .Include(vl => vl.Visitor) // Join bảng Visitor
+                .FirstOrDefaultAsync(vl => vl.VisitLogId == id);
+        }
     }
 }

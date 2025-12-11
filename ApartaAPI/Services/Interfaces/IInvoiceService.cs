@@ -12,6 +12,7 @@ public interface IInvoiceService
     Task<(bool Success, string Message, InvoiceDto? Invoice)> CreateOneTimeInvoiceAsync(OneTimeInvoiceCreateDto dto, string userId, List<string>? imageUrls = null);
     Task<(bool Success, string Message)> MarkInvoiceAsPaidAsync(string invoiceId, string userId);
     Task<(bool Success, string Message)> DeleteInvoiceAsync(string invoiceId, string userId);
+    Task<(bool Success, string Message)> UpdateInvoiceEndDateAsync(string invoiceId, DateOnly newEndDate, string userId);
     Task<(int SentCount, int FailedCount)> SendInvoiceEmailsToResidentsAsync(string buildingId, string billingPeriod);
 }
 

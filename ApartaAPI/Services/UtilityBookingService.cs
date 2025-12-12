@@ -72,16 +72,6 @@ namespace ApartaAPI.Services
 
 			var allBookings = await _bookingRepository.GetAllAsync();
 
-			//int pendingOnTargetDate = allBookings.Count(b =>
-			//	b.ResidentId == residentId &&
-			//	b.Status == "Pending" &&
-			//	b.BookingDate.Date == createDto.BookingDate.Date
-			//);
-
-			//if (pendingOnTargetDate >= 1)
-			//{
-			//	return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM51_PENDING_LIMIT_EXCEEDED);
-			//}
 
 			var userBookings = allBookings.Where(b => b.ResidentId == residentId).ToList();
 			int bookingsOnDay = userBookings.Count(b =>

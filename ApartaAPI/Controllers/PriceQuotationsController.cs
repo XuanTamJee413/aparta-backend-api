@@ -28,36 +28,6 @@ namespace ApartaAPI.Controllers
             return Ok(priceQuotations);
         }
 
-        /// <summary>
-        /// Tạo một đơn giá(fee) mới cho một tòa nhà.
-        /// </summary>
-        /// <remarks>
-        /// Endpoint này cho phép tạo một cấu hình đơn giá mới, ví dụ: "Phí quản lý", "Tiền điện".
-        /// 
-        /// **Lưu ý về `calculationMethod` và `note`:**
-        /// - Nếu dùng `calculationMethod` là "TIERED" (lũy tiến), trường `note` BẮT BUỘC phải chứa một 
-        ///   chuỗi JSON hợp lệ định nghĩa các bậc giá. unitPrice phải điền mức giá thấp nhất (hoặc trung bình) 
-        ///   phòng TH json không hợp lệ sẽ sử dụng unitPrice để tính
-        /// - Nếu dùng các phương thức khác(như "PER_AREA", "FIXED_RATE"), trường `unitPrice` sẽ được sử dụng
-        ///   và trường `note` có thể để trống.
-        /// 
-        /// ---
-        /// ### Ví dụ JSON cho `TIERED`:
-        /// ```json
-        /// {
-        ///   "buildingId": "1",
-        ///   "feeType": "Tiền điện sinh hoạt",
-        ///   "calculationMethod": "TIERED",
-        ///   "unitPrice": 1800,
-        ///   "unit": "VND/kWh",
-        ///   "note": "[{\"fromValue\":0,\"toValue\":100,\"unitPrice\":1800},{\"fromValue\":101,\"toValue\":200,\"unitPrice\":2500},{\"fromValue\":201,\"toValue\":400,\"unitPrice\":3000},{\"fromValue\":401,\"toValue\":null,\"unitPrice\":3500}]"
-        /// }
-        /// ```
-        /// </remarks>
-        /// <param name="createDto">Đối tượng chứa thông tin của đơn giá cần tạo.</param>
-        /// <response code="201">Tạo thành công. Trả về đối tượng đơn giá vừa được tạo.</response>
-        /// <response code="400">Dữ liệu đầu vào không hợp lệ (ví dụ: thiếu trường bắt buộc, `unitPrice` âm).</response>
-        /// <response code="404">Không tìm thấy `buildingId` được chỉ định trong hệ thống.</response>
         [HttpPost]
         public async Task<IActionResult> CreatePriceQuotation([FromBody] PriceQuotationCreateDto createDto)
         {

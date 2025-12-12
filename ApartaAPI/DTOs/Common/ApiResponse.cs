@@ -148,10 +148,10 @@
 		public const string SM48_SLOT_OVERLAP = "Khung giờ này đã có người đặt. Vui lòng chọn giờ khác.";
 
 		// SM49: Giờ mở cửa
-		public const string SM49_OPENING_HOURS_INVALID = "Dịch vụ chỉ mở cửa từ 6:00 sáng.";
+		public const string SM49_OPENING_HOURS_INVALID = "Dịch vụ chỉ mở cửa từ {hours}.";
 
 		// SM50: Giờ đóng cửa
-		public const string SM50_CLOSING_HOURS_INVALID = "Dịch vụ đóng cửa lúc 22:00. Vui lòng chọn giờ kết thúc sớm hơn.";
+		public const string SM50_CLOSING_HOURS_INVALID = "Dịch vụ đóng cửa lúc {hours}. Vui lòng chọn giờ kết thúc sớm hơn.";
 
 		// SM51: Giới hạn đơn Pending
 		public const string SM51_PENDING_LIMIT_EXCEEDED = "Bạn đang có đơn chờ duyệt vào ngày này. Vui lòng đợi xử lý.";

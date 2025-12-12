@@ -51,7 +51,14 @@ namespace ApartaAPI.DTOs.Tasks
         DateTime? CreatedAt,
         List<TaskAssigneeDto> Assignees,
 		DateTime? AssignedDate,
-		string? AssigneeNote
+		string? AssigneeNote,
+		string? VerifyNote
+	);
+
+	public sealed record TaskVerifyDto(
+		[Required] string TaskId,
+		[Required] bool IsAccepted,   
+		string? VerifyNote
 	);
 
 

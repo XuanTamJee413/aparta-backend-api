@@ -46,7 +46,19 @@ namespace ApartaAPI.Services
 			{
 				throw new InvalidOperationException("Không thể đặt dịch vụ cho ngày trong quá khứ.");
 			}
+			var allBookings = await _bookingRepository.GetAllAsync();
 
+			// Kiểm tra có đơn nào của user này, trạng thái Pending, và trùng ngày đặt không
+			bool hasPendingToday = allBookings.Any(b =>
+				b.ResidentId == residentId &&
+				b.Status == "Pending" &&
+				b.BookingDate.Date == createDto.BookingDate.Date
+			);
+
+			if (hasPendingToday)
+			{
+				throw new InvalidOperationException("Bạn đang có một đơn chờ duyệt trong ngày này. Vui lòng đợi xử lý hoặc chọn ngày khác.");
+			}
 			var newBooking = new ServiceBooking
 			{
 				ServiceBookingId = Guid.NewGuid().ToString(),
@@ -113,7 +125,7 @@ namespace ApartaAPI.Services
 			{
 				b.Service = allServices.FirstOrDefault(s => s.ServiceId == b.ServiceId);
 				b.Resident = allUsers.FirstOrDefault(u => u.UserId == b.ResidentId);
-				return MapToDto(b); // Map sang DTO để lọc
+				return MapToDto(b); 
 			}).AsQueryable();
 
 			// Lọc theo Trạng thái (Status)
@@ -153,6 +165,25 @@ namespace ApartaAPI.Services
 				return null;
 			}
 
+			if (existingBooking.Status == "Pending" && existingBooking.BookingDate <= DateTime.UtcNow)
+			{
+				// Tự động chuyển sang Expired
+				existingBooking.Status = "Expired";
+				existingBooking.UpdatedAt = DateTime.UtcNow;
+
+				await _bookingRepository.UpdateAsync(existingBooking);
+				await _bookingRepository.SaveChangesAsync();
+
+				// Ném ra lỗi để Frontend biết và không cho update tiếp
+				throw new InvalidOperationException("Đơn đặt này đã quá hạn (Expired) và không thể cập nhật trạng thái nữa.");
+			}
+
+			// Nếu trạng thái hiện tại ĐÃ là Expired hoặc Cancelled thì chặn luôn
+			if (existingBooking.Status == "Expired" || existingBooking.Status == "Cancelled")
+			{
+				throw new InvalidOperationException($"Không thể cập nhật đơn hàng ở trạng thái {existingBooking.Status}.");
+			}
+
 			// Lưu trạng thái cũ để so sánh
 			string oldStatus = existingBooking.Status;
 
@@ -164,8 +195,8 @@ namespace ApartaAPI.Services
 			await _bookingRepository.UpdateAsync(existingBooking);
 			await _bookingRepository.SaveChangesAsync();
 
-			// --- LOGIC MỚI: TỰ ĐỘNG TẠO TASK ---
-			// Nếu trạng thái chuyển sang Approved/Confirmed VÀ trước đó chưa phải trạng thái này
+			//TỰ ĐỘNG TẠO TASK 
+
 			if ((existingBooking.Status == "Approved" || existingBooking.Status == "Confirmed") && oldStatus != existingBooking.Status)
 			{
 				// Load thêm thông tin Service để làm Description cho rõ
@@ -176,17 +207,46 @@ namespace ApartaAPI.Services
 				DateTime startTime = DateTime.Now;
 				DateTime endTime = existingBooking.BookingDate;
 				
-
-				// Gọi TaskService để tạo Task (Status = New)
-				// Hàm này bạn đã thêm ở bước trước trong ITaskService
 				await _taskService.CreateTaskFromBookingAsync(existingBooking.ServiceBookingId, description, startTime, endTime, operationStaffId);
 			}
-			// ------------------------------------
+			// 
 
 			existingBooking.Service = await _serviceRepository.FirstOrDefaultAsync(s => s.ServiceId == existingBooking.ServiceId);
 			existingBooking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == existingBooking.ResidentId);
 
 			return MapToDto(existingBooking);
+		}
+
+		public async Task<bool> CancelBookingAsync(string bookingId, string residentId)
+		{
+			// 1. Tìm booking
+			var booking = await _bookingRepository.FirstOrDefaultAsync(b => b.ServiceBookingId == bookingId);
+
+			if (booking == null)
+			{
+				throw new KeyNotFoundException("Đơn đặt dịch vụ không tồn tại.");
+			}
+
+			if (booking.ResidentId != residentId)
+			{
+				throw new UnauthorizedAccessException("Bạn không có quyền hủy đơn đặt này.");
+			}
+
+			if (booking.Status != "Pending")
+			{
+				throw new InvalidOperationException("Chỉ có thể hủy đơn khi trạng thái là 'Chờ duyệt' (Pending). Đơn này đã được xử lý.");
+			}
+
+			if (booking.BookingDate <= DateTime.UtcNow)
+			{
+				throw new InvalidOperationException("Không thể hủy đơn vì thời gian thực hiện đã qua.");
+			}
+
+			booking.Status = "Cancelled";
+			booking.UpdatedAt = DateTime.UtcNow;
+
+			await _bookingRepository.UpdateAsync(booking);
+			return await _bookingRepository.SaveChangesAsync();
 		}
 
 

@@ -23,7 +23,7 @@ namespace ApartaAPI.Controllers
         // 1. DÀNH CHO STAFF (Xem danh sách quản lý)
         // ======================================================
         [HttpGet("all")]
-        [Authorize(Policy = "CanReadVisitor")] // Policy cũ
+        [Authorize(Policy = "CanReadVisitor")] 
         public async Task<ActionResult<ApiResponse<PagedList<VisitLogStaffViewDto>>>> GetVisitLogsForStaff(
             [FromQuery] VisitorQueryParameters queryParams)
         {
@@ -41,7 +41,7 @@ namespace ApartaAPI.Controllers
         }
 
         // ======================================================
-        // 2. [MỚI] DÀNH CHO RESIDENT (Xem lịch sử của chính mình)
+        // 2. DÀNH CHO RESIDENT (Xem lịch sử của chính mình)
         // GET: api/VisitLogs/my-history
         // ======================================================
         [HttpGet("my-history")]

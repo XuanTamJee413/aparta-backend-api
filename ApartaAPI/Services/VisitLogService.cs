@@ -30,7 +30,7 @@ namespace ApartaAPI.Services
         {
             var query = _repository.GetStaffViewLogsQuery();
 
-            // Lấy danh sách tòa nhà Staff đang quản lý
+            // check xem staff này được gán cho những building nào và lấy danh sách tòa nhà Staff đang quản lý
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var assignedBuildingIds = await _assignmentRepo.FindAsync(x =>
                 x.UserId == userId &&
@@ -45,10 +45,10 @@ namespace ApartaAPI.Services
                 return new PagedList<VisitLogStaffViewDto>(new List<VisitLogStaffViewDto>(), 0, queryParams.PageNumber, queryParams.PageSize);
             }
 
-            // Filter cứng: Chỉ xem được tòa nhà mình quản lý
+            // hỉ xem được tòa nhà mình quản lý
             query = query.Where(v => allowedBuildingIds.Contains(v.Apartment.BuildingId));
 
-            // Filter mềm: Nếu chọn cụ thể 1 tòa trong combobox
+            //  nếu chọn cụ thể 1 tòa trong combobox
             if (!string.IsNullOrEmpty(queryParams.BuildingId))
             {
                 if (!allowedBuildingIds.Contains(queryParams.BuildingId))
@@ -58,7 +58,7 @@ namespace ApartaAPI.Services
                 query = query.Where(v => v.Apartment.BuildingId == queryParams.BuildingId);
             }
 
-            // Gọi hàm chung để xử lý Search/Sort/Paging
+            // search/Sort/Paging
             return await ApplyCommonQueryLogic(query, queryParams);
         }
 
@@ -81,16 +81,16 @@ namespace ApartaAPI.Services
             // RESIDENT BẮT BUỘC CHỈ XEM ĐƯỢC CĂN HỘ CỦA MÌNH
             query = query.Where(v => v.ApartmentId == user.ApartmentId);
 
-            // Gọi hàm chung để xử lý Search/Sort/Paging
+            // search/Sort/Paging
             return await ApplyCommonQueryLogic(query, queryParams);
         }
 
         // ==========================================================
-        // HELPER: Hàm chung xử lý Search, Sort, Paging (Tránh lặp code)
+        // HELPER: Hàm chung xử lý Search, Sort, Paging
         // ==========================================================
         private async Task<PagedList<VisitLogStaffViewDto>> ApplyCommonQueryLogic(IQueryable<VisitLog> query, VisitorQueryParameters queryParams)
         {
-            // Filter theo ApartmentId (Optional cho Staff, nhưng Resident đã bị filter cứng ở trên rồi nên dòng này ko ảnh hưởng sai)
+            // Filter theo ApartmentId (Optional cho Staff, nhưng Resident đã bị filter cứng ở trên rồi nên dòng này ko ảnh hưởng)
             if (!string.IsNullOrEmpty(queryParams.ApartmentId))
             {
                 query = query.Where(v => v.ApartmentId == queryParams.ApartmentId);

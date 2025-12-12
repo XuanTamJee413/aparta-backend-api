@@ -41,6 +41,8 @@ namespace ApartaAPI.Services
             // --- [SỬA LOGIC A2.1: TÁI SỬ DỤNG KHÁCH CŨ] ---
             var visitor = await _visitorRepository.FirstOrDefaultAsync(v => v.IdNumber == dto.IdNumber);
 
+            bool isVisitorUpdated = false;
+
             if (visitor == null)
             {
                 // Nếu chưa có -> Tạo mới
@@ -55,6 +57,8 @@ namespace ApartaAPI.Services
                 visitor.Phone = dto.Phone;
                 // Không tạo ID mới, dùng lại ID cũ
                 await _visitorRepository.UpdateAsync(visitor);
+
+                isVisitorUpdated = true;
             }
 
             // 2. Xử lý VisitLog
@@ -95,13 +99,15 @@ namespace ApartaAPI.Services
 
             await _visitLogRepository.AddAsync(newVisitLog);
 
-            // SaveChanges 1 lần cuối cùng để đảm bảo Transaction
             await _visitorRepository.SaveChangesAsync();
 
-            return _mapper.Map<VisitorDto>(visitor);
+            var resultDto = _mapper.Map<VisitorDto>(visitor);
+            resultDto.IsUpdated = isVisitorUpdated;
+
+            return resultDto;
         }
 
-        // Thêm hàm lấy khách cũ cho Alternative Flow 2
+        //  lấy khách cũ 
         public async Task<IEnumerable<VisitorDto>> GetRecentVisitorsAsync(string apartmentId)
         {
             var visitors = await _visitorRepository.GetRecentVisitorsByApartmentAsync(apartmentId);

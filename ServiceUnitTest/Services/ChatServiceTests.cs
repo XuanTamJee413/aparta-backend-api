@@ -8,6 +8,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
+using System.Linq;
 using Task = System.Threading.Tasks.Task;
 
 namespace ServiceUnitTest.Services
@@ -34,7 +35,8 @@ namespace ServiceUnitTest.Services
             _service = new ChatService(
                 _context,
                 _mockInteractionRepo.Object,
-                _mockMessageRepo.Object
+                _mockMessageRepo.Object,
+                _mockMapper.Object
             );
         }
 
@@ -69,14 +71,15 @@ namespace ServiceUnitTest.Services
             
             var role1 = new Role { RoleId = "r1", RoleName = "Resident" };
             var role2 = new Role { RoleId = "r2", RoleName = "Staff" };
-            var resident = new User { UserId = residentId, Name = "Resident", PasswordHash = "hash", Status = "Active", Role = role1 };
-            var staff = new User { UserId = staffId, Name = "Staff", PasswordHash = "hash", Status = "Active", Role = role2 };
+            var resident = new User { UserId = residentId, Name = "Resident", PasswordHash = "hash", Status = "Active", RoleId = "r1", Role = role1 };
+            var staff = new User { UserId = staffId, Name = "Staff", PasswordHash = "hash", Status = "Active", RoleId = "r2", Role = role2 };
             
             await _context.Roles.AddRangeAsync(role1, role2);
             await _context.Users.AddRangeAsync(resident, staff);
             await _context.SaveChangesAsync();
 
             _mockInteractionRepo.Setup(r => r.GetInteractionByParticipantsAsync(residentId, staffId)).ReturnsAsync((Interaction)null);
+            _mockInteractionRepo.Setup(r => r.AddAsync(It.IsAny<Interaction>())).ReturnsAsync(new Interaction { InteractionId = "new" });
             _mockMapper.Setup(m => m.Map<InitiateInteractionDto>(It.IsAny<Interaction>())).Returns(new InitiateInteractionDto { InteractionId = "new" });
 
             // Act
@@ -116,24 +119,31 @@ namespace ServiceUnitTest.Services
             // Arrange
             var interactionId = "int1";
             var userId = "u1";
-            var messages = new List<Message> { new Message { MessageId = "m1" } };
-            var resident = new User { UserId = userId, Name = "Resident", PasswordHash = "hash", Status = "Active", Role = new Role { RoleId = "r1", RoleName = "Resident" } };
-            var staff = new User { UserId = "staff1", Name = "Staff", PasswordHash = "hash", Status = "Active", Role = new Role { RoleId = "r2", RoleName = "Staff" } };
+            var role1 = new Role { RoleId = "r1", RoleName = "Resident" };
+            var role2 = new Role { RoleId = "r2", RoleName = "Staff" };
+            var resident = new User { UserId = userId, Name = "Resident", PasswordHash = "hash", Status = "Active", RoleId = "r1", Role = role1 };
+            var staff = new User { UserId = "staff1", Name = "Staff", PasswordHash = "hash", Status = "Active", RoleId = "r2", Role = role2 };
             var interaction = new Interaction { InteractionId = interactionId, ResidentId = userId, StaffId = "staff1", Resident = resident, Staff = staff };
-            
+            var message = new Message { MessageId = "m1", InteractionId = interactionId, SenderId = userId, Content = "Hello", SentAt = DateTime.Now };
+
+            await _context.Roles.AddRangeAsync(role1, role2);
             await _context.Users.AddRangeAsync(resident, staff);
             await _context.Interactions.AddAsync(interaction);
+            await _context.Messages.AddAsync(message);
             await _context.SaveChangesAsync();
 
-            _mockInteractionRepo.Setup(r => r.GetByIdAsync(interactionId)).ReturnsAsync(interaction);
-            _mockMessageRepo.Setup(r => r.GetMessagesAsync(interactionId, 0, 20)).ReturnsAsync(messages);
-            _mockMapper.Setup(m => m.Map<IEnumerable<MessageDetailDto>>(messages)).Returns(new List<MessageDetailDto> { new MessageDetailDto { MessageId = "m1" } });
+            // Use real mapper configuration for ProjectTo
+            var config = new MapperConfiguration(cfg => {
+                cfg.CreateMap<Message, MessageDetailDto>();
+            });
+            _mockMapper.Setup(m => m.ConfigurationProvider).Returns(config);
 
             // Act
-            var result = await _service.GetMessageHistoryAsync(interactionId, userId, 1, 20);
+            var result = await _service.GetMessageHistoryAsync(interactionId, userId, new ChatQueryParameters { PageNumber = 1, PageSize = 20 });
 
             // Assert
-            result.Should().HaveCount(1);
+            result.Items.Should().HaveCount(1);
+            result.Items.First().MessageId.Should().Be("m1");
             _mockMessageRepo.Verify(r => r.MarkAsReadAsync(interactionId, userId), Times.Once);
         }
 
@@ -143,7 +153,7 @@ namespace ServiceUnitTest.Services
             // Arrange
             var sendDto = new SendMessageDto { InteractionId = "int1", Content = "Hello" };
             var userId = "u1";
-            var interaction = new Interaction { InteractionId = "int1" };
+            var interaction = new Interaction { InteractionId = "int1", ResidentId = userId, StaffId = "staff1" };
             
             _mockInteractionRepo.Setup(r => r.GetByIdAsync("int1")).ReturnsAsync(interaction);
             _mockMessageRepo.Setup(r => r.AddMessageAsync(It.IsAny<Message>())).ReturnsAsync(new Message { MessageId = "m1" });
@@ -163,8 +173,10 @@ namespace ServiceUnitTest.Services
             var userId = "res1";
             var buildingId = "b1";
             var building = new Building { BuildingId = buildingId, BuildingCode = "B1", Name = "Building 1", ProjectId = "proj1" };
-            var resident = new User { UserId = userId, Name = "Res 1", PasswordHash = "hash", Status = "Active", Role = new Role { RoleId = "r1", RoleName = "Resident" }, Apartment = new Apartment { ApartmentId = "apt1", BuildingId = buildingId, Code = "A101", Building = building, Status = "Occupied" } };
-            var staff = new User { UserId = "staff1", Name = "Staff 1", PasswordHash = "hash", Status = "Active", Role = new Role { RoleId = "r2", RoleName = "Staff" } };
+            var role1 = new Role { RoleId = "r1", RoleName = "Resident" };
+            var role2 = new Role { RoleId = "r2", RoleName = "Staff" };
+            var resident = new User { UserId = userId, Name = "Res 1", PasswordHash = "hash", Status = "Active", RoleId = "r1", Role = role1, Apartment = new Apartment { ApartmentId = "apt1", BuildingId = buildingId, Code = "A101", Building = building, Status = "Occupied" } };
+            var staff = new User { UserId = "staff1", Name = "Staff 1", PasswordHash = "hash", Status = "Active", RoleId = "r2", Role = role2 };
             var assignment = new StaffBuildingAssignment { AssignmentId = "a1", UserId = "staff1", BuildingId = buildingId, IsActive = true, AssignmentStartDate = DateOnly.FromDateTime(DateTime.Now), AssignmentEndDate = DateOnly.FromDateTime(DateTime.Now.AddYears(1)), Building = building, User = staff };
 
             await _context.Buildings.AddAsync(building);

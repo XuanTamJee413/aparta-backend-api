@@ -80,7 +80,7 @@ namespace ServiceUnitTest.Repositories
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetStaffAssignedProposalsAsync(staffId);
+            var result = _repository.GetStaffAssignedProposalsAsync(staffId);
 
             // Assert
             result.Should().HaveCount(2);

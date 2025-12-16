@@ -7,6 +7,8 @@ using ApartaAPI.Services;
 using AutoMapper;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using ApartaAPI.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
@@ -20,6 +22,8 @@ namespace ServiceUnitTest.Services
         private readonly Mock<IRepository<StaffBuildingAssignment>> _mockSbaRepo;
         private readonly Mock<IRepository<Role>> _mockRoleRepo;
         private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<IMailService> _mockMailService;
+        private readonly Mock<IConfiguration> _mockConfig;
         private readonly ApartaDbContext _context;
         private readonly UserManagementService _service;
 
@@ -30,6 +34,8 @@ namespace ServiceUnitTest.Services
             _mockSbaRepo = new Mock<IRepository<StaffBuildingAssignment>>();
             _mockRoleRepo = new Mock<IRepository<Role>>();
             _mockMapper = new Mock<IMapper>();
+            _mockMailService = new Mock<IMailService>();
+            _mockConfig = new Mock<IConfiguration>();
 
             var options = new DbContextOptionsBuilder<ApartaDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
@@ -42,7 +48,9 @@ namespace ServiceUnitTest.Services
                 _mockSbaRepo.Object,
                 _mockRoleRepo.Object,
                 _mockMapper.Object,
-                _context
+                _context,
+                _mockMailService.Object,
+                _mockConfig.Object
             );
         }
 

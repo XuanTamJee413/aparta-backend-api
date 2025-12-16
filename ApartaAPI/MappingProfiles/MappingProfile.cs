@@ -3,6 +3,7 @@ using ApartaAPI.DTOs.Apartments;
 using ApartaAPI.DTOs.Assets;
 using ApartaAPI.DTOs.Auth;
 using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.Chat;
 using ApartaAPI.DTOs.Contracts;
 using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.MeterReadings;
@@ -27,6 +28,8 @@ namespace ApartaAPI.Profiles
     {
         public MappingProfile()
         {
+            CreateMap<Message, MessageDetailDto>();
+
             CreateMap<Project, ProjectDto>();
             CreateMap<ProjectCreateDto, Project>();
             CreateMap<ProjectUpdateDto, Project>()
@@ -101,7 +104,8 @@ namespace ApartaAPI.Profiles
                 .ForMember(
                     dest => dest.VisitorIdNumber,
                     opt => opt.MapFrom(src => src.Visitor.IdNumber)
-                );
+                ).ForMember(dest => dest.VisitorPhone, opt => opt.MapFrom(src => src.Visitor.Phone));
+
             CreateMap<VisitorCreateDto, Visitor>();
             CreateMap<VisitorCreateDto, VisitLog>()
                 .ForMember(dest => dest.VisitorId, opt => opt.Ignore())
@@ -165,14 +169,14 @@ namespace ApartaAPI.Profiles
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<Vehicle, VehicleDto>();
-            CreateMap<VehicleCreateDto, Vehicle>();
-            CreateMap<VehicleUpdateDto, Vehicle>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<VehicleCreateDto, Vehicle>();
+            CreateMap<VehicleUpdateDto, Vehicle>()
+              .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<Apartment, ApartmentDto>();
-            CreateMap<ApartmentCreateDto, Apartment>();
-            CreateMap<ApartmentUpdateDto, Apartment>()
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<Apartment, ApartmentDto>();
+            CreateMap<ApartmentCreateDto, Apartment>();
+            CreateMap<ApartmentUpdateDto, Apartment>()
+              .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // Invoice mappings
             CreateMap<Invoice, InvoiceDto>()
@@ -190,11 +194,11 @@ namespace ApartaAPI.Profiles
                 {
                     var resident = src.Apartment.Users
                         .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident");
-                    dest.ResidentName = resident != null 
-                        ? resident.Name 
+                    dest.ResidentName = resident != null
+                        ? resident.Name
                         : src.Apartment.Users.FirstOrDefault()?.Name;
                 });
-            
+
             CreateMap<PriceQuotation, InvoiceItem>()
                 .ForMember(dest => dest.InvoiceItemId, opt => opt.Ignore())
                 .ForMember(dest => dest.InvoiceId, opt => opt.Ignore())
@@ -220,20 +224,28 @@ namespace ApartaAPI.Profiles
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             // Thêm vào constructor MappingProfile
+
             CreateMap<User, UserAccountDto>()
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role != null ? src.Role.RoleName : "unknown"))
-                // Chuẩn hóa Status về chữ thường ngay khi map
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status != null ? src.Status.ToLower() : "inactive"))
                 .ForMember(dest => dest.ApartmentCode, opt => opt.MapFrom(src => src.Apartment != null ? src.Apartment.Code : null))
-                // AssignedBuildingCodes sẽ được map thủ công trong Service vì logic phức tạp
-                .ForMember(dest => dest.AssignedBuildingCodes, opt => opt.Ignore());
-
+                // [CẬP NHẬT] Map trực tiếp danh sách tòa nhà đang active
+                .ForMember(dest => dest.AssignedBuildingCodes, opt => opt.MapFrom(src =>
+                    src.StaffBuildingAssignmentUsers
+                       .Where(sba => sba.IsActive)
+                       .Select(sba => sba.Building.BuildingCode)
+                       .ToList()))
+                .ForMember(dest => dest.AssignedBuildingIds, opt => opt.MapFrom(src =>
+                    src.StaffBuildingAssignmentUsers.Where(sba => sba.IsActive)
+                        .Select(sba => sba.BuildingId).ToList()));
             CreateMap<StaffCreateDto, User>()
                 // Bỏ qua các trường sẽ được gen tự động trong Service
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
+
 
         }
     }

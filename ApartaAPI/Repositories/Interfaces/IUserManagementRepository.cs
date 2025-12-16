@@ -1,15 +1,20 @@
-﻿using ApartaAPI.DTOs.Common;
-using ApartaAPI.DTOs.User;
-using ApartaAPI.Models;
+﻿using ApartaAPI.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ApartaAPI.Repositories.Interfaces
 {
-    public interface IUserManagementRepository
+    public interface IUserManagementRepository : IRepository<User>
     {
-        // Lấy danh sách Users (Staff hoặc Resident) có phân trang/tìm kiếm
-        Task<PagedList<User>> GetPagedUsersAsync(UserQueryParams queryParams, List<string> rolesToInclude);
+        /// <summary>
+        /// Trả về IQueryable để Service thực hiện Filter/Sort/Project/Paging.
+        /// Áp dụng các điều kiện cơ bản: Chưa xóa và thuộc danh sách Role cho trước.
+        /// </summary>
+        IQueryable<User> GetUsersQuery(List<string> rolesToInclude);
 
-        // Lấy thông tin Assignment của Staff (để Join Building Code)
-        Task<List<StaffBuildingAssignment>> GetStaffAssignmentsAsync(string userId);
+        /// <summary>
+        /// Trả về IQueryable cho Assignments (nếu cần query riêng lẻ, dù ProjectTo đã hỗ trợ).
+        /// </summary>
+        IQueryable<StaffBuildingAssignment> GetStaffAssignmentsQuery(string userId);
     }
 }

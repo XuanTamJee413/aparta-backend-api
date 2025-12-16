@@ -29,56 +29,89 @@ namespace ApartaAPI.Services
             _mapper = mapper;
         }
 
-        // checked in hoac 0 co j = staff gui len, pending thi la resident gui len, vi hai role tao khac nhau moi status nen dung luon 1 phuong thuc
         public async Task<VisitorDto> CreateVisitAsync(VisitorCreateDto dto)
         {
+            // 1. Kiểm tra căn hộ
             var apartmentExists = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == dto.ApartmentId || a.Code == dto.ApartmentId);
             if (apartmentExists == null)
             {
                 throw new ValidationException($"Căn hộ với ID '{dto.ApartmentId}' không tồn tại.");
             }
-            var existingVisitor = await _visitorRepository.FirstOrDefaultAsync(v => v.IdNumber == dto.IdNumber);
-            if (existingVisitor != null)
-            {
-                throw new ValidationException("Số CCCD/Hộ chiếu này đã tồn tại trong hệ thống.");
-            }
-            var newVisitor = _mapper.Map<Visitor>(dto);
-            newVisitor.VisitorId = Guid.NewGuid().ToString("N");
-            await _visitorRepository.AddAsync(newVisitor);
 
+            // --- [SỬA LOGIC A2.1: TÁI SỬ DỤNG KHÁCH CŨ] ---
+            var visitor = await _visitorRepository.FirstOrDefaultAsync(v => v.IdNumber == dto.IdNumber);
+
+            bool isVisitorUpdated = false;
+
+            if (visitor == null)
+            {
+                // Nếu chưa có -> Tạo mới
+                visitor = _mapper.Map<Visitor>(dto);
+                visitor.VisitorId = Guid.NewGuid().ToString("N");
+                await _visitorRepository.AddAsync(visitor);
+            }
+            else
+            {
+                // Nếu đã có -> Cập nhật thông tin mới nhất (SĐT, Tên có thể thay đổi)
+                visitor.FullName = dto.FullName;
+                visitor.Phone = dto.Phone;
+                // Không tạo ID mới, dùng lại ID cũ
+                await _visitorRepository.UpdateAsync(visitor);
+
+                isVisitorUpdated = true;
+            }
+
+            // 2. Xử lý VisitLog
             var newVisitLog = _mapper.Map<VisitLog>(dto);
             newVisitLog.VisitLogId = Guid.NewGuid().ToString("N");
-            newVisitLog.VisitorId = newVisitor.VisitorId;
+            newVisitLog.VisitorId = visitor.VisitorId; // Luôn dùng ID của visitor (dù mới hay cũ)
             newVisitLog.ApartmentId = apartmentExists.ApartmentId;
             newVisitLog.CheckoutTime = null;
 
-            if (dto.Status == "Pending")
+            // 3. Xử lý thời gian (BR-21 & BR-126)
+            if (string.IsNullOrWhiteSpace(dto.CheckinTime))
             {
-                if (DateTime.TryParse(dto.CheckinTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var checkinTime))
+                // BR-21: Nếu để trống, mặc định 1 ngày từ hiện tại
+                newVisitLog.CheckinTime = DateTime.UtcNow.AddDays(1);
+                newVisitLog.Status = "Pending";
+            }
+            else
+            {
+                if (DateTime.TryParse(dto.CheckinTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var parsedTime))
                 {
-                    if (checkinTime <= DateTime.Now)
-                    {
-                        throw new ValidationException("Thời gian check-in phải là một thời điểm trong tương lai.");
-                    }
+                    var utcTime = parsedTime.ToUniversalTime();
 
-                    newVisitLog.CheckinTime = checkinTime.ToUniversalTime();
+                    // BR-126: Cannot be in the past (cho phép sai số nhỏ 5 phút)
+                    if (utcTime <= DateTime.UtcNow.AddMinutes(-5))
+                    {
+                        throw new ValidationException("Thời gian check-in dự kiến không thể ở trong quá khứ.");
+                    }
+                    newVisitLog.CheckinTime = utcTime;
                 }
                 else
                 {
                     throw new ValidationException("Định dạng thời gian check-in không hợp lệ.");
                 }
-                newVisitLog.Status = "Pending";
-            }
-            else
-            {
-                newVisitLog.CheckinTime = DateTime.UtcNow;
-                newVisitLog.Status = "Checked-in";
+
+                // Nếu Resident tạo thì luôn là Pending, trừ khi Staff tạo mới cho Check-in ngay
+                newVisitLog.Status = dto.Status ?? "Pending";
             }
 
             await _visitLogRepository.AddAsync(newVisitLog);
+
             await _visitorRepository.SaveChangesAsync();
 
-            return _mapper.Map<VisitorDto>(newVisitor);
+            var resultDto = _mapper.Map<VisitorDto>(visitor);
+            resultDto.IsUpdated = isVisitorUpdated;
+
+            return resultDto;
+        }
+
+        //  lấy khách cũ 
+        public async Task<IEnumerable<VisitorDto>> GetRecentVisitorsAsync(string apartmentId)
+        {
+            var visitors = await _visitorRepository.GetRecentVisitorsByApartmentAsync(apartmentId);
+            return _mapper.Map<IEnumerable<VisitorDto>>(visitors);
         }
     }
 }

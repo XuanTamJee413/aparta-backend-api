@@ -136,5 +136,43 @@ namespace ApartaAPI.Controllers
 				return BadRequest(new { message = ex.Message });
 			}
 		}
+
+		[HttpPut("{id}/cancel")]
+		[ProducesResponseType(StatusCodes.Status204NoContent)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		[ProducesResponseType(StatusCodes.Status403Forbidden)]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		public async Task<IActionResult> CancelBooking(string id)
+		{
+			try
+			{
+				var residentId = GetCurrentUserId(); // Lấy ID user đang đăng nhập
+
+				var result = await _bookingService.CancelBookingAsync(id, residentId);
+
+				if (result)
+				{
+					return NoContent(); // 204: Thành công, không cần trả về nội dung
+				}
+
+				return BadRequest(new { message = "Không thể hủy đơn đặt này." });
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound(new { message = "Không tìm thấy đơn đặt." });
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				return StatusCode(403, new { message = ex.Message }); // Trả về 403 Forbidden
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(new { message = ex.Message }); // Trả về lỗi logic (VD: Không phải Pending)
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
+			}
+		}
 	}
 }

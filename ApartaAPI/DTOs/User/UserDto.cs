@@ -17,6 +17,7 @@
 
         // Chi tiết Staff
         public List<string> AssignedBuildingCodes { get; set; } = new List<string>();
+        public List<string> AssignedBuildingIds { get; set; } = new List<string>();
     }
     public class UserDetailDto
     {

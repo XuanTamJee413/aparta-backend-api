@@ -37,6 +37,20 @@ namespace ApartaAPI.Controllers
                 return StatusCode(500, $"Lỗi máy chủ nội bộ: {ex.Message}");
             }
         }
+        [HttpGet("recent")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<VisitorDto>>> GetRecentVisitors()
+        {
+            // Lấy ApartmentId từ Token của User đang đăng nhập
+            var apartmentId = User.FindFirst("apartment_id")?.Value;
 
+            if (string.IsNullOrEmpty(apartmentId))
+            {
+                return BadRequest(new { message = "Tài khoản này không gắn liền với căn hộ nào." });
+            }
+
+            var visitors = await _service.GetRecentVisitorsAsync(apartmentId);
+            return Ok(visitors);
+        }
     }
 }

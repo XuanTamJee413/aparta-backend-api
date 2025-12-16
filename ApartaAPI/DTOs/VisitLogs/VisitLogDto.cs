@@ -18,5 +18,14 @@ namespace ApartaAPI.DTOs.VisitLogs
         // Visitor
         public string VisitorFullName { get; set; } = null!;
         public string? VisitorIdNumber { get; set; }
+        public string? VisitorPhone { get; set; }
+    }
+    public class VisitLogUpdateDto
+    {
+        public string? FullName { get; set; }
+        public string? Phone { get; set; }
+        public string? IdNumber { get; set; }
+        public string? Purpose { get; set; }
+        public string? CheckinTime { get; set; } // Nhận chuỗi ISO
     }
 }

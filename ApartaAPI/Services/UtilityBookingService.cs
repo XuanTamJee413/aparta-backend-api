@@ -15,15 +15,18 @@ namespace ApartaAPI.Services
 		private readonly IRepository<UtilityBooking> _bookingRepository;
 		private readonly IRepository<Utility> _utilityRepository;
 		private readonly IRepository<User> _userRepository;
+		private readonly IMailService _emailService;
 
 		public UtilityBookingService(
 			IRepository<UtilityBooking> bookingRepository,
 			IRepository<Utility> utilityRepository,
-			IRepository<User> userRepository)
+			IRepository<User> userRepository,
+			IMailService emailService)
 		{
 			_bookingRepository = bookingRepository;
 			_utilityRepository = utilityRepository;
 			_userRepository = userRepository;
+			_emailService = emailService;
 		}
 
 		public async Task<ApiResponse<UtilityBookingDto>> CreateBookingAsync(UtilityBookingCreateDto createDto, string residentId)
@@ -147,6 +150,7 @@ namespace ApartaAPI.Services
 				return ApiResponse<UtilityBookingDto>.Fail(ApiResponse.SM01_NO_RESULTS);
 			}
 
+			// Cập nhật trạng thái
 			booking.Status = updateDto.Status;
 			booking.StaffNote = updateDto.StaffNote;
 			booking.UpdatedAt = DateTime.UtcNow;
@@ -154,8 +158,39 @@ namespace ApartaAPI.Services
 			await _bookingRepository.UpdateAsync(booking);
 			await _bookingRepository.SaveChangesAsync();
 
+			// Load thông tin liên quan (để lấy Email cư dân và Tên tiện ích)
 			booking.Utility = await _utilityRepository.FirstOrDefaultAsync(u => u.UtilityId == booking.UtilityId);
 			booking.Resident = await _userRepository.FirstOrDefaultAsync(u => u.UserId == booking.ResidentId);
+
+			// 3. Logic gửi email thông báo
+			if (booking.Resident != null && !string.IsNullOrEmpty(booking.Resident.Email))
+			{
+				try
+				{
+					string emailSubject = $"[Aparta] Cập nhật trạng thái đặt tiện ích: {booking.Utility?.Name}";
+					string statusVn = TranslateStatus(booking.Status); // Hàm hỗ trợ dịch sang tiếng Việt
+
+					string emailBody = $@"
+                        <h3>Xin chào {booking.Resident.Name},</h3>
+                        <p>Yêu cầu đặt tiện ích <strong>{booking.Utility?.Name}</strong> của bạn cho khung giờ 
+                           <strong>{booking.BookingDate:HH:mm dd/MM/yyyy}</strong> đã được cập nhật.</p>
+                        
+                        <p><strong>Trạng thái mới:</strong> <span style='color:blue; font-weight:bold'>{statusVn}</span></p>
+                        
+                        {(string.IsNullOrEmpty(booking.StaffNote) ? "" : $"<p><strong>Ghi chú từ BQL:</strong> {booking.StaffNote}</p>")}
+                        
+                        <p>Vui lòng kiểm tra ứng dụng để biết thêm chi tiết.</p>
+                        <p>Trân trọng,<br/>Ban Quản Lý Aparta</p>";
+
+					// Gọi service gửi mail (Fire-and-forget hoặc await tùy nhu cầu, ở đây dùng await để đảm bảo gửi)
+					await _emailService.SendEmailAsync(booking.Resident.Email, emailSubject, emailBody);
+				}
+				catch (Exception ex)
+				{
+					// Log lỗi gửi mail nhưng không return Fail vì booking đã được update thành công
+					// _logger.LogError($"Lỗi gửi mail: {ex.Message}");
+				}
+			}
 
 			return ApiResponse<UtilityBookingDto>.Success(MapToDto(booking), ApiResponse.SM03_UPDATE_SUCCESS);
 		}
@@ -257,6 +292,19 @@ namespace ApartaAPI.Services
 				.Select(b => new BookedSlotDto(b.BookingDate, b.BookedAt ?? b.BookingDate.AddHours(1)))
 				.OrderBy(b => b.Start)
 				.ToList();
+		}
+
+		private string TranslateStatus(string status)
+		{
+			return status switch
+			{
+				"Pending" => "Đang chờ duyệt",
+				"Approved" => "Đã duyệt",
+				"Rejected" => "Đã từ chối",
+				"Cancelled" => "Đã hủy",
+				"Completed" => "Đã hoàn thành",
+				_ => status
+			};
 		}
 
 		private UtilityBookingDto MapToDto(UtilityBooking b)

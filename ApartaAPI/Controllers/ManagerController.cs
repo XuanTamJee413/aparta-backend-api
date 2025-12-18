@@ -29,6 +29,15 @@ namespace ApartaAPI.Controllers
             return Ok(response);
         }
 
+        // Lấy tất cả tòa đang active
+        [HttpGet("building-options")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<ManagerBuildingOptionDto>>), 200)]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ManagerBuildingOptionDto>>>> GetBuildingOptions([FromQuery] string? managerId)
+        {
+            var response = await _managerService.GetBuildingOptionsAsync(managerId);
+            return Ok(response);
+        }
+
         // POST: api/Manager - tao manager mới
         [HttpPost]
         public async Task<ActionResult<ApiResponse<ManagerDto>>> CreateManager([FromBody] CreateManagerDto request)

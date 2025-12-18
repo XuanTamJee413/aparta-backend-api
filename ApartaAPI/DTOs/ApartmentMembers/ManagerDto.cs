@@ -7,6 +7,16 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         string? SearchTerm  //feild nhập dể search 
     );
 
+    public class ManagerBuildingOptionDto
+    {
+        public string BuildingId { get; set; } = null!;
+        public string BuildingName { get; set; } = null!;
+        public string BuildingCode { get; set; } = null!;
+        public bool HasManager { get; set; }
+        public string? ManagerUserId { get; set; }
+        public string? ManagerName { get; set; }
+    }
+
     public class BuildingSummaryDto
     {
         public string BuildingId { get; set; } = null!;

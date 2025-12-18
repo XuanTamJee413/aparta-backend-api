@@ -15,5 +15,7 @@ namespace ApartaAPI.Services.Interfaces
 		// Tương tự UpdateServiceAsync
 		Task<ServiceBookingDto?> UpdateBookingStatusAsync(string bookingId, ServiceBookingUpdateDto updateDto, string operationStaffId);
 
+		Task<bool> CancelBookingAsync(string bookingId, string residentId);
+
 	}
 }

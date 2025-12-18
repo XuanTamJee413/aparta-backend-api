@@ -6,6 +6,8 @@
 		string? Status,
 		string? Location,
 		double? PeriodTime,
+		TimeSpan? OpenTime,  
+		TimeSpan? CloseTime,
 		DateTime? CreatedAt,
 		DateTime? UpdatedAt
 	);
@@ -14,6 +16,8 @@
 		string? Name,
 		string? Status,
 		string? Location,
+		TimeSpan? OpenTime,
+		TimeSpan? CloseTime,
 		double? PeriodTime
 	);
 
@@ -21,6 +25,8 @@
 		string? Name,
 		string? Status,
 		string? Location,
+		TimeSpan? OpenTime,
+		TimeSpan? CloseTime,
 		double? PeriodTime
 	);
 }

@@ -29,6 +29,7 @@ namespace ApartaAPI.Services
 			_roleRepository = roleRepository;
 		}
 
+		// 1. Lấy danh sách Task
 		public async Task<PagedList<TaskDto>> GetAllTasksAsync(TaskQueryParameters parameters)
 		{
 			var tasks = await _taskRepository.GetAllAsync();
@@ -60,13 +61,11 @@ namespace ApartaAPI.Services
 		// 2. Tạo Task Mới
 		public async Task<TaskDto> CreateTaskAsync(TaskCreateDto createDto, string operationStaffId)
 		{
-
 			if (createDto.StartDate.HasValue && createDto.StartDate.Value < DateTime.UtcNow.AddMinutes(-1))
 			{
 				throw new ArgumentException("Thời gian bắt đầu không thể ở trong quá khứ.");
 			}
 
-			// 2. Kiểm tra ngày kết thúc phải sau ngày bắt đầu
 			if (createDto.StartDate.HasValue && createDto.EndDate.HasValue)
 			{
 				if (createDto.EndDate.Value <= createDto.StartDate.Value)
@@ -76,8 +75,6 @@ namespace ApartaAPI.Services
 			}
 			else if (!createDto.StartDate.HasValue && createDto.EndDate.HasValue)
 			{
-				// Trường hợp không nhập StartDate (tức là bắt đầu ngay bây giờ)
-				// thì EndDate phải lớn hơn hiện tại
 				if (createDto.EndDate.Value <= DateTime.UtcNow)
 				{
 					throw new ArgumentException("Thời gian kết thúc phải lớn hơn thời gian hiện tại.");
@@ -96,7 +93,8 @@ namespace ApartaAPI.Services
 				EndDate = createDto.EndDate,
 				CreatedAt = DateTime.UtcNow,
 				UpdatedAt = DateTime.UtcNow,
-				AssigneeNote = null
+				AssigneeNote = null,
+				VerifyNote = null // Mặc định null
 			};
 
 			await _taskRepository.AddAsync(newTask);
@@ -104,24 +102,23 @@ namespace ApartaAPI.Services
 
 			var creator = await _userRepository.FirstOrDefaultAsync(u => u.UserId == operationStaffId);
 
-			// Trả về DTO với danh sách Assignees rỗng
 			return new TaskDto(
 				newTask.TaskId, newTask.ServiceBookingId, newTask.OperationStaffId,
 				creator?.Name ?? "Unknown", newTask.Type, newTask.Description,
 				newTask.Status, newTask.StartDate, newTask.EndDate, newTask.CreatedAt,
-				new List<TaskAssigneeDto>(), // <-- List rỗng
+				new List<TaskAssigneeDto>(),
 				null, // AssignedDate
-				null  // Note
+				null, // AssigneeNote
+				null  // VerifyNote <-- (CẬP NHẬT)
 			);
 		}
 
-		// 3. Phân công Task (Giao thêm người)
+		// 3. Phân công Task
 		public async Task<bool> AssignTaskAsync(TaskAssignmentCreateDto assignmentDto, string assignerId)
 		{
 			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == assignmentDto.TaskId);
 			if (task == null) throw new ArgumentException("Task không tồn tại.");
 
-			// 1. Kiểm tra User tồn tại và có Role đúng
 			var assignee = await _userRepository.FirstOrDefaultAsync(u => u.UserId == assignmentDto.AssigneeUserId);
 			if (assignee == null) throw new ArgumentException("Nhân viên không tồn tại.");
 
@@ -133,10 +130,9 @@ namespace ApartaAPI.Services
 
 			if (task.EndDate.HasValue && task.EndDate.Value < DateTime.UtcNow)
 			{
-				throw new ArgumentException("Nhiệm vụ này đã quá hạn (Deadline trong quá khứ). Vui lòng cập nhật lại thời gian kết thúc trước khi phân công.");
+				throw new ArgumentException("Nhiệm vụ này đã quá hạn. Vui lòng cập nhật lại thời gian kết thúc trước khi phân công.");
 			}
 
-			// 2. Kiểm tra xem nhân viên này ĐÃ được giao task này chưa (Tránh trùng)
 			var existingAssignment = await _assignmentRepository.FirstOrDefaultAsync(a =>
 				a.TaskId == assignmentDto.TaskId && a.AssigneeUserId == assignmentDto.AssigneeUserId);
 
@@ -145,7 +141,6 @@ namespace ApartaAPI.Services
 				throw new ArgumentException($"Nhân viên {assignee.Name} đã được giao nhiệm vụ này rồi.");
 			}
 
-			// 3. Validate Trùng lịch (Task Overlap)
 			if (task.StartDate.HasValue && task.EndDate.HasValue)
 			{
 				var allAssignments = await _assignmentRepository.GetAllAsync();
@@ -164,7 +159,6 @@ namespace ApartaAPI.Services
 				}
 			}
 
-			// 4. Tạo Assignment mới
 			var assignment = new TaskAssignment
 			{
 				TaskAssignmentId = Guid.NewGuid().ToString(),
@@ -178,10 +172,12 @@ namespace ApartaAPI.Services
 
 			await _assignmentRepository.AddAsync(assignment);
 
-			// 5. Cập nhật trạng thái Task (Nếu đang New thì chuyển sang Assigned)
-			if (task.Status == "New")
+			if (task.Status == "New" || task.Status == "In Progress") // Cập nhật logic: Nếu đang làm lại thì vẫn giữ In Progress hoặc về Assigned tùy quy trình
 			{
-				task.Status = "Assigned";
+				// Nếu Task đang New, chuyển sang Assigned. 
+				// Nếu bị Reject (đang In Progress), giữ nguyên hoặc chuyển Assigned tùy bạn. Ở đây giữ nguyên logic cũ cho New.
+				if (task.Status == "New") task.Status = "Assigned";
+
 				task.UpdatedAt = DateTime.UtcNow;
 				await _taskRepository.UpdateAsync(task);
 			}
@@ -221,11 +217,12 @@ namespace ApartaAPI.Services
 			return new PagedList<TaskDto>(items, count, parameters.PageNumber, parameters.PageSize);
 		}
 
-		// 5. Cập nhật trạng thái
+		// 5. Cập nhật trạng thái (Maintenance Staff)
 		public async Task<TaskDto?> UpdateTaskStatusAsync(string taskId, TaskUpdateStatusDto updateDto)
 		{
 			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == taskId);
 			if (task == null) return null;
+
 			task.Status = updateDto.Status;
 
 			if (!string.IsNullOrEmpty(updateDto.Note))
@@ -268,7 +265,8 @@ namespace ApartaAPI.Services
 				EndDate = endTime,
 				CreatedAt = DateTime.UtcNow,
 				UpdatedAt = DateTime.UtcNow,
-				AssigneeNote = null
+				AssigneeNote = null,
+				VerifyNote = null
 			};
 
 			await _taskRepository.AddAsync(newTask);
@@ -279,13 +277,14 @@ namespace ApartaAPI.Services
 				newTask.TaskId, newTask.ServiceBookingId, newTask.OperationStaffId,
 				creator?.Name ?? "Unknown", newTask.Type, newTask.Description,
 				newTask.Status, newTask.StartDate, newTask.EndDate, newTask.CreatedAt,
-				new List<TaskAssigneeDto>(), // List rỗng
+				new List<TaskAssigneeDto>(),
 				null,
-				null
+				null,
+				null // VerifyNote <-- (CẬP NHẬT)
 			);
 		}
 
-		// 7. Gỡ Nhân viên (Unassign)
+		// 7. Gỡ Nhân viên
 		public async Task<bool> UnassignTaskAsync(string taskId, string assigneeUserId)
 		{
 			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == taskId);
@@ -294,20 +293,14 @@ namespace ApartaAPI.Services
 			var assignment = await _assignmentRepository.FirstOrDefaultAsync(a =>
 				a.TaskId == taskId && a.AssigneeUserId == assigneeUserId);
 
-			if (assignment == null)
-			{
-				throw new ArgumentException("Nhân viên này chưa được giao task này.");
-			}
+			if (assignment == null) throw new ArgumentException("Nhân viên này chưa được giao task này.");
 
-			// Xóa phân công
 			await _assignmentRepository.RemoveAsync(assignment);
 
-			// Kiểm tra xem Task còn ai làm không?
 			var allAssignments = await _assignmentRepository.GetAllAsync();
 			var remainingCount = allAssignments.Count(a => a.TaskId == taskId && a.TaskAssignmentId != assignment.TaskAssignmentId);
 
-			// Nếu không còn ai làm, chuyển trạng thái về "New"
-			if (remainingCount == 0 && task.Status != "Completed" && task.Status != "Cancelled")
+			if (remainingCount == 0 && task.Status != "Completed" && task.Status != "Closed" && task.Status != "Cancelled")
 			{
 				task.Status = "New";
 				task.UpdatedAt = DateTime.UtcNow;
@@ -317,12 +310,50 @@ namespace ApartaAPI.Services
 			return await _taskRepository.SaveChangesAsync();
 		}
 
-		// Helper Mapping (ĐÃ SỬA: Lấy List Assignees)
+		// 8. Nghiệm thu / Xác nhận Task (MỚI - THAY THẾ ConfirmTaskCompletionAsync)
+		public async Task<TaskDto?> VerifyTaskAsync(TaskVerifyDto dto)
+		{
+			var task = await _taskRepository.FirstOrDefaultAsync(t => t.TaskId == dto.TaskId);
+			if (task == null) throw new KeyNotFoundException("Task không tồn tại.");
+
+			// Chỉ cho phép nghiệm thu nếu task đã Hoàn thành
+			if (task.Status != "Completed")
+			{
+				throw new InvalidOperationException("Chỉ có thể nghiệm thu các công việc đã hoàn thành (Completed).");
+			}
+
+			// Lưu ghi chú của OS (nếu có)
+			if (!string.IsNullOrEmpty(dto.VerifyNote))
+			{
+				task.VerifyNote = dto.VerifyNote; // Lưu vào cột riêng
+			}
+
+			if (dto.IsAccepted)
+			{
+				// Duyệt -> Đóng task
+				task.Status = "Closed";
+			}
+			else
+			{
+				// Từ chối -> Mở lại để làm
+				task.Status = "In Progress";
+			}
+
+			task.UpdatedAt = DateTime.UtcNow;
+
+			await _taskRepository.UpdateAsync(task);
+			await _taskRepository.SaveChangesAsync();
+
+			var assignments = await _assignmentRepository.GetAllAsync();
+			var users = await _userRepository.GetAllAsync();
+			return MapToDto(task, assignments, users);
+		}
+
+		// --- Helper Mapping (ĐÃ CẬP NHẬT VerifyNote) ---
 		private TaskDto MapToDto(ApartaAPI.Models.Task task, IEnumerable<TaskAssignment> assignments, IEnumerable<User> users)
 		{
 			var creator = users.FirstOrDefault(u => u.UserId == task.OperationStaffId);
 
-			// Lấy danh sách tất cả những người được giao task này
 			var assigneesList = assignments
 				.Where(a => a.TaskId == task.TaskId)
 				.Select(a => {
@@ -335,7 +366,6 @@ namespace ApartaAPI.Services
 				})
 				.ToList();
 
-			// Lấy ngày giao gần nhất để hiển thị (cho đẹp đội hình)
 			var latestDate = assignments
 				.Where(a => a.TaskId == task.TaskId)
 				.OrderByDescending(a => a.AssignedDate)
@@ -353,10 +383,12 @@ namespace ApartaAPI.Services
 				task.StartDate,
 				task.EndDate,
 				task.CreatedAt,
-				assigneesList, // <-- List nhân viên
+				assigneesList,
 				latestDate == default ? null : (DateTime?)latestDate,
-				task.AssigneeNote
+				task.AssigneeNote,
+				task.VerifyNote // <-- (CẬP NHẬT: Map cột VerifyNote)
 			);
 		}
 	}
+
 }

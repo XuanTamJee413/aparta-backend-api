@@ -38,6 +38,7 @@ namespace ApartaAPI.Controllers
             }
         }
         [HttpGet("recent")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<VisitorDto>>> GetRecentVisitors()
         {
             // Lấy ApartmentId từ Token của User đang đăng nhập

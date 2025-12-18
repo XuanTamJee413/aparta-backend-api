@@ -1173,6 +1173,9 @@ public partial class ApartaDbContext : DbContext
 			entity.Property(e => e.AssigneeNote)
 	            .HasMaxLength(255)
 	            .HasColumnName("assignee_note");
+			entity.Property(e => e.VerifyNote)
+		        .HasMaxLength(255) 
+		        .HasColumnName("verify_note");
 
 			entity.HasOne(d => d.OperationStaff).WithMany(p => p.Tasks)
                 .HasForeignKey(d => d.OperationStaffId)
@@ -1324,7 +1327,15 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-        });
+
+			entity.Property(e => e.OpenTime)
+		        .HasColumnType("time")       
+		        .HasColumnName("open_time"); 
+
+			entity.Property(e => e.CloseTime)
+				.HasColumnType("time")
+				.HasColumnName("close_time");
+		});
 
         modelBuilder.Entity<UtilityBooking>(entity =>
         {

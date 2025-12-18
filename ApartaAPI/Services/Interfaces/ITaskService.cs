@@ -22,5 +22,7 @@ namespace ApartaAPI.Services.Interfaces
 		Task<TaskDto> CreateTaskFromBookingAsync(string bookingId, string description, DateTime startTime, DateTime endTime, string operationStaffId);
 
 		Task<bool> UnassignTaskAsync(string taskId, string assigneeUserId);
+
+		Task<TaskDto?> VerifyTaskAsync(TaskVerifyDto dto);
 	}
 }

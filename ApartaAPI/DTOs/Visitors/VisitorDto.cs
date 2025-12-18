@@ -9,11 +9,13 @@ namespace ApartaAPI.DTOs.Visitors
         public string FullName { get; set; } = null!;
         public string? Phone { get; set; }
         public string? IdNumber { get; set; }
+        public bool IsUpdated { get; set; } = false;
     }
     public class VisitorCreateDto
     {
         [Required(ErrorMessage = "Họ tên là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Họ tên không quá 100 ký tự")]
+        [StringLength(255, ErrorMessage = "Họ tên không quá 255 ký tự")]
+        [RegularExpression(@"^[\p{L}0-9\s]+$", ErrorMessage = "Họ tên không được chứa ký tự đặc biệt")]
         public string FullName { get; set; } = null!;
 
         [RegularExpression(@"^[0-9]{10,13}$", ErrorMessage = "Số điện thoại phải từ 10 đến 13 số")]
@@ -28,6 +30,7 @@ namespace ApartaAPI.DTOs.Visitors
         public string ApartmentId { get; set; } = null!;
 
         [StringLength(500, ErrorMessage = "Mục đích không quá 500 ký tự")]
+        [RegularExpression(@"^[\p{L}0-9\s,.-]+$", ErrorMessage = "Mục đích không được chứa ký tự đặc biệt nguy hiểm")]
         public string? Purpose { get; set; }
 
         public string? CheckinTime { get; set; }

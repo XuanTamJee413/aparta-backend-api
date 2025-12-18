@@ -60,7 +60,6 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         public string? IdNumber { get; set; }
         public string? Gender { get; set; }
         public DateOnly? DateOfBirth { get; set; }
-        public bool? IsOwner { get; set; }
         public string? FamilyRole { get; set; }
         public string? FaceImageUrl { get; set; }
         public string? Info { get; set; }

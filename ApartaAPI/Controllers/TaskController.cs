@@ -32,6 +32,7 @@ namespace ApartaAPI.Controllers
 
 		// 1. Lấy danh sách Task (Dành cho Operation Staff quản lý)
 		[HttpGet]
+		[Authorize(Roles = "operation_staff")]
 		public async Task<ActionResult<PagedList<TaskDto>>> GetAllTasks([FromQuery] TaskQueryParameters parameters)
 		{
 			var result = await _taskService.GetAllTasksAsync(parameters);
@@ -40,6 +41,7 @@ namespace ApartaAPI.Controllers
 
 		// 2. Lấy danh sách Task của tôi (Dành cho Maintenance Staff)
 		[HttpGet("my")]
+		[Authorize(Roles = "maintenance_staff")]
 		public async Task<ActionResult<PagedList<TaskDto>>> GetMyTasks([FromQuery] TaskQueryParameters parameters)
 		{
 			var userId = GetCurrentUserId();
@@ -104,6 +106,38 @@ namespace ApartaAPI.Controllers
 			catch (ArgumentException ex)
 			{
 				return BadRequest(new { message = ex.Message });
+			}
+		}
+
+		// PUT: api/tasks/{id}/confirm
+		[HttpPut("verify")] // Endpoint sẽ là: /api/tasks/verify
+		public async Task<IActionResult> VerifyTask([FromBody] TaskVerifyDto dto)
+		{
+			try
+			{
+				// Kiểm tra tính hợp lệ của dữ liệu (Required fields, etc.)
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(ModelState);
+				}
+
+				// Gọi service với DTO
+				var result = await _taskService.VerifyTaskAsync(dto);
+
+				return Ok(result);
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(new { message = ex.Message });
+			}
+			catch (InvalidOperationException ex)
+			{
+				// Lỗi logic (Ví dụ: Task chưa hoàn thành mà đòi verify)
+				return BadRequest(new { message = ex.Message });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { message = "Lỗi hệ thống: " + ex.Message });
 			}
 		}
 	}

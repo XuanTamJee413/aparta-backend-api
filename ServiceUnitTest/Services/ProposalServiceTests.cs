@@ -1,15 +1,17 @@
 using ApartaAPI.Data;
 using ApartaAPI.DTOs.Proposals;
 using ApartaAPI.Models;
+using ApartaAPI.Profiles;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services;
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using ServiceUnitTest.Helpers;
-using System.Security.Claims;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -20,8 +22,7 @@ namespace ServiceUnitTest.Services
         private readonly Mock<IProposalRepository> _mockProposalRepo;
         private readonly Mock<IRepository<User>> _mockUserRepo;
         private readonly Mock<IRepository<StaffBuildingAssignment>> _mockAssignmentRepo;
-        private readonly Mock<IMapper> _mockMapper;
-        private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
+        private readonly IMapper _mapper;
         private readonly ApartaDbContext _context;
         private readonly ProposalService _service;
 
@@ -30,9 +31,14 @@ namespace ServiceUnitTest.Services
             _mockProposalRepo = new Mock<IProposalRepository>();
             _mockUserRepo = new Mock<IRepository<User>>();
             _mockAssignmentRepo = new Mock<IRepository<StaffBuildingAssignment>>();
-            _mockMapper = new Mock<IMapper>();
-            _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
 
+            // Real Mapper Setup
+            var config = new MapperConfiguration(cfg => {
+                cfg.AddProfile<MappingProfile>();
+            });
+            _mapper = config.CreateMapper();
+
+            // InMemory DbContext Setup
             var options = new DbContextOptionsBuilder<ApartaDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
@@ -42,50 +48,45 @@ namespace ServiceUnitTest.Services
                 _mockProposalRepo.Object,
                 _mockUserRepo.Object,
                 _mockAssignmentRepo.Object,
-                _mockMapper.Object,
+                _mapper,
                 _context
             );
         }
 
         [Fact]
-        public async Task CreateProposalAsync_KhiThongTinHopLe_NenTaoProposal()
+        public async Task CreateProposalAsync_WithValidData_ReturnsProposalDto()
         {
             // Arrange
-            var createDto = new ProposalCreateDto { Content = "Test Proposal" };
-            var userId = "u1";
-            var user = new User { UserId = userId, ApartmentId = "apt1", Apartment = new Apartment { ApartmentId = "apt1", BuildingId = "b1" } };
-            var assignment = new StaffBuildingAssignment { UserId = "staff1" };
+            var residentId = "u1";
+            var createDto = new ProposalCreateDto { Content = "Test Content" };
+            var proposal = new Proposal { ProposalId = "p1", ResidentId = residentId, Content = "Test Content", Status = "Pending", CreatedAt = DateTime.UtcNow };
 
-            _mockUserRepo.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
-            _mockAssignmentRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<StaffBuildingAssignment, bool>>>()))
-                .ReturnsAsync(assignment);
-            
-            var proposal = new Proposal { ProposalId = "p1" };
-            _mockMapper.Setup(m => m.Map<Proposal>(createDto)).Returns(proposal);
             _mockProposalRepo.Setup(r => r.AddAsync(It.IsAny<Proposal>())).ReturnsAsync(proposal);
             _mockProposalRepo.Setup(r => r.GetProposalDetailsAsync("p1")).ReturnsAsync(proposal);
-            _mockMapper.Setup(m => m.Map<ProposalDto>(It.IsAny<Proposal>())).Returns(new ProposalDto { ProposalId = "p1" });
 
             // Act
-            var result = await _service.CreateProposalAsync(userId, createDto);
+            var result = await _service.CreateProposalAsync(residentId, createDto);
 
             // Assert
             result.Should().NotBeNull();
-            result.ProposalId.Should().Be("p1");
+            result.Content.Should().Be("Test Content");
+            result.Status.Should().Be("Pending");
             _mockProposalRepo.Verify(r => r.AddAsync(It.IsAny<Proposal>()), Times.Once);
         }
 
         [Fact]
-        public async Task GetProposalsByResidentAsync_KhiGoi_NenTraVeDanhSach()
+        public async Task GetProposalsByResidentAsync_WithValidResident_ReturnsList()
         {
             // Arrange
-            var userId = "u1";
-            var proposals = new List<Proposal> { new Proposal { ProposalId = "p1" } };
-            _mockProposalRepo.Setup(r => r.GetResidentProposalsAsync(userId)).ReturnsAsync(proposals);
-            _mockMapper.Setup(m => m.Map<IEnumerable<ProposalDto>>(proposals)).Returns(new List<ProposalDto> { new ProposalDto { ProposalId = "p1" } });
+            var residentId = "u1";
+            var proposals = new List<Proposal> 
+            { 
+                new Proposal { ProposalId = "p1", ResidentId = residentId, Resident = new User { Name = "Res", PasswordHash = "hash" }, Content = "Content" } 
+            };
+            _mockProposalRepo.Setup(r => r.GetResidentProposalsAsync(residentId)).ReturnsAsync(proposals);
 
             // Act
-            var result = await _service.GetProposalsByResidentAsync(userId);
+            var result = await _service.GetProposalsByResidentAsync(residentId);
 
             // Assert
             result.Should().HaveCount(1);
@@ -93,47 +94,65 @@ namespace ServiceUnitTest.Services
         }
 
         [Fact]
-        public async Task GetProposalsForStaffAsync_KhiGoi_NenTraVePagedList()
+        public async Task GetProposalsForStaffAsync_WithValidParams_ReturnsPagedList()
         {
             // Arrange
             var staffId = "staff1";
             var queryParams = new ProposalQueryParams { PageNumber = 1, PageSize = 10 };
-            var proposals = new List<Proposal> { new Proposal { ProposalId = "p1" } }.AsQueryable();
+            var proposals = new List<Proposal> 
+            { 
+                new Proposal { ProposalId = "p1", Content = "Test", Status = "Pending", CreatedAt = DateTime.UtcNow, Resident = new User { Name = "Res", PasswordHash = "hash" }, ResidentId = "u1" } 
+            }.AsQueryable();
 
-            _mockProposalRepo.Setup(r => r.GetStaffProposalsQuery(staffId)).Returns(new TestAsyncEnumerable<Proposal>(proposals).AsQueryable());
-            
-            // Note: ProjectTo is hard to mock without real mapper configuration. 
-            // For this test, we might need to use a real mapper or skip ProjectTo verification if possible.
-            // However, since we are using Moq for IMapper, ProjectTo extension method will fail if not configured.
-            // We should use a real mapper for this test or mock the extension method (which is static and hard to mock).
-            // Let's switch to real mapper for this specific test class setup if needed, but for now let's assume we can mock the repo to return something that ProjectTo can handle if we provided a real configuration provider.
-            // Actually, ProjectTo requires a valid IConfigurationProvider.
-            
-            var config = new MapperConfiguration(cfg => { cfg.CreateMap<Proposal, ProposalDto>(); });
-            var mapper = config.CreateMapper();
-            _mockMapper.Setup(m => m.ConfigurationProvider).Returns(config);
-            _mockMapper.Setup(m => m.Map<ProposalDto>(It.IsAny<Proposal>())).Returns((Proposal s) => mapper.Map<ProposalDto>(s));
-            _mockMapper.Setup(m => m.Map<List<ProposalDto>>(It.IsAny<List<Proposal>>())).Returns((List<Proposal> s) => mapper.Map<List<ProposalDto>>(s));
+            // Mock returning IQueryable backed by list
+            _mockProposalRepo.Setup(r => r.GetStaffAssignedProposalsAsync(staffId))
+                .Returns(new TestAsyncEnumerable<Proposal>(proposals).AsQueryable());
 
             // Act
             var result = await _service.GetProposalsForStaffAsync(staffId, queryParams);
 
             // Assert
             result.Succeeded.Should().BeTrue();
-            result.Data.Should().NotBeNull();
             result.Data.Items.Should().HaveCount(1);
         }
 
         [Fact]
-        public async Task GetProposalDetailAsync_KhiUserLaOwner_NenTraVeChiTiet()
+        public async Task GetProposalsForStaffAsync_WithStatusFilter_ReturnsFilteredList()
+        {
+            // Arrange
+            var staffId = "staff1";
+            var queryParams = new ProposalQueryParams { PageNumber = 1, PageSize = 10, Status = "Pending" };
+            var proposals = new List<Proposal> 
+            { 
+                new Proposal { ProposalId = "p1", Status = "Pending", Resident = new User { Name = "Res", PasswordHash = "hash" }, Content = "Content", ResidentId = "u1" },
+                new Proposal { ProposalId = "p2", Status = "Completed", Resident = new User { Name = "Res", PasswordHash = "hash" }, Content = "Content", ResidentId = "u1" }
+            }.AsQueryable();
+
+            _mockProposalRepo.Setup(r => r.GetStaffAssignedProposalsAsync(staffId))
+                .Returns(new TestAsyncEnumerable<Proposal>(proposals).AsQueryable());
+
+            // Act
+            var result = await _service.GetProposalsForStaffAsync(staffId, queryParams);
+
+            // Assert
+            result.Succeeded.Should().BeTrue();
+            result.Data.Items.Should().HaveCount(1);
+            result.Data.Items.First().ProposalId.Should().Be("p1");
+        }
+
+        [Fact]
+        public async Task GetProposalDetailAsync_AsOwner_ReturnsDetail()
         {
             // Arrange
             var proposalId = "p1";
             var userId = "u1";
-            var proposal = new Proposal { ProposalId = proposalId, ResidentId = userId };
-            
+            var proposal = new Proposal { ProposalId = proposalId, ResidentId = userId, Resident = new User { Name = "Res", PasswordHash = "hash" }, Content = "Content" };
+            var user = new User { UserId = userId, Role = new Role { RoleName = "Resident" }, PasswordHash = "hash", Name = "User" };
+
             _mockProposalRepo.Setup(r => r.GetProposalDetailsAsync(proposalId)).ReturnsAsync(proposal);
-            _mockMapper.Setup(m => m.Map<ProposalDto>(proposal)).Returns(new ProposalDto { ProposalId = proposalId });
+            
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
 
             // Act
             var result = await _service.GetProposalDetailAsync(proposalId, userId);
@@ -143,33 +162,73 @@ namespace ServiceUnitTest.Services
             result!.ProposalId.Should().Be(proposalId);
         }
 
+        [Fact]
+        public async Task GetProposalDetailAsync_AsUnauthorizedUser_ThrowsException()
+        {
+            // Arrange
+            var proposalId = "p1";
+            var userId = "u2"; // Not owner, not assigned
+            var proposal = new Proposal { ProposalId = proposalId, ResidentId = "u1", OperationStaffId = "staff1", Content = "Content" };
+            var user = new User { UserId = userId, Role = new Role { RoleName = "Resident" }, PasswordHash = "hash", Name = "User" };
+
+            _mockProposalRepo.Setup(r => r.GetProposalDetailsAsync(proposalId)).ReturnsAsync(proposal);
+            
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
+            // Act
+            Func<Task> act = async () => await _service.GetProposalDetailAsync(proposalId, userId);
+
+            // Assert
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
 
         [Fact]
-        public async Task ReplyProposalAsync_KhiUserLaStaff_NenTaoReplyVaCapNhatStatus()
+        public async Task ReplyProposalAsync_AsStaff_UpdatesProposal()
         {
             // Arrange
             var proposalId = "p1";
             var staffId = "staff1";
             var replyDto = new ProposalReplyDto { ReplyContent = "Reply" };
-            var proposal = new Proposal { ProposalId = proposalId, OperationStaffId = staffId, Status = "Pending" };
+            var proposal = new Proposal { ProposalId = proposalId, Status = "Pending", Resident = new User { Name = "Res", PasswordHash = "hash" }, Content = "Content", ResidentId = "u1" };
+            var staff = new User { UserId = staffId, Role = new Role { RoleName = "Staff" }, PasswordHash = "hash", Name = "Staff" };
 
-            var staff = new User { UserId = staffId, Name = "Staff", PasswordHash = "hash", Status = "Active", Role = new Role { RoleId = "r1", RoleName = "Staff" } };
-            _context.Users.Add(staff);
-            _context.SaveChanges();
-            
-            _mockUserRepo.Setup(r => r.GetByIdAsync(staffId)).ReturnsAsync(staff);
             _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
             _mockProposalRepo.Setup(r => r.GetProposalDetailsAsync(proposalId)).ReturnsAsync(proposal);
-            _mockMapper.Setup(m => m.Map<ProposalDto>(proposal)).Returns(new ProposalDto { ProposalId = proposalId, Status = "Processing", Reply = "Reply" });
+            
+            await _context.Users.AddAsync(staff);
+            await _context.SaveChangesAsync();
 
             // Act
             var result = await _service.ReplyProposalAsync(proposalId, staffId, replyDto);
 
             // Assert
             result.Should().NotBeNull();
-            result!.Status.Should().Be("Processing");
-            proposal.Reply.Should().Be("Reply");
+            result!.Reply.Should().Be("Reply");
+            result.Status.Should().Be("Completed");
             _mockProposalRepo.Verify(r => r.UpdateAsync(proposal), Times.Once);
+        }
+
+        [Fact]
+        public async Task ReplyProposalAsync_AsNonStaff_ThrowsException()
+        {
+            // Arrange
+            var proposalId = "p1";
+            var userId = "u1";
+            var replyDto = new ProposalReplyDto { ReplyContent = "Reply" };
+            var proposal = new Proposal { ProposalId = proposalId, Content = "Content", ResidentId = "u1" };
+            var user = new User { UserId = userId, Role = new Role { RoleName = "Resident" }, PasswordHash = "hash", Name = "User" };
+
+            _mockProposalRepo.Setup(r => r.GetByIdAsync(proposalId)).ReturnsAsync(proposal);
+            
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
+            // Act
+            Func<Task> act = async () => await _service.ReplyProposalAsync(proposalId, userId, replyDto);
+
+            // Assert
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
         }
     }
 }

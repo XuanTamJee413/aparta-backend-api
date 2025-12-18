@@ -221,13 +221,16 @@ namespace ApartaAPI.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(dto.ProjectCode))
+                    return ApiResponse<ProjectDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, "Mã dự án không được để trống.");
+
                 var errorMsg = ValidateProjectLogic(
-                    dto.ProjectCode, 
-                    dto.Name, 
-                    dto.BankAccountNumber,
-                    dto.PayOSClientId,
-                    dto.PayOSApiKey,
-                    dto.PayOSChecksumKey
+                    dto.ProjectCode?.Trim(), 
+                    dto.Name?.Trim(), 
+                    dto.BankAccountNumber?.Trim(),
+                    dto.PayOSClientId?.Trim(),
+                    dto.PayOSApiKey?.Trim(),
+                    dto.PayOSChecksumKey?.Trim()
                 );
                 if (errorMsg != null) return ApiResponse<ProjectDto>.Fail(ApiResponse.SM25_INVALID_INPUT, null, errorMsg);
 

@@ -19,9 +19,9 @@ public partial class Utility
 
     public DateTime? UpdatedAt { get; set; }
 
-    public TimeOnly? OpenTime { get; set; }
+    public TimeSpan? OpenTime { get; set; }
 
-    public TimeOnly? CloseTime { get; set; }
+    public TimeSpan? CloseTime { get; set; }
 
     public virtual ICollection<UtilityBooking> UtilityBookings { get; set; } = new List<UtilityBooking>();
 }

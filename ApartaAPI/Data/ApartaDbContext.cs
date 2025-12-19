@@ -842,13 +842,13 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
-            entity.Property(e => e.PayOsapiKey)
+            entity.Property(e => e.PayOSApiKey)
                 .HasMaxLength(255)
                 .HasColumnName("PayOSApiKey");
-            entity.Property(e => e.PayOschecksumKey)
+            entity.Property(e => e.PayOSChecksumKey)
                 .HasMaxLength(500)
                 .HasColumnName("PayOSChecksumKey");
-            entity.Property(e => e.PayOsclientId)
+            entity.Property(e => e.PayOSClientId)
                 .HasMaxLength(255)
                 .HasColumnName("PayOSClientId");
             entity.Property(e => e.ProjectCode)

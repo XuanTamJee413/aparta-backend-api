@@ -17,11 +17,15 @@ public partial class Apartment
 
     public double? Area { get; set; }
 
-    public int? Floor {  get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public int? Floor { get; set; }
+
+    public DateOnly? HandoverDate { get; set; }
+
+    public string? OccupancyStatus { get; set; }
 
     public virtual ICollection<ApartmentMember> ApartmentMembers { get; set; } = new List<ApartmentMember>();
 

@@ -14,12 +14,14 @@ public partial class Utility
     public string? Location { get; set; }
 
     public double? PeriodTime { get; set; }
-	public TimeSpan? OpenTime { get; set; }
-	public TimeSpan? CloseTime { get; set; }
 
-	public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public TimeOnly? OpenTime { get; set; }
+
+    public TimeOnly? CloseTime { get; set; }
 
     public virtual ICollection<UtilityBooking> UtilityBookings { get; set; } = new List<UtilityBooking>();
 }

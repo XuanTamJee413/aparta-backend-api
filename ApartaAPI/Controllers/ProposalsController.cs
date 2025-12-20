@@ -1,6 +1,7 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Proposals;
 using ApartaAPI.Services.Interfaces;
+using ApartaAPI.Utils.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -121,6 +122,14 @@ namespace ApartaAPI.Controllers
             {
                 return BadRequest(ApiResponse.Fail(ex.Message));
             }
+        }
+
+        // helper lay enum proposal type
+        [HttpGet("types")]
+        public IActionResult GetProposalTypes()
+        {
+            var types = EnumHelper.GetProposalTypeOptions();
+            return Ok(new ApiResponse<List<EnumOptionDto>>(types));
         }
     }
 }

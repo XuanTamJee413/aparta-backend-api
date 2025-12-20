@@ -16,7 +16,7 @@ public partial class Proposal
     public string? Reply { get; set; }
 
     public string Status { get; set; } = null!;
-    public string Tilte { get; set; } 
+    public string Title { get; set; } 
     public string Type { get; set; } 
     
     public DateTime? CreatedAt { get; set; }

@@ -895,7 +895,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-			entity.Property(e => e.Tilte)
+			entity.Property(e => e.Title)
 	            .HasMaxLength(255)
 	            .HasColumnName("title");
 			entity.Property(e => e.Type)

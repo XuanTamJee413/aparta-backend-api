@@ -736,8 +736,9 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
 
-            entity.HasOne(d => d.Building).WithMany(p => p.PriceQuotations)
+			entity.HasOne(d => d.Building).WithMany(p => p.PriceQuotations)
                 .HasForeignKey(d => d.BuildingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PriceQuotation_Building");
@@ -829,8 +830,15 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.Tilte)
+	            .HasMaxLength(255)
+	            .HasColumnName("title");
+			entity.Property(e => e.Type)
+				.HasMaxLength(100)
+				.HasColumnName("type");
 
-            entity.HasOne(d => d.OperationStaff).WithMany(p => p.ProposalOperationStaffs)
+
+			entity.HasOne(d => d.OperationStaff).WithMany(p => p.ProposalOperationStaffs)
                 .HasForeignKey(d => d.OperationStaffId)
                 .HasConstraintName("FK_Proposal_Staff");
 

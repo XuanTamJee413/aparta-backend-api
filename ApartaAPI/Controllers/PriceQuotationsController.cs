@@ -78,9 +78,14 @@ namespace ApartaAPI.Controllers
         [HttpGet("list")]
         [ProducesResponseType(typeof(ApiResponse<PagedList<PriceQuotationDto>>), StatusCodes.Status200OK)]
         public async Task<ActionResult<ApiResponse<PagedList<PriceQuotationDto>>>> GetPriceQuotationsPaginated(
-            [FromQuery] PriceQuotationQueryParameters queryParams)
+                            [FromQuery] PriceQuotationQueryParameters queryParams)
         {
-            var pagedData = await _priceQuotationService.GetPriceQuotationsPaginatedAsync(queryParams);
+            // 1. Lấy ManagerId từ Token
+            var managerId = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(managerId)) return Unauthorized(ApiResponse.Fail("Không tìm thấy thông tin người dùng."));
+
+            // 2. Gọi service với managerId
+            var pagedData = await _priceQuotationService.GetPriceQuotationsPaginatedAsync(queryParams, managerId);
 
             if (pagedData.TotalCount == 0)
             {

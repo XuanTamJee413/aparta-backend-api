@@ -10,18 +10,26 @@ using Moq;
 using ServiceUnitTest.Helpers;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
+using System.Collections.Generic;
+using System.Linq;
+using System;
+using System.Linq.Expressions;
 
 namespace ServiceUnitTest.Services
 {
     public class VisitLogServiceTests
     {
         private readonly Mock<IVisitLogRepository> _mockRepo;
+        private readonly Mock<IRepository<StaffBuildingAssignment>> _mockAssignmentRepo;
+        private readonly Mock<IRepository<User>> _mockUserRepo;
         private readonly IMapper _mapper;
         private readonly VisitLogService _service;
 
         public VisitLogServiceTests()
         {
             _mockRepo = new Mock<IVisitLogRepository>();
+            _mockAssignmentRepo = new Mock<IRepository<StaffBuildingAssignment>>();
+            _mockUserRepo = new Mock<IRepository<User>>();
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -29,26 +37,39 @@ namespace ServiceUnitTest.Services
             });
             _mapper = config.CreateMapper();
 
-            _service = new VisitLogService(_mockRepo.Object, _mapper);
+            _service = new VisitLogService(
+                _mockRepo.Object, 
+                _mockAssignmentRepo.Object, 
+                _mockUserRepo.Object, 
+                _mapper
+            );
         }
 
         [Fact]
-        public async Task GetStaffViewLogsAsync_KhiCoThamSo_NenTraVePagedList()
+        public async Task GetStaffViewLogsAsync_WithValidParams_ReturnsPagedList()
         {
             // Arrange
+            var userId = "staff1";
             var queryParams = new VisitorQueryParameters { PageNumber = 1, PageSize = 10, SearchTerm = "John", SortColumn = "VisitorFullName", SortDirection = "asc" };
             
             var visitor = new Visitor { VisitorId = "v1", FullName = "John Doe" };
-            var apartment = new Apartment { ApartmentId = "apt1", Code = "A101" };
+            var apartment = new Apartment { ApartmentId = "apt1", Code = "A101", BuildingId = "b1" };
             var logs = new List<VisitLog>
             {
                 new VisitLog { VisitLogId = "vl1", VisitorId = "v1", ApartmentId = "apt1", CheckinTime = DateTime.Now, Visitor = visitor, Apartment = apartment }
             }.AsQueryable();
 
+            var assignments = new List<StaffBuildingAssignment>
+            {
+                new StaffBuildingAssignment { UserId = userId, BuildingId = "b1", IsActive = true }
+            };
+
             _mockRepo.Setup(r => r.GetStaffViewLogsQuery()).Returns(new TestAsyncEnumerable<VisitLog>(logs).AsQueryable());
+            _mockAssignmentRepo.Setup(r => r.FindAsync(It.IsAny<Expression<Func<StaffBuildingAssignment, bool>>>()))
+                .ReturnsAsync(assignments);
 
             // Act
-            var result = await _service.GetStaffViewLogsAsync(queryParams);
+            var result = await _service.GetStaffViewLogsAsync(queryParams, userId);
 
             // Assert
             result.Should().NotBeNull();
@@ -57,12 +78,12 @@ namespace ServiceUnitTest.Services
         }
 
         [Fact]
-        public async Task CheckInAsync_KhiStatusPending_NenCapNhatThanhCheckedIn()
+        public async Task CheckInAsync_WhenStatusPending_UpdatesToCheckedIn()
         {
             // Arrange
             var logId = "vl1";
             var log = new VisitLog { VisitLogId = logId, Status = "Pending" };
-            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<VisitLog, bool>>>()))
+            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<VisitLog, bool>>>()))
                 .ReturnsAsync(log);
             _mockRepo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
@@ -77,12 +98,12 @@ namespace ServiceUnitTest.Services
         }
 
         [Fact]
-        public async Task CheckOutAsync_KhiStatusCheckedIn_NenCapNhatThanhCheckedOut()
+        public async Task CheckOutAsync_WhenStatusCheckedIn_UpdatesToCheckedOut()
         {
             // Arrange
             var logId = "vl1";
             var log = new VisitLog { VisitLogId = logId, Status = "Checked-in" };
-            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<VisitLog, bool>>>()))
+            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<VisitLog, bool>>>()))
                 .ReturnsAsync(log);
             _mockRepo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
@@ -97,12 +118,12 @@ namespace ServiceUnitTest.Services
         }
 
         [Fact]
-        public async Task CheckOutAsync_KhiStatusKhongPhaiCheckedIn_NenTraVeFalse()
+        public async Task CheckOutAsync_WhenStatusNotCheckedIn_ReturnsFalse()
         {
             // Arrange
             var logId = "vl1";
             var log = new VisitLog { VisitLogId = logId, Status = "Pending" };
-            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<VisitLog, bool>>>()))
+            _mockRepo.Setup(r => r.FirstOrDefaultAsync(It.IsAny<Expression<Func<VisitLog, bool>>>()))
                 .ReturnsAsync(log);
 
             // Act

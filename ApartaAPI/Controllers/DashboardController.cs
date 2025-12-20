@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly ApartaDbContext _context;
@@ -26,24 +28,61 @@ namespace ApartaAPI.Controllers
         {
             try
             {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleBuildingIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<DashboardStatisticsDto>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+                }
+
                 var statistics = new DashboardStatisticsDto();
 
                 // Tổng số tòa nhà
                 statistics.TotalBuildings = await _context.Buildings
-                    .Where(b => b.IsActive)
+                    .Where(b => b.IsActive && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(b.BuildingId))))
                     .CountAsync();
 
                 // Tổng số căn hộ
                 statistics.TotalApartments = await _context.Apartments
+                    .Where(a => !isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId)))
                     .CountAsync();
 
                 // Doanh thu tháng hiện tại
                 var currentMonth = DateTime.UtcNow.Month;
                 var currentYear = DateTime.UtcNow.Year;
-                statistics.MonthlyRevenue = await _context.Invoices
-                    .Where(i => i.Status == "paid" 
+
+                // Filter invoices by manager-accessible apartments if needed
+                List<string>? accessibleApartmentIds = null;
+                if (isManager && accessibleBuildingIds != null)
+                {
+                    accessibleApartmentIds = await _context.Apartments
+                        .Where(a => accessibleBuildingIds.Contains(a.BuildingId))
+                        .Select(a => a.ApartmentId)
+                        .ToListAsync();
+                }
+
+                var invoicesQuery = _context.Invoices.AsQueryable();
+                if (isManager && accessibleApartmentIds != null)
+                {
+                    invoicesQuery = invoicesQuery.Where(i => accessibleApartmentIds.Contains(i.ApartmentId));
+                }
+
+                statistics.MonthlyRevenue = await invoicesQuery
+                    .Where(i => i.Status == "paid"
                         && i.CreatedAt.HasValue
-                        && i.CreatedAt.Value.Month == currentMonth 
+                        && i.CreatedAt.Value.Month == currentMonth
                         && i.CreatedAt.Value.Year == currentYear)
                     .SumAsync(i => (decimal?)i.Price) ?? 0;
 
@@ -52,7 +91,7 @@ namespace ApartaAPI.Controllers
                 
                 // Đếm căn hộ có status = "Đã Bán"
                 var soldApartments = await _context.Apartments
-                    .Where(a => a.Status == "Đã Bán")
+                    .Where(a => a.Status == "Đã Bán" && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
                     .CountAsync();
                 
                 var unsoldApartments = totalApartments - soldApartments;
@@ -80,9 +119,10 @@ namespace ApartaAPI.Controllers
                 }
 
                 var revenueDataRaw = await _context.Invoices
-                    .Where(i => i.Status == "paid" 
+                    .Where(i => i.Status == "paid"
                         && i.CreatedAt.HasValue
-                        && i.CreatedAt.Value >= startDate)
+                        && i.CreatedAt.Value >= startDate
+                        && (!isManager || (accessibleApartmentIds != null && accessibleApartmentIds.Contains(i.ApartmentId))))
                     .Select(i => new 
                     { 
                         Year = i.CreatedAt.Value.Year, 
@@ -129,7 +169,7 @@ namespace ApartaAPI.Controllers
                 // Chỉ số chưa ghi: Đếm số căn hộ "Đã Bán" chưa có meter reading cho tháng hiện tại
                 var currentBillingPeriod = DateTime.UtcNow.ToString("yyyy-MM");
                 var soldApartmentIds = await _context.Apartments
-                    .Where(a => a.Status == "Đã Bán")
+                    .Where(a => a.Status == "Đã Bán" && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
                     .Select(a => a.ApartmentId)
                     .ToListAsync();
 
@@ -146,7 +186,7 @@ namespace ApartaAPI.Controllers
 
                 // Hóa đơn chưa thanh toán (placeholder - có thể implement sau)
                 statistics.UnpaidInvoices = await _context.Invoices
-                    .Where(i => i.Status != "paid")
+                    .Where(i => i.Status != "paid" && (!isManager || (accessibleApartmentIds != null && accessibleApartmentIds.Contains(i.ApartmentId))))
                     .CountAsync();
 
                 return Ok(ApiResponse<DashboardStatisticsDto>.Success(statistics, "Lấy thống kê dashboard thành công."));
@@ -164,6 +204,25 @@ namespace ApartaAPI.Controllers
         {
             try
             {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleBuildingIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<List<ProjectApartmentStatusDto>>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+                }
+
                 var projects = await _context.Projects
                     .Where(p => p.IsActive)
                     .Include(p => p.Buildings)
@@ -174,8 +233,19 @@ namespace ApartaAPI.Controllers
 
                 foreach (var project in projects)
                 {
-                    var allApartments = project.Buildings
-                        .Where(b => b.IsActive)
+                    // Lọc buildings thuộc quyền manager (nếu là manager)
+                    var accessibleBuildings = project.Buildings
+                        .Where(b => b.IsActive && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(b.BuildingId))))
+                        .ToList();
+
+                    // Manager: nếu project không có building nào thuộc quyền => không trả về project này
+                    if (isManager && accessibleBuildings.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Lấy tất cả apartments từ các buildings thuộc quyền
+                    var allApartments = accessibleBuildings
                         .SelectMany(b => b.Apartments)
                         .ToList();
 
@@ -183,6 +253,7 @@ namespace ApartaAPI.Controllers
                     var soldApartments = allApartments.Count(a => a.Status == "Đã Bán");
                     var unsoldApartments = totalApartments - soldApartments;
 
+                    // Vẫn trả về project dù totalApartments = 0 (để hiển thị chart 0/0 hoặc 100% chưa bán)
                     result.Add(new ProjectApartmentStatusDto
                     {
                         ProjectId = project.ProjectId,
@@ -208,6 +279,25 @@ namespace ApartaAPI.Controllers
         {
             try
             {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleBuildingIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<List<ProjectRevenueDto>>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+                }
+
                 if (!year.HasValue)
                 {
                     year = DateTime.UtcNow.Year;
@@ -222,9 +312,15 @@ namespace ApartaAPI.Controllers
                 foreach (var project in projects)
                 {
                     var projectBuildings = await _context.Buildings
-                        .Where(b => b.ProjectId == project.ProjectId && b.IsActive)
+                        .Where(b => b.ProjectId == project.ProjectId && b.IsActive && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(b.BuildingId))))
                         .Select(b => b.BuildingId)
                         .ToListAsync();
+
+                    // Manager: nếu project không có building nào thuộc quyền => không trả về project này
+                    if (isManager && projectBuildings.Count == 0)
+                    {
+                        continue;
+                    }
 
                     var projectApartments = await _context.Apartments
                         .Where(a => projectBuildings.Contains(a.BuildingId))
@@ -277,9 +373,33 @@ namespace ApartaAPI.Controllers
         {
             try
             {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleApartmentIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<List<int>>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    var accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    accessibleApartmentIds = await _context.Apartments
+                        .Where(a => accessibleBuildingIds.Contains(a.BuildingId))
+                        .Select(a => a.ApartmentId)
+                        .ToListAsync();
+                }
+
                 // Lấy danh sách các năm có invoice đã thanh toán
                 var years = await _context.Invoices
-                    .Where(i => i.Status == "paid" && i.CreatedAt.HasValue)
+                    .Where(i => i.Status == "paid" && i.CreatedAt.HasValue && (!isManager || (accessibleApartmentIds != null && accessibleApartmentIds.Contains(i.ApartmentId))))
                     .Select(i => i.CreatedAt.Value.Year)
                     .Distinct()
                     .OrderByDescending(y => y)

@@ -101,6 +101,48 @@ namespace ApartaAPI.Services
             return ApiResponse<IEnumerable<ManagerDto>>.Success(managerDtos);
         }
 
+        // Lấy tất cả tòa đang active
+        public async Task<ApiResponse<IEnumerable<ManagerBuildingOptionDto>>> GetBuildingOptionsAsync(string? managerId)
+        {
+            var buildingsQuery = _context.Buildings
+                .Include(b => b.StaffBuildingAssignments)
+                    .ThenInclude(sba => sba.User)
+                        .ThenInclude(u => u.Role)
+                .Where(b => b.IsActive);
+
+            var buildings = await buildingsQuery.ToListAsync();
+
+            var options = buildings.Select(b =>
+            {
+                // Tìm manager active hiện tại của tòa
+                var activeManagerAssignment = b.StaffBuildingAssignments
+                    .FirstOrDefault(sba =>
+                        sba.IsActive &&
+                        sba.User != null &&
+                        !sba.User.IsDeleted &&
+                        sba.User.Role.RoleName == "manager");
+
+                var hasManager = activeManagerAssignment != null;
+
+                if (hasManager && managerId != null && activeManagerAssignment!.UserId == managerId)
+                {
+                    hasManager = false;
+                }
+
+                return new ManagerBuildingOptionDto
+                {
+                    BuildingId = b.BuildingId,
+                    BuildingName = b.Name,
+                    BuildingCode = b.BuildingCode,
+                    HasManager = hasManager,
+                    ManagerUserId = activeManagerAssignment?.UserId,
+                    ManagerName = activeManagerAssignment?.User?.Name
+                };
+            }).ToList();
+
+            return ApiResponse<IEnumerable<ManagerBuildingOptionDto>>.Success(options);
+        }
+
         public async Task<ApiResponse<ManagerDto>> CreateManagerAsync(CreateManagerDto dto, string assignedBy)
         {
             var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.Phone == dto.Phone);
@@ -133,6 +175,31 @@ namespace ApartaAPI.Services
             if (role == null)
             {
                 return ApiResponse<ManagerDto>.Fail("Role 'manager' không tồn tại trong hệ thống");
+            }
+
+            // Kiểm tra: mỗi tòa nhà chỉ được phép có 1 manager đang hoạt động
+            if (dto.BuildingIds != null && dto.BuildingIds.Any())
+            {
+                foreach (var buildingId in dto.BuildingIds)
+                {
+                    var hasActiveManagerForBuilding = await _context.StaffBuildingAssignments
+                        .Include(sba => sba.User)
+                            .ThenInclude(u => u.Role)
+                        .AnyAsync(sba =>
+                            sba.BuildingId == buildingId &&
+                            sba.IsActive &&
+                            !sba.User.IsDeleted &&
+                            sba.User.Role.RoleName == "manager");
+
+                    if (hasActiveManagerForBuilding)
+                    {
+                        return ApiResponse<ManagerDto>.Fail(
+                            ApiResponse.SM25_INVALID_INPUT,
+                            null,
+                            "Mỗi tòa chỉ được gán một manager đang hoạt động. Vui lòng chọn tòa nhà khác."
+                        );
+                    }
+                }
             }
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
@@ -297,6 +364,32 @@ namespace ApartaAPI.Services
                 var buildingIdsToAdd = newBuildingIds
                     .Where(bid => !currentBuildingIds.Contains(bid))
                     .ToList();
+
+                // Kiểm tra: mỗi tòa nhà chỉ được phép có 1 manager đang hoạt động
+                if (buildingIdsToAdd.Any())
+                {
+                    foreach (var buildingId in buildingIdsToAdd)
+                    {
+                        var hasOtherActiveManagerForBuilding = await _context.StaffBuildingAssignments
+                            .Include(sba => sba.User)
+                                .ThenInclude(u => u.Role)
+                            .AnyAsync(sba =>
+                                sba.BuildingId == buildingId &&
+                                sba.IsActive &&
+                                sba.UserId != userId &&
+                                !sba.User.IsDeleted &&
+                                sba.User.Role.RoleName == "manager");
+
+                        if (hasOtherActiveManagerForBuilding)
+                        {
+                            return ApiResponse<ManagerDto>.Fail(
+                                ApiResponse.SM25_INVALID_INPUT,
+                                null,
+                                "Mỗi tòa chỉ được gán một manager đang hoạt động. Vui lòng chọn tòa nhà khác."
+                            );
+                        }
+                    }
+                }
 
                 var now = DateTime.UtcNow;
                 foreach (var buildingId in buildingIdsToAdd)

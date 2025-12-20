@@ -95,12 +95,17 @@ namespace ApartaAPI.Services
                 var status = query.Status.Trim();
                 source = source.Where(p => p.Status == status);
             }
-
+            // loc theo type
+            if (!string.IsNullOrWhiteSpace(query.Type))
+            {
+                source = source.Where(p => p.Type == query.Type.Trim());
+            }
             // 2. Filtering by SearchTerm (content search)
             if (!string.IsNullOrWhiteSpace(query.SearchTerm))
             {
                 var term = query.SearchTerm.Trim().ToLowerInvariant();
                 source = source.Where(p =>
+                    p.Title.ToLower().Contains(term) ||
                     p.Content.ToLower().Contains(term) ||
                     p.Resident.Name.ToLower().Contains(term)
                 );

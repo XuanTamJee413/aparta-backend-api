@@ -159,11 +159,18 @@ namespace ApartaAPI.Services
         public async Task<bool> DeleteAsync(string id)
         {
             var entity = await _priceQuotationRepo.FirstOrDefaultAsync(pq => pq.PriceQuotationId == id);
-            if (entity == null)
+            if (entity == null || entity.IsDeleted == true)
                 return false;
 
-            await _priceQuotationRepo.RemoveAsync(entity);
-            return await _priceQuotationRepo.SaveChangesAsync();
+            // xóa
+            entity.IsDeleted = true;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _priceQuotationRepo.UpdateAsync(entity);
+
+            bool success = true;
+            //success = await _priceQuotationRepo.SaveChangesAsync();
+            return success;
         }
     }
 }

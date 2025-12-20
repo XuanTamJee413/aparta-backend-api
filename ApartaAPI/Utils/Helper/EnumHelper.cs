@@ -46,5 +46,9 @@ namespace ApartaAPI.Utils.Helper
             // Chỉ cần gọi hàm chung và chỉ định Enum ECalculationMethod
             return GetEnumOptions<ECalculationMethod>();
         }
+        public static List<EnumOptionDto> GetProposalTypeOptions()
+        {
+            return GetEnumOptions<EProposalType>();
+        }
     }
 }

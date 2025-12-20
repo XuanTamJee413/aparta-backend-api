@@ -33,7 +33,6 @@ public partial class Project
 
     public string? BankAccountName { get; set; }
 
-    // PayOS Settings
     public string? PayOSClientId { get; set; }
 
     public string? PayOSApiKey { get; set; }

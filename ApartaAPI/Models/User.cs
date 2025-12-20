@@ -41,6 +41,8 @@ public partial class User
 
     public virtual Apartment? Apartment { get; set; }
 
+    public virtual ICollection<ApartmentMember> ApartmentMembers { get; set; } = new List<ApartmentMember>();
+
     public virtual ICollection<Interaction> InteractionResidents { get; set; } = new List<Interaction>();
 
     public virtual ICollection<Interaction> InteractionStaffs { get; set; } = new List<Interaction>();

@@ -58,6 +58,12 @@ namespace ApartaAPI.Services
 
                 (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId) &&
 
+                (string.IsNullOrWhiteSpace(query.Status) ||
+                    (!string.IsNullOrWhiteSpace(m.Status) &&
+                        string.Equals(m.Status.Trim(), query.Status.Trim(), StringComparison.OrdinalIgnoreCase))) &&
+
+                (string.IsNullOrWhiteSpace(query.HeadMemberId) || m.HeadMemberId == query.HeadMemberId) &&
+
                 (
                     searchTerm == null
                     ||
@@ -136,6 +142,12 @@ namespace ApartaAPI.Services
                 && (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value)
 
                 && (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId)
+
+                && (string.IsNullOrWhiteSpace(query.Status) ||
+                    (!string.IsNullOrWhiteSpace(m.Status) &&
+                        string.Equals(m.Status.Trim(), query.Status.Trim(), StringComparison.OrdinalIgnoreCase)))
+
+                && (string.IsNullOrWhiteSpace(query.HeadMemberId) || m.HeadMemberId == query.HeadMemberId)
 
                 && (
                     searchTerm == null

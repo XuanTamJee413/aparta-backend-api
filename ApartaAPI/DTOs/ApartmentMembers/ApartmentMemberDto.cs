@@ -7,13 +7,16 @@ namespace ApartaAPI.DTOs.ApartmentMembers
         string? SearchTerm,
         string? SortBy,
         string? SortOrder,
-        string? ApartmentId
+        string? ApartmentId,
+        string? Status,
+        string? HeadMemberId
     );
 
     public class ApartmentMemberDto
     {
         public string ApartmentMemberId { get; set; }
         public string? ApartmentId { get; set; }
+        public string? HeadMemberId { get; set; }
         public string? Name { get; set; }
         public string? PhoneNumber { get; set; }
         public string? IdNumber { get; set; }

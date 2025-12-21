@@ -113,20 +113,32 @@ namespace ApartaAPI.Services
             await _priceQuotationRepo.UpdateAsync(entity);
             return await _priceQuotationRepo.SaveChangesAsync();
         }
-        public async Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams, string managerId)
+        public async Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams, string userId, bool isAdmin = false)
         {
-            // 1. Lấy danh sách ID các tòa nhà mà Manager này quản lý từ bảng StaffBuildingAssignment
-            // Lưu ý: Cần inject thêm DbContext hoặc BuildingAssignment Repository nếu chưa có
-            var managedBuildingIds = await _context.StaffBuildingAssignments
-                .Where(sba => sba.UserId == managerId && sba.IsActive)
-                .Select(sba => sba.BuildingId)
-                .ToListAsync();
-
-            // 2. Lấy Query gốc
+            // 1. Lấy Query gốc
             var query = _priceQuotationRepo.GetQuotationsQueryable();
 
-            // 3. LỌC CỨNG: Chỉ lấy Price Quotation thuộc các tòa nhà Manager quản lý
-            query = query.Where(q => managedBuildingIds.Contains(q.BuildingId));
+            // 2. Kiểm tra role: nếu không phải admin thì filter theo building assignment
+            if (!isAdmin)
+            {
+                // Lấy danh sách ID các tòa nhà mà user này được gán từ bảng StaffBuildingAssignment
+                var managedBuildingIds = await _context.StaffBuildingAssignments
+                    .Where(sba => sba.UserId == userId && sba.IsActive)
+                    .Select(sba => sba.BuildingId)
+                    .ToListAsync();
+
+                // LỌC: Chỉ lấy Price Quotation thuộc các tòa nhà user được gán
+                if (managedBuildingIds.Any())
+                {
+                    query = query.Where(q => managedBuildingIds.Contains(q.BuildingId));
+                }
+                else
+                {
+                    // User không có building assignment nào -> trả về empty
+                    query = query.Where(q => false); // Always false để trả về empty
+                }
+            }
+            // Nếu là admin, không filter -> trả về tất cả
 
             // 4. Nếu trên UI người dùng chọn lọc cụ thể 1 tòa nhà (trong số những tòa họ quản lý)
             if (!string.IsNullOrEmpty(queryParams.BuildingId))

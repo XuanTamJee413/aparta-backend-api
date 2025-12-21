@@ -80,9 +80,9 @@ namespace ApartaAPI.Controllers
                 }
 
                 statistics.MonthlyRevenue = await invoicesQuery
-                    .Where(i => i.Status == "paid"
+                    .Where(i => i.Status == "paid" 
                         && i.CreatedAt.HasValue
-                        && i.CreatedAt.Value.Month == currentMonth
+                        && i.CreatedAt.Value.Month == currentMonth 
                         && i.CreatedAt.Value.Year == currentYear)
                     .SumAsync(i => (decimal?)i.Price) ?? 0;
 
@@ -119,7 +119,7 @@ namespace ApartaAPI.Controllers
                 }
 
                 var revenueDataRaw = await _context.Invoices
-                    .Where(i => i.Status == "paid"
+                    .Where(i => i.Status == "paid" 
                         && i.CreatedAt.HasValue
                         && i.CreatedAt.Value >= startDate
                         && (!isManager || (accessibleApartmentIds != null && accessibleApartmentIds.Contains(i.ApartmentId))))

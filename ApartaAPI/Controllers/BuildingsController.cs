@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-// using Microsoft.AspNetCore.Authorization; // Uncomment if authorization is needed
+using System;
+using System.Security.Claims;
+using ApartaAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApartaAPI.Controllers
 {
@@ -15,10 +18,12 @@ namespace ApartaAPI.Controllers
     public class BuildingsController : ControllerBase
     {
         private readonly IBuildingService _service;
+        private readonly ApartaDbContext _context;
 
-        public BuildingsController(IBuildingService service)
+        public BuildingsController(IBuildingService service, ApartaDbContext context)
         {
             _service = service;
+            _context = context;
         }
 
         // GET: api/Buildings
@@ -104,6 +109,31 @@ namespace ApartaAPI.Controllers
         [Authorize(Policy = "CanReadBuilding")]
         public async Task<ActionResult<ApiResponse<IEnumerable<ApartmentDto>>>> GetRentedApartmentsByBuilding(string buildingId)
         {
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse<IEnumerable<ApartmentDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
+            }
+
+            // Kiểm tra quyền: tất cả role (trừ admin) chỉ được xem apartment của building được gán
+            var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+            var isAdmin = !string.IsNullOrWhiteSpace(role) && role.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isAdmin)
+            {
+                // Kiểm tra xem user có được gán quản lý building này không
+                var hasAccess = await _context.StaffBuildingAssignments
+                    .AnyAsync(sba => sba.UserId == userId 
+                        && sba.BuildingId == buildingId 
+                        && sba.IsActive);
+
+                if (!hasAccess)
+                {
+                    return Forbid(); // 403 - Không có quyền truy cập building này
+                }
+            }
+
             var response = await _service.GetRentedApartmentsByBuildingAsync(buildingId);
 
             if (!response.Succeeded)

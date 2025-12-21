@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace ApartaAPI.Utils.Helper
 {
     public static class EmailTemplateHelper
@@ -225,7 +228,111 @@ namespace ApartaAPI.Utils.Helper
 </body>
 </html>";
 		}
+
+        public static string GetManagerInvoiceSummaryEmailTemplate(
+            string managerName,
+            string buildingName,
+            string billingPeriod,
+            int totalInvoices,
+            decimal totalAmount,
+            List<InvoiceSummaryItem> invoiceList,
+            string frontendUrl)
+        {
+            var invoiceRows = string.Join("", invoiceList.Select(inv => $@"
+                <tr style='border-bottom: 1px solid #e5e7eb;'>
+                    <td style='padding: 12px; font-size: 14px; color: #374151;'>{inv.ApartmentCode}</td>
+                    <td style='padding: 12px; font-size: 14px; color: #374151;'>{inv.ResidentName ?? "N/A"}</td>
+                    <td style='padding: 12px; font-size: 14px; color: #374151; text-align: right;'>{inv.Amount:N0} VNĐ</td>
+                    <td style='padding: 12px; font-size: 14px; color: #374151;'>{inv.DueDate:dd/MM/yyyy}</td>
+                </tr>"));
+
+            return $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                    <div style='max-width: 700px; margin: 0 auto; padding: 20px;'>
+                        <div style='background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;'>
+                            <h1 style='color: white; margin: 0; font-size: 24px;'>Báo cáo hóa đơn tháng</h1>
+                        </div>
+                        <div style='background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;'>
+                            <p style='font-size: 16px; margin-bottom: 20px;'>Xin chào <strong>{managerName}</strong>,</p>
+                            <p style='font-size: 16px; margin-bottom: 20px;'>Hệ thống đã tạo thành công <strong>{totalInvoices}</strong> hóa đơn cho tòa nhà <strong>{buildingName}</strong> trong kỳ thanh toán <strong>{billingPeriod}</strong>.</p>
+                            
+                            <div style='background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;'>
+                                <h2 style='color: #1f2937; margin-top: 0; font-size: 18px; margin-bottom: 15px;'>Tổng quan:</h2>
+                                <table style='width: 100%; border-collapse: collapse;'>
+                                    <tr>
+                                        <td style='padding: 10px 0; font-weight: 600; color: #4b5563; width: 200px;'>Tòa nhà:</td>
+                                        <td style='padding: 10px 0; color: #1f2937;'><strong>{buildingName}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 10px 0; font-weight: 600; color: #4b5563;'>Kỳ thanh toán:</td>
+                                        <td style='padding: 10px 0; color: #1f2937;'><strong>{billingPeriod}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 10px 0; font-weight: 600; color: #4b5563;'>Tổng số hóa đơn:</td>
+                                        <td style='padding: 10px 0; color: #1f2937;'><strong>{totalInvoices}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 10px 0; font-weight: 600; color: #4b5563;'>Tổng tiền:</td>
+                                        <td style='padding: 10px 0; color: #dc2626; font-size: 18px; font-weight: 700;'><strong>{totalAmount:N0} VNĐ</strong></td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div style='margin: 20px 0;'>
+                                <h2 style='color: #1f2937; font-size: 18px; margin-bottom: 15px;'>Danh sách hóa đơn đã tạo:</h2>
+                                <div style='overflow-x: auto;'>
+                                    <table style='width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;'>
+                                        <thead>
+                                            <tr style='background: #f9fafb; border-bottom: 2px solid #e5e7eb;'>
+                                                <th style='padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;'>Căn hộ</th>
+                                                <th style='padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;'>Cư dân</th>
+                                                <th style='padding: 12px; text-align: right; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;'>Số tiền</th>
+                                                <th style='padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;'>Hạn thanh toán</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {invoiceRows}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div style='background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                                <p style='margin: 0; color: #92400e; font-size: 14px;'>
+                                    <strong>ℹ️ Thông tin:</strong> Tất cả hóa đơn đã được gửi email thông báo đến các cư dân. Bạn có thể xem chi tiết trong hệ thống quản lý.
+                                </p>
+                            </div>
+
+                            <div style='margin: 30px 0; text-align: center;'>
+                                <a href='{frontendUrl}/manager/invoice-management' 
+                                   style='background-color: #4f46e5; color: white; padding: 12px 30px; 
+                                          text-decoration: none; border-radius: 6px; display: inline-block; 
+                                          font-weight: 600; font-size: 16px;'>
+                                    Xem chi tiết trong hệ thống
+                                </a>
+                            </div>
+                        </div>
+                        <div style='background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; 
+                                    border-radius: 0 0 10px 10px; text-align: center;'>
+                            <p style='color: #6b7280; font-size: 12px; margin: 0;'>
+                                Email này được gửi tự động, vui lòng không trả lời.<br>
+                                © 2025 Aparta Co., Ltd. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>";
+        }
 	}
+
+    public class InvoiceSummaryItem
+    {
+        public string ApartmentCode { get; set; } = string.Empty;
+        public string? ResidentName { get; set; }
+        public decimal Amount { get; set; }
+        public DateOnly DueDate { get; set; }
+    }
 }
 
 

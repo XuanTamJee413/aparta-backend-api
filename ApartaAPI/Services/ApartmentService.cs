@@ -194,6 +194,7 @@ namespace ApartaAPI.Services
             entity.Status = "Còn Trống";
             entity.CreatedAt = now;
             entity.UpdatedAt = now;
+            entity.OccupancyStatus = "Chưa có người ở";
 
             await _repository.AddAsync(entity);
             await _repository.SaveChangesAsync();
@@ -356,6 +357,7 @@ namespace ApartaAPI.Services
                     Status = "Còn Trống",
                     Area = item.Area,
                     Floor = item.Floor,
+                    OccupancyStatus = "Chưa có người ở",
                     CreatedAt = now,
                     UpdatedAt = now
                 };

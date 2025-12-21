@@ -174,6 +174,27 @@
         // SM57: Gia hạn thành công
         public const string SM57_SUBSCRIPTION_EXTENDED = "Gia hạn gói dịch vụ thành công.";
 
+        // SM58: Căn hộ không tồn tại
+        public const string SM58_APARTMENT_NOT_FOUND = "Căn hộ không tồn tại.";
+
+        // SM59: Số hợp đồng trùng lặp
+        public const string SM59_CONTRACT_NUMBER_EXISTS = "Số hợp đồng đã tồn tại trong hệ thống.";
+
+        // SM60: Ngày hợp đồng không hợp lệ
+        public const string SM60_INVALID_CONTRACT_DATES = "Ngày bắt đầu phải nhỏ hơn ngày kết thúc.";
+
+        // SM61: Thiếu SĐT cho App User (với {memberName})
+        public const string SM61_MEMBER_PHONE_REQUIRED = "Thành viên {memberName} được cấp quyền App nhưng thiếu số điện thoại.";
+
+        // SM62: Lỗi tạo User Identity (với {error})
+        public const string SM62_USER_CREATION_FAILED = "Lỗi tạo tài khoản: {error}.";
+
+        // SM63: Role ngữ cảnh không tìm thấy (với {roleName})
+        public const string SM63_ROLE_NOT_FOUND = "Vai trò '{roleName}' không hợp lệ hoặc không tồn tại.";
+
+        // SM64: Lỗi cấu hình Role hệ thống
+        public const string SM64_SYSTEM_ROLE_MISSING = "Lỗi hệ thống: Không tìm thấy vai trò 'resident'.";
+
         public static string GetMessageFromCode(string code)
         {
             return code switch
@@ -235,6 +256,13 @@
 				SM55_ALREADY_CANCELLED => SM55_ALREADY_CANCELLED,
 				SM56_BOOKING_MIN_TIME => SM56_BOOKING_MIN_TIME,
                 SM57_SUBSCRIPTION_EXTENDED => SM57_SUBSCRIPTION_EXTENDED,
+                SM58_APARTMENT_NOT_FOUND => SM58_APARTMENT_NOT_FOUND,
+                SM59_CONTRACT_NUMBER_EXISTS => SM59_CONTRACT_NUMBER_EXISTS,
+                SM60_INVALID_CONTRACT_DATES => SM60_INVALID_CONTRACT_DATES,
+                SM61_MEMBER_PHONE_REQUIRED => SM61_MEMBER_PHONE_REQUIRED,
+                SM62_USER_CREATION_FAILED => SM62_USER_CREATION_FAILED,
+                SM63_ROLE_NOT_FOUND => SM63_ROLE_NOT_FOUND,
+                SM64_SYSTEM_ROLE_MISSING => SM64_SYSTEM_ROLE_MISSING,
                 _ => code
             };
         }

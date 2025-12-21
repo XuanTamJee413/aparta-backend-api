@@ -34,29 +34,24 @@ namespace ApartaAPI.Controllers
 
         // POST: api/Auth/login
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Password))
             {
-                return BadRequest("Phone and password are required");
+                return BadRequest(ApiResponse<LoginResponse>.Fail(ApiResponse.SM25_INVALID_INPUT, null, "Số điện thoại và mật khẩu là bắt buộc."));
             }
 
-            var token = await _authService.LoginAsync(request.Phone, request.Password);
-            if (token == null)
+            // Gọi Service (Service giờ trả về ApiResponse)
+            var response = await _authService.LoginAsync(request);
+
+            if (!response.Succeeded)
             {
-                return Unauthorized("Invalid phone or password");
-            }
+                // Trả về mã lỗi tương ứng (Unauthorized nếu sai pass, BadRequest nếu lỗi khác)
+                if (response.Message == ApiResponse.GetMessageFromCode(ApiResponse.SM07_LOGIN_FAIL))
+                    return Unauthorized(response);
 
-            var user = await _authService.GetUserByPhoneAsync(request.Phone);
-            if (user == null)
-            {
-                return Unauthorized("User not found");
+                return BadRequest(response);
             }
-
-            var response = new LoginResponse(
-                Token: token,
-                IsFirstLogin: user.IsFirstLogin
-            );
 
             return Ok(response);
         }
@@ -64,20 +59,25 @@ namespace ApartaAPI.Controllers
         // GET: api/Auth/me
         [HttpGet("me")]
         [Authorize]
-        public ActionResult<UserInfoResponse> GetCurrentUser()
+        public ActionResult<ApiResponse<UserInfoResponse>> GetCurrentUser()
         {
-            var userId = User.FindFirst("id")?.Value;
-            var name = User.FindFirst("name")?.Value;
+            // Lấy Claims từ Token (Khớp với AuthService.GenerateJwtToken)
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null) return Unauthorized(ApiResponse.Fail(ApiResponse.SM13_ACCOUNT_NOT_FOUND));
+
+            // Các thông tin cơ bản
+            var name = User.FindFirst("name")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value;
             var phone = User.FindFirst("phone")?.Value;
             var email = User.FindFirst("email")?.Value;
-            var role = User.FindFirst("role")?.Value;
-            var apartmentId = User.FindFirst("apartment_id")?.Value;
             var staffCode = User.FindFirst("staff_code")?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
+            // Thông tin ngữ cảnh (Có thể null nếu là Admin/Staff)
+            var apartmentId = User.FindFirst("apartment_id")?.Value;
+
+            // Logic Role: Ưu tiên role ngữ cảnh (context_role), nếu không có thì lấy role gốc (role)
+            // Trong AuthService mới: Claim "role" chứa role ngữ cảnh (owner/resident), "system_role" chứa role gốc
+            var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
 
             var response = new UserInfoResponse(
                 UserId: userId,
@@ -87,11 +87,11 @@ namespace ApartaAPI.Controllers
                 Role: role ?? "unknown",
                 ApartmentId: apartmentId,
                 StaffCode: staffCode,
-                Status: "active", // You might want to get this from database
+                Status: "active",
                 LastLoginAt: DateTime.UtcNow
             );
 
-            return Ok(response);
+            return Ok(ApiResponse<UserInfoResponse>.Success(response));
         }
 
         // POST: api/Auth/forgot-password

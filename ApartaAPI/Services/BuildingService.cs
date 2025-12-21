@@ -339,12 +339,12 @@ namespace ApartaAPI.Services
                     // 1. Vô hiệu hóa Cư dân (User linked to Apartment in THIS Building)
                     // Tìm users có Apartment thuộc tòa nhà này và đang Active
                     var residentUsers = await _context.Users
-                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Active")
+                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "active")
                         .ToListAsync();
 
                     foreach (var user in residentUsers)
                     {
-                        user.Status = "Inactive";
+                        user.Status = "inactive";
                         user.UpdatedAt = now;
                     }
 
@@ -368,12 +368,12 @@ namespace ApartaAPI.Services
                 {
                     // 1. Khôi phục Cư dân: Tìm các User thuộc tòa nhà đang 'Inactive' và chuyển về 'Active'
                     var inactiveResidents = await _context.Users
-                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "Inactive")
+                        .Where(u => u.Apartment != null && u.Apartment.BuildingId == id && u.Status == "inactive")
                         .ToListAsync();
 
                     foreach (var user in inactiveResidents)
                     {
-                        user.Status = "Active";
+                        user.Status = "active";
                         user.UpdatedAt = now;
                     }
 

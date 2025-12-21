@@ -288,5 +288,47 @@ namespace ApartaAPI.Services
                 .ProjectTo<StaffAssignmentDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
         }
-    }
+
+		public async Task<ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>> GetMyAssignedBuildingsAsync(string userId)
+		{
+			try
+			{
+				var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+				// 1. Tìm các phân công của User này
+				// Điều kiện: UserId khớp + IsActive = true + (Chưa hết hạn hoặc không có ngày kết thúc)
+				var assignments = await _assignmentRepo.FindAsync(x =>
+					x.UserId == userId &&
+					x.IsActive == true &&
+					(x.AssignmentEndDate == null || x.AssignmentEndDate >= today)
+				);
+
+				if (!assignments.Any())
+				{
+					return ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>.Success(new List<StaffAssignmentBuildingDto>(), ApiResponse.SM01_NO_RESULTS);
+				}
+
+				// 2. Lấy danh sách BuildingId
+				var buildingIds = assignments.Select(x => x.BuildingId).Distinct().ToList();
+
+				// 3. Query thông tin chi tiết Tòa nhà từ BuildingRepo
+				var buildings = await _buildingRepo.FindAsync(b => buildingIds.Contains(b.BuildingId));
+
+				// 4. Map sang DTO
+				var result = buildings.Select(b => new StaffAssignmentBuildingDto
+				{
+					BuildingId = b.BuildingId,
+					Name = b.Name,
+					BuildingCode = b.BuildingCode
+				}).OrderBy(b => b.Name).ToList();
+
+				return ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>.Success(result);
+			}
+			catch (Exception ex)
+			{
+				// Log error here
+				return ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>.Fail(ApiResponse.SM40_SYSTEM_ERROR);
+			}
+		}
+	}
 }

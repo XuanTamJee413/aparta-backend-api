@@ -23,6 +23,7 @@ namespace ApartaAPI.Controllers
 			_bookingService = bookingService;
 		}
 
+		// Helper lấy ID chuẩn xác
 		private string GetCurrentUserId()
 		{
 			return User.FindFirstValue("id")
@@ -31,33 +32,45 @@ namespace ApartaAPI.Controllers
 				?? throw new UnauthorizedAccessException("User ID not found.");
 		}
 
-		// --- DÀNH CHO CƯ DÂN ---
+		// --- DÀNH CHO NHÂN VIÊN / ADMIN ---
 
-		// POST: api/utilitybookings
+		// GET: api/utilitybookings (Staff xem list)
+		[HttpGet]
+		public async Task<ActionResult<PagedList<UtilityBookingDto>>> GetAllBookings([FromQuery] ServiceQueryParameters parameters)
+		{
+			var staffId = GetCurrentUserId(); // Lấy ID Staff
+			var result = await _bookingService.GetAllBookingsAsync(parameters, staffId); // Truyền xuống Service
+			return Ok(result);
+		}
+
+		// PUT: api/utilitybookings/{id} (Staff duyệt/từ chối)
+		[HttpPut("{id}")]
+		public async Task<ActionResult<UtilityBookingDto>> UpdateStatus(string id, [FromBody] UtilityBookingUpdateDto updateDto)
+		{
+			var staffId = GetCurrentUserId(); // Lấy ID Staff
+			var result = await _bookingService.UpdateBookingStatusAsync(id, updateDto, staffId); // Truyền xuống Service
+
+			if (!result.Succeeded)
+			{
+				// Nếu lỗi do không có quyền -> 403 Forbidden
+				if (result.Message.Contains("không có quyền")) return StatusCode(403, result);
+				if (result.Message == ApiResponse.SM01_NO_RESULTS) return NotFound(result);
+				return BadRequest(result);
+			}
+			return Ok(result);
+		}
+
+		// --- CÁC API KHÁC GIỮ NGUYÊN ---
 		[HttpPost]
-		[ProducesResponseType(typeof(UtilityBookingDto), StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public async Task<ActionResult<UtilityBookingDto>> CreateBooking([FromBody] UtilityBookingCreateDto createDto)
 		{
 			if (!ModelState.IsValid) return BadRequest(ModelState);
-
 			var userId = GetCurrentUserId();
-
 			var response = await _bookingService.CreateBookingAsync(createDto, userId);
-
-			if (!response.Succeeded)
-			{
-				return BadRequest(response);
-			}
-
-			return CreatedAtAction(
-				nameof(GetBookingById),
-				new { id = response.Data!.UtilityBookingId },
-				response
-			);
+			if (!response.Succeeded) return BadRequest(response);
+			return CreatedAtAction(nameof(GetBookingById), new { id = response.Data!.UtilityBookingId }, response);
 		}
 
-		// GET: api/utilitybookings/my
 		[HttpGet("my")]
 		public async Task<ActionResult<IEnumerable<UtilityBookingDto>>> GetMyBookings()
 		{
@@ -66,34 +79,15 @@ namespace ApartaAPI.Controllers
 			return Ok(result);
 		}
 
-		// --- DÀNH CHO NHÂN VIÊN / ADMIN ---
-
-		// GET: api/utilitybookings
-		[HttpGet]
-		public async Task<ActionResult<PagedList<UtilityBookingDto>>> GetAllBookings([FromQuery] ServiceQueryParameters parameters)
-		{
-			var result = await _bookingService.GetAllBookingsAsync(parameters);
-			return Ok(result);
-		}
-
-		// PUT: api/utilitybookings/{id}
-		[HttpPut("{id}")]
-		public async Task<ActionResult<UtilityBookingDto>> UpdateStatus(string id, [FromBody] UtilityBookingUpdateDto updateDto)
-		{
-			var result = await _bookingService.UpdateBookingStatusAsync(id, updateDto);
-			if (result == null) return NotFound();
-			return Ok(result);
-		}
-
-		// --- DÙNG CHUNG ---
-
-		// GET: api/utilitybookings/{id}
 		[HttpGet("{id}")]
 		public async Task<ActionResult<UtilityBookingDto>> GetBookingById(string id)
 		{
 			var result = await _bookingService.GetBookingByIdAsync(id);
-			if (result == null) return NotFound();
-			return Ok(result);
+			if (result == null) return NotFound(); // Cẩn thận: result là ApiResponse hay Dto? Service code bạn gửi trả về ApiResponse ở GetBookingByIdAsync, hãy check lại kiểu trả về. Ở code Service trên tôi để ApiResponse.
+
+			// Nếu Service trả ApiResponse:
+			if (!result.Succeeded) return NotFound(result);
+			return Ok(result.Data);
 		}
 
 		// Endpoint dành cho Cư dân tự hủy

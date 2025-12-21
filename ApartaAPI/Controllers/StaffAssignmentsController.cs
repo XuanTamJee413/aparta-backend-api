@@ -137,5 +137,21 @@ namespace ApartaAPI.Controllers
 
             return Ok(response);
         }
-    }
+
+		// API lấy danh sách tòa nhà mà Staff đang đăng nhập được phụ trách
+		// GET: api/StaffAssignments/my-buildings
+		[HttpGet("my-buildings")]
+		[Authorize]
+		public async Task<ActionResult<ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>>> GetMyBuildings()
+		{
+			var userId = GetCurrentUserId();
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized();
+			}
+
+			var response = await _service.GetMyAssignedBuildingsAsync(userId);
+			return Ok(response);
+		}
+	}
 }

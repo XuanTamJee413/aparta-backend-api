@@ -8,6 +8,7 @@
 		double? PeriodTime,
 		TimeSpan? OpenTime,  
 		TimeSpan? CloseTime,
+		string? BuildingId,
 		DateTime? CreatedAt,
 		DateTime? UpdatedAt
 	);
@@ -18,7 +19,8 @@
 		string? Location,
 		TimeSpan? OpenTime,
 		TimeSpan? CloseTime,
-		double? PeriodTime
+		double? PeriodTime,
+		string? BuildingId
 	);
 
 	public sealed record UtilityUpdateDto(

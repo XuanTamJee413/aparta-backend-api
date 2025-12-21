@@ -1399,7 +1399,24 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-        });
+
+			entity.Property(e => e.OpenTime)
+		        .HasColumnType("time")       
+		        .HasColumnName("open_time"); 
+
+			entity.Property(e => e.CloseTime)
+				.HasColumnType("time")
+				.HasColumnName("close_time");
+
+			entity.Property(e => e.BuildingId)
+					.HasMaxLength(50) 
+					.HasColumnName("building_id");
+
+			entity.HasOne(d => d.Building)      
+					  .WithMany(p => p.Utilities)   
+					  .HasForeignKey(d => d.BuildingId)
+					  .HasConstraintName("FK_UTILITY_BUILDING");
+		});
 
         modelBuilder.Entity<UtilityBooking>(entity =>
         {

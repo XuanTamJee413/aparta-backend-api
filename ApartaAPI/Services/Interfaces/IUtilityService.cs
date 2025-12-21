@@ -8,10 +8,11 @@ namespace ApartaAPI.Services.Interfaces
 {
 	public interface IUtilityService
 	{
-		Task<PagedList<UtilityDto>> GetAllUtilitiesAsync(ServiceQueryParameters parameters);
-		Task<UtilityDto?> GetUtilityByIdAsync(string id);
-		Task<UtilityDto> AddUtilityAsync(UtilityCreateDto utilityDto);
-		Task<UtilityDto?> UpdateUtilityAsync(string id, UtilityUpdateDto utilityDto);
-		Task<bool> DeleteUtilityAsync(string id);
+		Task<PagedList<UtilityDto>> GetAllUtilitiesAsync(ServiceQueryParameters parameters, string userId);
+		Task<UtilityDto?> GetUtilityByIdAsync(string id, string userId);
+		Task<UtilityDto> AddUtilityAsync(UtilityCreateDto utilityDto, string userId);
+		Task<UtilityDto?> UpdateUtilityAsync(string id, UtilityUpdateDto utilityDto, string userId);
+		Task<bool> DeleteUtilityAsync(string id, string userId);
+		Task<PagedList<UtilityDto>> GetUtilitiesForResidentAsync(ServiceQueryParameters parameters, string residentId);
 	}
 }

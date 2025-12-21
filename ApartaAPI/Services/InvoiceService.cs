@@ -269,6 +269,46 @@ public class InvoiceService : IInvoiceService
     }
 
     /**
+     * Lấy thông tin chi tiết của một hóa đơn cho resident (chỉ xem được invoice của chính mình)
+     */
+    public async Task<InvoiceDetailDto?> GetResidentInvoiceDetailAsync(string invoiceId, string userId)
+    {
+        // Lấy thông tin user để kiểm tra apartment
+        var user = await _userRepo.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null || string.IsNullOrEmpty(user.ApartmentId))
+        {
+            return null;
+        }
+
+        // Truy vấn Hóa đơn với Include InvoiceItems và kiểm tra apartment của resident
+        var invoice = await _context.Invoices
+            .Include(i => i.Apartment)
+            .ThenInclude(a => a.Users)
+            .ThenInclude(u => u.Role)
+            .Include(i => i.Staff)
+            .Include(i => i.InvoiceItems)
+            .FirstOrDefaultAsync(i => i.InvoiceId == invoiceId && i.ApartmentId == user.ApartmentId);
+
+        if (invoice == null)
+        {
+            return null;
+        }
+
+        // Tự động cập nhật status sang OVERDUE nếu invoice quá hạn
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (invoice.Status == "PENDING" && invoice.EndDate < today)
+        {
+            invoice.Status = "OVERDUE";
+            invoice.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+
+        // Sử dụng AutoMapper để map Invoice -> InvoiceDetailDto
+        var detailDto = _mapper.Map<InvoiceDetailDto>(invoice);
+        return detailDto;
+    }
+
+    /**
     * Tạo hóa đơn cho tòa nhà
     */
     public async Task<(bool Success, string Message, int ProcessedCount)> GenerateInvoicesAsync(GenerateInvoicesRequest request, string userId)

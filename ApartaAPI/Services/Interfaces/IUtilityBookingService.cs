@@ -7,14 +7,14 @@ namespace ApartaAPI.Services.Interfaces
 {
 	public interface IUtilityBookingService
 	{
-		Task<ApiResponse<UtilityBookingDto>> CreateBookingAsync(UtilityBookingCreateDto createDto, string residentId);
-        Task<ApiResponse<UtilityBookingDto>> GetBookingByIdAsync(string bookingId);
-        Task<ApiResponse<UtilityBookingDto>> UpdateBookingStatusAsync(string bookingId, UtilityBookingUpdateDto updateDto);
-        Task<ApiResponse> CancelBookingByResidentAsync(string bookingId, string residentId);
+		Task<PagedList<UtilityBookingDto>> GetAllBookingsAsync(ServiceQueryParameters parameters, string staffId);
 
-        // Các hàm danh sách giữ nguyên (hoặc có thể bọc nếu muốn, nhưng PagedList thường dùng độc lập)
-        Task<IEnumerable<UtilityBookingDto>> GetBookingsByResidentAsync(string residentId);
-        Task<PagedList<UtilityBookingDto>> GetAllBookingsAsync(ServiceQueryParameters parameters);
-        Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(string utilityId, DateTime date);
+		Task<ApiResponse<UtilityBookingDto>> UpdateBookingStatusAsync(string bookingId, UtilityBookingUpdateDto updateDto, string staffId);
+
+		Task<ApiResponse<UtilityBookingDto>> CreateBookingAsync(UtilityBookingCreateDto createDto, string residentId);
+		Task<ApiResponse<UtilityBookingDto>> GetBookingByIdAsync(string bookingId);
+		Task<IEnumerable<UtilityBookingDto>> GetBookingsByResidentAsync(string residentId);
+		Task<IEnumerable<BookedSlotDto>> GetBookedSlotsAsync(string utilityId, DateTime date);
+		Task<ApiResponse> CancelBookingByResidentAsync(string bookingId, string residentId);
 	}
 }

@@ -12,5 +12,7 @@ namespace ApartaAPI.Services.Interfaces
         Task<ApiResponse> DeletePermanentAsync(string assignmentId);
         Task<ApiResponse<IEnumerable<StaffUserDto>>> GetAvailableStaffsAsync(string? searchTerm);
         Task<ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>> GetAvailableBuildingsAsync(string? searchTerm);
-    }
+
+		Task<ApiResponse<IEnumerable<StaffAssignmentBuildingDto>>> GetMyAssignedBuildingsAsync(string userId);
+	}
 }

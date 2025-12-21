@@ -20,6 +20,9 @@ public partial class Utility
 	public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+	public string? BuildingId { get; set; }
 
-    public virtual ICollection<UtilityBooking> UtilityBookings { get; set; } = new List<UtilityBooking>();
+	public virtual Building Building { get; set; } = null!;
+
+	public virtual ICollection<UtilityBooking> UtilityBookings { get; set; } = new List<UtilityBooking>();
 }

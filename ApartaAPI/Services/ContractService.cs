@@ -213,6 +213,85 @@ namespace ApartaAPI.Services
             if (apartment == null)
                 return ApiResponse<ContractDto>.Fail(ApiResponse.SM58_APARTMENT_NOT_FOUND);
 
+            // Preflight: kiểm tra trùng dữ liệu trong request và trong DB để tránh lỗi khi tạo User/Member
+            var normalizedMembers = (request.Members ?? new List<MemberInputDto>())
+                .Select(m => new
+                {
+                    Raw = m,
+                    Phone = string.IsNullOrWhiteSpace(m.PhoneNumber) ? null : m.PhoneNumber.Trim(),
+                    Email = string.IsNullOrWhiteSpace(m.Email) ? null : m.Email.Trim().ToLowerInvariant(),
+                    IdNumber = string.IsNullOrWhiteSpace(m.IdentityCard) ? null : m.IdentityCard.Trim()
+                })
+                .ToList();
+
+            var duplicatePhone = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.Phone))
+                .GroupBy(x => x.Phone)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicatePhone))
+            {
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+            }
+
+            var duplicateEmail = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+                .GroupBy(x => x.Email)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicateEmail))
+            {
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
+            }
+
+            var duplicateIdNumber = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.IdNumber))
+                .GroupBy(x => x.IdNumber)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicateIdNumber))
+            {
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+            }
+
+            var phones = normalizedMembers.Where(x => x.Phone != null).Select(x => x.Phone!).Distinct().ToList();
+            var emails = normalizedMembers.Where(x => x.Email != null).Select(x => x.Email!).Distinct().ToList();
+            var idNumbers = normalizedMembers.Where(x => x.IdNumber != null).Select(x => x.IdNumber!).Distinct().ToList();
+
+            if (idNumbers.Count > 0)
+            {
+                var memberIdDup = await _apartmentMemberRepository.FirstOrDefaultAsync(m =>
+                    m.IdNumber != null && idNumbers.Contains(m.IdNumber));
+                if (memberIdDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+                }
+            }
+
+            if (phones.Count > 0)
+            {
+                var memberPhoneDup = await _apartmentMemberRepository.FirstOrDefaultAsync(m =>
+                    m.PhoneNumber != null && phones.Contains(m.PhoneNumber));
+                if (memberPhoneDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                }
+
+                var userPhoneDup = await _userRepository.FirstOrDefaultAsync(u =>
+                    u.Phone != null && phones.Contains(u.Phone));
+                if (userPhoneDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                }
+            }
+
+            if (emails.Count > 0)
+            {
+                var emailDup = await _userRepository.FirstOrDefaultAsync(u =>
+                    u.Email != null && emails.Contains(u.Email.Trim().ToLower()));
+                if (emailDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
+                }
+            }
+
             var existingContract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractNumber == request.ContractNumber);
             if (existingContract != null)
                 return ApiResponse<ContractDto>.Fail(ApiResponse.SM59_CONTRACT_NUMBER_EXISTS);
@@ -299,7 +378,7 @@ namespace ApartaAPI.Services
                                 RoleId = sysRole.RoleId,
                                 ApartmentId = request.ApartmentId,
                                 Phone = memDto.PhoneNumber,
-                                Email = memDto.Email,
+                                Email = string.IsNullOrWhiteSpace(memDto.Email) ? null : memDto.Email.Trim().ToLowerInvariant(),
                                 Name = memDto.FullName,
                                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword),
                                 Status = "active",
@@ -456,7 +535,7 @@ namespace ApartaAPI.Services
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _contractRepository.UpdateAsync(entity);
-            return await _contractRepository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> DeleteAsync(string id)

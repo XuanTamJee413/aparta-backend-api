@@ -248,6 +248,11 @@ namespace ApartaAPI.Services
             var entity = await _repository.FirstOrDefaultAsync(m => m.ApartmentMemberId == id);
             if (entity == null) return false;
 
+            var shouldEvaluateVacancy =
+                !string.IsNullOrWhiteSpace(dto.Status)
+                && string.Equals(dto.Status.Trim(), "Đi vắng", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(entity.ApartmentId);
+
             if (!string.IsNullOrWhiteSpace(dto.IdNumber))
             {
                 var existingMember = await _repository.FirstOrDefaultAsync(
@@ -278,7 +283,32 @@ namespace ApartaAPI.Services
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _repository.UpdateAsync(entity);
-            return await _repository.SaveChangesAsync();
+
+            if (shouldEvaluateVacancy)
+            {
+                var apartmentMembers = await _repository.FindAsync(m => m.ApartmentId == entity.ApartmentId);
+                var validApartmentMembers = apartmentMembers.Where(m => m != null).ToList();
+
+                var allAway = validApartmentMembers.Count > 0
+                    && validApartmentMembers.All(m =>
+                        !string.IsNullOrWhiteSpace(m.Status)
+                        && string.Equals(m.Status.Trim(), "Đi vắng", StringComparison.OrdinalIgnoreCase));
+
+                if (allAway)
+                {
+                    var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == entity.ApartmentId);
+                    if (apartment != null)
+                    {
+                        apartment.Status = "Còn Trống";
+                        apartment.UpdatedAt = DateTime.UtcNow;
+
+                        await _apartmentRepository.UpdateAsync(apartment);
+                        await _apartmentRepository.SaveChangesAsync();
+                    }
+                }
+            }
+
+            return true;
         }
 
         public async Task<ApiResponse<string>> UpdateFaceImageAsync(

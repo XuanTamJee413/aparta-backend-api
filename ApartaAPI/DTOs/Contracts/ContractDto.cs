@@ -24,6 +24,10 @@ namespace ApartaAPI.DTOs.Contracts
         public DateOnly? EndDate { get; init; }
 
         public DateTime? CreatedAt { get; init; }
+
+        public string ContractType { get; set; } = "Sale";
+        public decimal? DepositAmount { get; set; }
+        public decimal? TotalValue { get; set; }
     }
 
 

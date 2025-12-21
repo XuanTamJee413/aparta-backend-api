@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ApartaAPI.DTOs;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Contracts;
 using ApartaAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PayOS.Exceptions;
 
 namespace ApartaAPI.Controllers
 {
@@ -18,6 +21,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "CanReadContract")]
         public async Task<ActionResult<ApiResponse<IEnumerable<ContractDto>>>> GetContracts([FromQuery] ContractQueryParameters query)
         {
             var response = await _service.GetAllAsync(query);
@@ -25,6 +29,7 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "CanReadContract")]
         public async Task<ActionResult<ContractDto>> GetContract(string id)
         {
             var contract = await _service.GetByIdAsync(id);
@@ -33,28 +38,31 @@ namespace ApartaAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ContractDto>> PostContract([FromBody] ContractCreateDto request)
+        [Authorize(Policy = "CanCreateContract")]
+        public async Task<ActionResult<ApiResponse<ContractDto>>> PostContract([FromBody] CreateContractRequestDto request)
         {
-            try
+            // Gọi Service, nhận về ApiResponse (chứa data hoặc lỗi)
+            var response = await _service.CreateAsync(request);
+
+            if (response.Succeeded && response.Data is not null)
             {
-                var created = await _service.CreateAsync(request);
-                return CreatedAtAction(nameof(GetContract), new { id = created.ContractId }, created);
+                // Thành công: Trả về 201 Created kèm dữ liệu
+                return CreatedAtAction(nameof(GetContract), new { id = response.Data.ContractId }, response);
             }
-            catch (KeyNotFoundException ex)
+
+            // Thất bại: Kiểm tra mã lỗi để trả về status code phù hợp
+            // Ví dụ: Lỗi không tìm thấy -> 404, Lỗi nghiệp vụ -> 400
+            if (response.Message == ApiResponse.GetMessageFromCode(ApiResponse.SM58_APARTMENT_NOT_FOUND))
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(response);
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi trong quá trình tạo hợp đồng.", details = ex.Message });
-            }
+
+            // Mặc định các lỗi khác là 400 Bad Request
+            return BadRequest(response);
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "CanUpdateContract")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> PutContract(string id, [FromForm] ContractUpdateDto request)
         {
@@ -75,6 +83,7 @@ namespace ApartaAPI.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "CanDeleteContract")]
         public async Task<IActionResult> DeleteContract(string id)
         {
             try

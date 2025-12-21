@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.Data;
 using ApartaAPI.DTOs.Auth;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
@@ -18,50 +19,116 @@ namespace ApartaAPI.Services
     {
         private readonly IMapper _mapper;
         private readonly IRepository<User> _userRepository;
+        private readonly IRepository<ApartmentMember> _memberRepository;
         private readonly ApartaDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthService(IRepository<User> userRepository, ApartaDbContext context, IConfiguration configuration, IMapper mapper)
+        public AuthService(IRepository<User> userRepository, IRepository<ApartmentMember> memberRepository, ApartaDbContext context, IConfiguration configuration, IMapper mapper)
         {
             _userRepository = userRepository;
+            _memberRepository = memberRepository;
             _context = context;
             _configuration = configuration;
             _mapper = mapper;
         }
 
-        public async Task<string?> LoginAsync(string phone, string password)
+        public async Task<ApiResponse<LoginResponse>> LoginAsync(LoginRequest request)
         {
-            var user = await GetUserByPhoneAsync(phone);
-            if (user == null) return null;
+            // 1. Tìm User
+            var user = await _userRepository.FirstOrDefaultAsync(u => u.Phone == request.Phone && !u.IsDeleted);
 
-            // Verify password (assuming password is hashed)
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                return null;
+            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return ApiResponse<LoginResponse>.Fail(ApiResponse.SM07_LOGIN_FAIL);
 
-            // Get role information
-            var role = await _context.Roles.Include(r => r.Permissions)
+            if (user.Status?.ToLower() != "active")
+                return ApiResponse<LoginResponse>.Fail(ApiResponse.SM17_PERMISSION_DENIED, null, "Tài khoản bị khóa hoặc chưa kích hoạt.");
+
+            // 2. Lấy Role Hệ thống (Resident/Staff)
+            var systemRole = await _context.Roles
+                .Include(r => r.Permissions)
                 .FirstOrDefaultAsync(r => r.RoleId == user.RoleId);
-            if (role == null || !role.IsActive) return null;
 
-            if (role.RoleName == "resident")
+            var roleName = systemRole?.RoleName ?? "";
+
+            // 3. XỬ LÝ NGỮ CẢNH (Context Resolution)
+            ApartmentMember? currentContext = null;
+            List<string> permissions = new List<string>();
+            string activeRoleDisplay = roleName;
+
+            // Nếu là Cư Dân -> Phải tìm xem đang ở căn nào
+            if (roleName == "resident")
             {
-                if (string.IsNullOrEmpty(user.ApartmentId))
-                {
-                    return null;
-                }
-                var project = await _context.Apartments
-                    .Where(a => a.ApartmentId == user.ApartmentId)
-                    .Select(a => a.Building.Project)
-                    .FirstOrDefaultAsync();
+                // 3.1 Tìm tất cả căn hộ mà user đang cư trú và có quyền truy cập app
+                var memberships = await _memberRepository.FindAsync(m => m.UserId == user.UserId
+                                                                      && m.Status == "Đang cư trú"
+                                                                      && m.IsAppAccess);
+
+                if (!memberships.Any())
+                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM13_ACCOUNT_NOT_FOUND, null, "Tài khoản chưa được gán vào căn hộ nào.");
+
+                // 3.2 Chọn căn hộ: Ưu tiên căn mặc định -> Hoặc căn đầu tiên
+                var selectedMemberId = memberships.FirstOrDefault(m => m.ApartmentId == user.ApartmentId)?.ApartmentMemberId
+                                       ?? memberships.First().ApartmentMemberId;
+
+                // 3.3 [SỬA LẠI] Query sâu để lấy thông tin Project/Building validate
+                currentContext = await _context.ApartmentMembers
+                    .Include(m => m.Apartment)
+                        .ThenInclude(a => a.Building)   // [THÊM] Lấy tòa nhà
+                        .ThenInclude(b => b.Project)    // [THÊM] Lấy dự án
+                    .Include(m => m.Role)
+                        .ThenInclude(r => r.Permissions)
+                    .FirstOrDefaultAsync(m => m.ApartmentMemberId == selectedMemberId);
+
+                if (currentContext == null)
+                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM13_ACCOUNT_NOT_FOUND);
+
+                // 3.4 [THÊM] VALIDATE TRẠNG THÁI DỰ ÁN & TÒA NHÀ
+                var project = currentContext.Apartment?.Building?.Project;
+                var building = currentContext.Apartment?.Building;
 
                 if (project == null || !project.IsActive)
                 {
-                    return null;
+                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM28_PROJECT_NOT_ACTIVE, null, "Dự án này hiện đang tạm ngưng hoạt động.");
+                }
+
+                if (building == null || !building.IsActive) // Giả sử Building cũng có IsActive, nếu không có thì bỏ dòng này
+                {
+                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM26_BUILDING_NOT_ACTIVE, null, "Tòa nhà này hiện đang tạm ngưng hoạt động.");
+                }
+
+                // 3.5 Cập nhật lại ApartmentId mặc định nếu khác
+                if (user.ApartmentId != currentContext.ApartmentId)
+                {
+                    user.ApartmentId = currentContext.ApartmentId;
+                    await _userRepository.UpdateAsync(user);
+                }
+
+                // 3.6 Lấy quyền từ Role ngữ cảnh
+                activeRoleDisplay = currentContext.Role?.RoleName ?? "resident";
+                if (currentContext.Role?.Permissions != null)
+                {
+                    permissions = currentContext.Role.Permissions.Select(p => p.Name).ToList();
+                }
+            }
+            else
+            {
+                // Nếu là Staff/Admin -> Lấy quyền từ Role hệ thống
+                if (systemRole?.Permissions != null)
+                {
+                    permissions = systemRole.Permissions.Select(p => p.Name).ToList();
                 }
             }
 
-            // Generate JWT token
-            return GenerateJwtToken(user, role);
+            // 4. Tạo Token
+            var token = GenerateJwtToken(user, roleName, currentContext, permissions);
+
+            // 5. Trả về Response
+            var response = new LoginResponse(
+                Token: token,
+                IsFirstLogin: user.IsFirstLogin
+            );
+
+            return ApiResponse<LoginResponse>.Success(response, "Đăng nhập thành công.");
         }
 
         public async Task<User?> GetUserByPhoneAsync(string phone)
@@ -69,7 +136,7 @@ namespace ApartaAPI.Services
             return await _userRepository.FirstOrDefaultAsync(u => u.Phone == phone && !u.IsDeleted && u.Status.ToLower() == "active");
         }
 
-        private string GenerateJwtToken(User user, Role role)
+        private string GenerateJwtToken(User user, string systemRole, ApartmentMember? context, List<string> permissions)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"] ?? "14da3d232e7472b1197c6262937d1aaa49cdc1acc71db952e6aed7f40df50ad6";
@@ -84,20 +151,28 @@ namespace ApartaAPI.Services
             {
                 new Claim("id", user.UserId),
                 new Claim("name", user.Name),
-                new Claim("phone", user.Phone),
-                new Claim("email", user.Email),
-                new Claim("role", role.RoleName ?? "unknown"),
-                new Claim("role_id", user.RoleId),
-                new Claim("apartment_id", user.ApartmentId ?? ""),
+                new Claim("phone", user.Phone ?? ""),
+                new Claim("email", user.Email ?? ""),
+                new Claim("system_role", systemRole), // Role gốc
                 new Claim("staff_code", user.StaffCode ?? "")
             };
 
-            if (role.Permissions != null)
+            // Thêm Claims ngữ cảnh
+            if (context != null)
             {
-                foreach (var perm in role.Permissions)
-                {
-                    claims.Add(new Claim("permission", perm.Name));
-                }
+                claims.Add(new Claim("apartment_id", context.ApartmentId));
+                claims.Add(new Claim("member_id", context.ApartmentMemberId));
+                claims.Add(new Claim("role", context.Role?.RoleName ?? "unknown")); // Role ngữ cảnh
+            }
+            else
+            {
+                claims.Add(new Claim("role", systemRole));
+            }
+
+            // Thêm Permissions
+            foreach (var perm in permissions)
+            {
+                claims.Add(new Claim("permission", perm));
             }
 
             var token = new JwtSecurityToken(

@@ -8,7 +8,9 @@ namespace ApartaAPI.DTOs.Profile
         public string PhoneNumber { get; set; } = string.Empty;
         public string? AvatarUrl { get; set; }
         public string Role { get; set; } = string.Empty;
-        
+
+        public string? ContextRole { get; set; }
+
         // Thông tin thêm cho Resident
         public string? ApartmentInfo { get; set; }
         

@@ -32,6 +32,8 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
+                .Include(u => u.ApartmentMembers)
+                    .ThenInclude(am => am.Role)
                 .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
@@ -60,6 +62,13 @@ namespace ApartaAPI.Services
                 var buildingName = user.Apartment.Building?.Name ?? "N/A";
                 var apartmentCode = user.Apartment.Code ?? "N/A";
                 profileDto.ApartmentInfo = $"{apartmentCode} - {buildingName}";
+
+                // Lấy role ngữ cảnh từ ApartmentMember
+                var apartmentMember = user.ApartmentMembers?.FirstOrDefault(am => am.ApartmentId == user.ApartmentId);
+                if (apartmentMember?.Role != null)
+                {
+                    profileDto.ContextRole = apartmentMember.Role.RoleName;
+                }
             }
             // [SỬA] Logic lấy thông tin công tác cho Manager/Staff
             else if (roleName != "admin")
@@ -188,6 +197,8 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
+                .Include(u => u.ApartmentMembers)
+                    .ThenInclude(am => am.Role)
                 .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
@@ -232,6 +243,8 @@ namespace ApartaAPI.Services
                 .Include(u => u.Role)
                 .Include(u => u.Apartment)
                     .ThenInclude(a => a!.Building)
+                .Include(u => u.ApartmentMembers)
+                    .ThenInclude(am => am.Role)
                 .Include(u => u.StaffBuildingAssignmentUsers)
                     .ThenInclude(sba => sba.Building)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
@@ -260,6 +273,13 @@ namespace ApartaAPI.Services
                 var buildingName = updatedUser.Apartment.Building?.Name ?? "N/A";
                 var apartmentCode = updatedUser.Apartment.Code ?? "N/A";
                 profileDto.ApartmentInfo = $"{apartmentCode} - {buildingName}";
+
+                // Lấy role ngữ cảnh từ ApartmentMember
+                var apartmentMember = updatedUser.ApartmentMembers?.FirstOrDefault(am => am.ApartmentId == updatedUser.ApartmentId);
+                if (apartmentMember?.Role != null)
+                {
+                    profileDto.ContextRole = apartmentMember.Role.RoleName;
+                }
             }
             else if (roleName == "manager" || roleName.Contains("staff"))
             {

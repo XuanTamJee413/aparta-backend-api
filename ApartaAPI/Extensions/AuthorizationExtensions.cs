@@ -249,6 +249,30 @@ namespace ApartaAPI.Extensions
                 options.AddPolicy("CanManageStaff", policy => policy.RequireRole("admin")); // Chỉ Admin quản lý nhân viên
                 options.AddPolicy("CanViewResidents", policy => policy.RequireRole("admin", "manager")); // Admin & Manager xem cư dân
                 options.AddPolicy("CanUpdateUserStatus", policy => policy.RequireRole("admin", "manager"));
+
+                // Policy cho Contract 
+                options.AddPolicy("CanReadContract", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "contract.read")
+                ));
+
+                options.AddPolicy("CanCreateContract", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "contract.create")
+                ));
+
+                options.AddPolicy("CanUpdateContract", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.IsInRole("manager") ||
+                    ctx.User.HasClaim("permission", "contract.update")
+                ));
+
+                options.AddPolicy("CanDeleteContract", policy => policy.RequireAssertion(ctx =>
+                    ctx.User.IsInRole("admin") ||
+                    ctx.User.HasClaim("permission", "contract.delete")
+                ));
             });
 
             return services;

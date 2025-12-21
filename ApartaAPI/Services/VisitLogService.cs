@@ -68,7 +68,7 @@ namespace ApartaAPI.Services
             }
 
             var newVisitLog = _mapper.Map<VisitLog>(dto);
-            newVisitLog.VisitLogId = Guid.NewGuid().ToString(); 
+            newVisitLog.VisitLogId = Guid.NewGuid().ToString();
             newVisitLog.VisitorId = visitor.VisitorId;
             newVisitLog.VisitorId = visitor.VisitorId;
             newVisitLog.ApartmentId = apartmentExists.ApartmentId;
@@ -210,7 +210,22 @@ namespace ApartaAPI.Services
         public async Task<bool> CheckInAsync(string id)
         {
             var visitLog = await _visitLogRepository.FirstOrDefaultAsync(v => v.VisitLogId == id);
-            if (visitLog == null || visitLog.Status != "Pending") return false;
+            if (visitLog == null) return false;
+            if (visitLog.Status == "Cancelled")
+            {
+                throw new ValidationException("Yêu cầu này đã được cư dân hủy hoặc xóa. Bạn không thể thực hiện thao tác này.");
+            }
+            // Tình huống 1: Đã bị từ chối
+            if (visitLog.Status == "Rejected")
+                throw new ValidationException("Khách thăm này đã bị từ chối bởi một nhân viên khác.");
+
+            // Tình huống 2: Đã check-in rồi
+            if (visitLog.Status == "Checked-in")
+                throw new ValidationException("Khách thăm này hiện đã ở trạng thái Đã check-in.");
+
+            // Tình huống 3: Đã check-out rồi
+            if (visitLog.Status == "Checked-out")
+                throw new ValidationException("Khách thăm này đã hoàn tất lượt thăm (Checked-out).");
 
             visitLog.Status = "Checked-in";
             visitLog.CheckinTime = DateTime.UtcNow;
@@ -221,7 +236,22 @@ namespace ApartaAPI.Services
         public async Task<bool> CheckOutAsync(string id)
         {
             var visitLog = await _visitLogRepository.FirstOrDefaultAsync(v => v.VisitLogId == id);
-            if (visitLog == null || visitLog.Status != "Checked-in") return false;
+            if (visitLog == null) return false;
+            if (visitLog.Status == "Cancelled")
+            {
+                throw new ValidationException("Yêu cầu này đã được cư dân hủy hoặc xóa. Bạn không thể thực hiện thao tác này.");
+            }
+            // Tình huống 1: Chưa check-in
+            if (visitLog.Status == "Pending")
+                throw new ValidationException("Khách thăm này chưa thực hiện thủ tục check-in.");
+
+            // Tình huống 2: Đã check-out rồi
+            if (visitLog.Status == "Checked-out")
+                throw new ValidationException("Khách thăm này đã được check-out bởi một nhân viên khác.");
+
+            // Tình huống 3: Bị từ chối thì không thể check-out
+            if (visitLog.Status == "Rejected")
+                throw new ValidationException("Yêu cầu này đã bị từ chối, không thể thực hiện check-out.");
 
             visitLog.Status = "Checked-out";
             visitLog.CheckoutTime = DateTime.UtcNow;
@@ -229,11 +259,41 @@ namespace ApartaAPI.Services
             return await _visitLogRepository.SaveChangesAsync();
         }
 
+        public async Task<bool> RejectAsync(string id)
+        {
+            var visitLog = await _visitLogRepository.FirstOrDefaultAsync(v => v.VisitLogId == id);
+            if (visitLog == null) return false;
+            if (visitLog.Status == "Cancelled")
+            {
+                throw new ValidationException("Yêu cầu này đã được cư dân hủy hoặc xóa. Bạn không thể thực hiện thao tác này.");
+            }
+            // Tình huống: Đã check-in rồi thì không được phép từ chối nữa
+            if (visitLog.Status == "Checked-in")
+            {
+                throw new ValidationException("Khách thăm đã check-in vào tòa nhà, bạn không thể từ chối yêu cầu này.");
+            }
+            if (visitLog.Status == "Checked-out")
+            {
+                throw new ValidationException("Khách thăm đã check-out khỏi tòa nhà, bạn không thể từ chối yêu cầu này.");
+            }
+            if (visitLog.Status == "Rejected")
+            {
+                throw new ValidationException("Yêu cầu này đã được từ chối bởi nhân viên khác.");
+            }
+            visitLog.Status = "Rejected";
+            await _visitLogRepository.UpdateAsync(visitLog);
+            return await _visitLogRepository.SaveChangesAsync();
+        }
         public async Task<bool> DeleteLogAsync(string id)
         {
-            return await _visitLogRepository.DeleteAsync(id);
-        }
+            var visitLog = await _visitLogRepository.FirstOrDefaultAsync(v => v.VisitLogId == id);
+            if (visitLog == null) return false;
 
+            visitLog.Status = "Cancelled";
+            await _visitLogRepository.UpdateAsync(visitLog);
+            return await _visitLogRepository.SaveChangesAsync();
+        }
+        
         private async Task<PagedList<VisitLogStaffViewDto>> ApplyCommonQueryLogic(IQueryable<VisitLog> query, VisitorQueryParameters queryParams)
         {
             if (!string.IsNullOrEmpty(queryParams.ApartmentId))

@@ -119,20 +119,46 @@ namespace ApartaAPI.Controllers
         [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> CheckInVisit(string id)
         {
-            var success = await _service.CheckInAsync(id);
-            //if (!success) return BadRequest(ApiResponse.Fail("Thao tác thất bại hoặc sai trạng thái."));
-            return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
+            try
+            {
+                await _service.CheckInAsync(id);
+                return Ok(ApiResponse.Success("Check-in thành công."));
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
         }
 
         [HttpPut("{id}/checkout")]
         [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> CheckOutVisit(string id)
         {
-            var success = await _service.CheckOutAsync(id);
-            //if (!success) return BadRequest(ApiResponse.Fail("Thao tác thất bại hoặc sai trạng thái."));
-            return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
+            try
+            {
+                await _service.CheckOutAsync(id);
+                return Ok(ApiResponse.Success("Check-out thành công."));
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
         }
 
+        [HttpPut("{id}/reject")]
+        [Authorize(Policy = "CanReadVisitor")]
+        public async Task<ActionResult<ApiResponse>> RejectVisit(string id)
+        {
+            try
+            {
+                await _service.RejectAsync(id);
+                return Ok(ApiResponse.Success("Đã từ chối yêu cầu thành công."));
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
+        }
         // ======================================================
         // 6. XÓA VÀ CẬP NHẬT THÔNG TIN
         // ======================================================
@@ -140,7 +166,7 @@ namespace ApartaAPI.Controllers
         public async Task<ActionResult<ApiResponse>> DeleteVisitLog(string id)
         {
             var success = await _service.DeleteLogAsync(id);
-            if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+            //if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
             return Ok(ApiResponse.Success(ApiResponse.SM05_DELETION_SUCCESS));
         }
 

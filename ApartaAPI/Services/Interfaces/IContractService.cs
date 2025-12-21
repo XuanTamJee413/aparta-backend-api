@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.DTOs;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Contracts;
 
 namespace ApartaAPI.Services.Interfaces
@@ -7,7 +8,7 @@ namespace ApartaAPI.Services.Interfaces
     {
         Task<ApiResponse<IEnumerable<ContractDto>>> GetAllAsync(ContractQueryParameters query);
         Task<ContractDto?> GetByIdAsync(string id);
-        Task<ContractDto> CreateAsync(ContractCreateDto dto); 
+        Task<ApiResponse<ContractDto>> CreateAsync(CreateContractRequestDto request);
         Task<bool> UpdateAsync(string id, ContractUpdateDto dto);
         Task<bool> DeleteAsync(string id);
         Task<ApiResponse<IEnumerable<ContractDto>>> GetByUserBuildingsAsync(string userId, ContractQueryParameters query);

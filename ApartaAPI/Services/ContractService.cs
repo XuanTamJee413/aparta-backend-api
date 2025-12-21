@@ -1,9 +1,13 @@
-﻿using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.Data;
+using ApartaAPI.DTOs;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Contracts;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
 using ApartaAPI.Services.Interfaces;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Linq.Expressions;
 
 namespace ApartaAPI.Services
@@ -14,23 +18,37 @@ namespace ApartaAPI.Services
         private readonly IRepository<Apartment> _apartmentRepository;
         private readonly IRepository<ApartmentMember> _apartmentMemberRepository;
         private readonly IRepository<User> _userRepository;
+        private readonly IRepository<Role> _roleRepository; // Thay thế RoleManager
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
+        private readonly ApartaDbContext _context;
+
+        private readonly IMailService _mailService;
+        private readonly IConfiguration _configuration;
 
         public ContractService(
+            ApartaDbContext context,
             IRepository<Contract> contractRepository,
             IRepository<Apartment> apartmentRepository,
             IRepository<ApartmentMember> apartmentMemberRepository,
             IRepository<User> userRepository,
+            IRepository<Role> roleRepository, // Inject Repo thay vì Manager
             ICloudinaryService cloudinaryService,
-            IMapper mapper)
+            IMapper mapper,
+            IMailService mailService,
+            IConfiguration configuration)
         {
+            _context = context;
             _contractRepository = contractRepository;
             _apartmentRepository = apartmentRepository;
             _apartmentMemberRepository = apartmentMemberRepository;
             _userRepository = userRepository;
+            _roleRepository = roleRepository;
             _cloudinaryService = cloudinaryService;
             _mapper = mapper;
+
+            _mailService = mailService;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse<IEnumerable<ContractDto>>> GetAllAsync(ContractQueryParameters query)
@@ -48,21 +66,12 @@ namespace ApartaAPI.Services
                 (apartmentIdFilter == null || c.ApartmentId == apartmentIdFilter);
 
             var entities = await _contractRepository.FindAsync(predicate);
-
-            if (entities == null)
+            if (entities == null || !entities.Any())
             {
-                entities = new List<Contract>();
+                return ApiResponse<IEnumerable<ContractDto>>.Success(new List<ContractDto>(), ApiResponse.SM01_NO_RESULTS);
             }
 
             var validEntities = entities.Where(e => e != null).ToList();
-
-            if (!validEntities.Any())
-            {
-                return ApiResponse<IEnumerable<ContractDto>>.Success(
-                    new List<ContractDto>(),
-                    ApiResponse.SM01_NO_RESULTS
-                );
-            }
 
             IOrderedEnumerable<Contract> sortedEntities;
             bool isDescending = query.SortOrder?.ToLowerInvariant() == "desc";
@@ -99,7 +108,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => apartmentIds.Contains(m.ApartmentId)
                      && m.IsOwner == true
-                     && m.Status == "Đã Bán"
+                     && (m.Status == "Đã Bán" || m.Status == "Đang cư trú")
             );
             var ownerDict = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
                 .GroupBy(m => m.ApartmentId)
@@ -109,7 +118,7 @@ namespace ApartaAPI.Services
                 );
 
             var users = await _userRepository.FindAsync(
-                u => apartmentIds.Contains(u.ApartmentId) && !u.IsDeleted
+                u => apartmentIds.Contains(u.ApartmentId ?? "") && !u.IsDeleted
             );
             var userDict = (users ?? Enumerable.Empty<User>())
                 .GroupBy(u => u.ApartmentId)
@@ -139,7 +148,10 @@ namespace ApartaAPI.Services
                     Image = c.Image,
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
-                    CreatedAt = c.CreatedAt
+                    CreatedAt = c.CreatedAt,
+                    ContractType = c.ContractType,
+                    DepositAmount = c.DepositAmount,
+                    TotalValue = c.TotalValue
                 };
             }).ToList();
 
@@ -157,7 +169,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => m.ApartmentId == contract.ApartmentId
                      && m.IsOwner == true
-                     && m.Status == "Đã Bán"
+                     && (m.Status == "Đã Bán" || m.Status == "Đang cư trú")
             );
             var owner = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
                 .OrderByDescending(m => m.CreatedAt)
@@ -185,123 +197,311 @@ namespace ApartaAPI.Services
                 Image = contract.Image,
                 StartDate = contract.StartDate,
                 EndDate = contract.EndDate,
-                CreatedAt = contract.CreatedAt
+                CreatedAt = contract.CreatedAt,
+                ContractType = contract.ContractType,
+                DepositAmount = contract.DepositAmount,
+                TotalValue = contract.TotalValue
             };
 
             return dto;
         }
 
-        public async Task<ContractDto> CreateAsync(ContractCreateDto dto)
+        public async Task<ApiResponse<ContractDto>> CreateAsync(CreateContractRequestDto request)
         {
-            var now = DateTime.UtcNow;
-
-            var apartment = await _apartmentRepository.FirstOrDefaultAsync(a => a.ApartmentId == dto.ApartmentId);
+            // 1. VALIDATION LAYER (Giữ nguyên)
+            var apartment = await _apartmentRepository.GetByIdAsync(request.ApartmentId);
             if (apartment == null)
-            {
-                throw new KeyNotFoundException($"Không tìm thấy căn hộ với ID: {dto.ApartmentId}");
-            }
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM58_APARTMENT_NOT_FOUND);
 
-            if (apartment.Status == null ||
-                 apartment.Status.Trim().ToLowerInvariant() != "còn trống")
-            {
-                throw new InvalidOperationException("Căn hộ này không có sẵn để mua.");
-            }
-
-            var ownerIdNumber = dto.OwnerIdNumber.Trim();
-
-            var existedMember = await _apartmentMemberRepository
-                .FirstOrDefaultAsync(m => m.IdNumber == ownerIdNumber);
-
-            if (existedMember != null)
-            {
-                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số giấy tờ tùy thân (CMND/CCCD)");
-                throw new InvalidOperationException(error.Message);
-            }
-
-            var phoneNumber = dto.OwnerPhoneNumber.Trim();
-
-            var existedPhone = await _apartmentMemberRepository
-                .FirstOrDefaultAsync(m => m.PhoneNumber == phoneNumber);
-
-            if (existedPhone != null)
-            {
-                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
-                throw new InvalidOperationException(error.Message);
-            }
-
-            var checkEmail = dto.OwnerEmail.ToLowerInvariant().Trim();
-            var existedEmail = await _userRepository.FirstOrDefaultAsync(m => m.Email == checkEmail);
-            if (existedEmail != null)
-            {
-                var error = ApiResponse.Fail(ApiResponse.SM16_DUPLICATE_CODE, "email");
-                throw new InvalidOperationException(error.Message);
-            }
-
-            apartment.Status = "Đã Bán";
-            apartment.UpdatedAt = now;
-
-            var contract = _mapper.Map<Contract>(dto);
-            contract.ContractId = Guid.NewGuid().ToString("N");
-            contract.CreatedAt = now;
-            contract.UpdatedAt = now;
-            await _contractRepository.AddAsync(contract);
-
-            var existingUser = await _userRepository.FirstOrDefaultAsync(u => u.ApartmentId == dto.ApartmentId);
-
-            if (existingUser != null)
-            {
-                existingUser.Name = dto.OwnerName;
-                existingUser.Phone = dto.OwnerPhoneNumber;
-                existingUser.Email = dto.OwnerEmail;
-                existingUser.UpdatedAt = now;
-            }
-            else
-            {
-                var newUser = new User
+            // Preflight: kiểm tra trùng dữ liệu trong request và trong DB để tránh lỗi khi tạo User/Member
+            var normalizedMembers = (request.Members ?? new List<MemberInputDto>())
+                .Select(m => new
                 {
-                    UserId = Guid.NewGuid().ToString("N"),
-                    RoleId = "EC13BABB-416F-42EB-BFD4-0725493A63D0",
-                    ApartmentId = dto.ApartmentId,
-                    Email = dto.OwnerEmail,
-                    Phone = dto.OwnerPhoneNumber,
-                    Name = dto.OwnerName,
+                    Raw = m,
+                    Phone = string.IsNullOrWhiteSpace(m.PhoneNumber) ? null : m.PhoneNumber.Trim(),
+                    Email = string.IsNullOrWhiteSpace(m.Email) ? null : m.Email.Trim().ToLowerInvariant(),
+                    IdNumber = string.IsNullOrWhiteSpace(m.IdentityCard) ? null : m.IdentityCard.Trim()
+                })
+                .ToList();
 
-                    PasswordHash = "$2a$12$s7OmJwjZnyB8qCrL9KifvORA461N/6WgzDfvAyRUMhWVVkHuPecZ.",
-                    Status = "active",
-                    IsDeleted = false,
-                    IsFirstLogin = true,
-                    AvatarUrl = null,
-                    StaffCode = Guid.NewGuid().ToString("N"),
-                    LastLoginAt = null,
-
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
-                await _userRepository.AddAsync(newUser);
+            var duplicatePhone = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.Phone))
+                .GroupBy(x => x.Phone)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicatePhone))
+            {
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
             }
 
-            var apartmentMember = new ApartmentMember
+            var duplicateEmail = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+                .GroupBy(x => x.Email)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicateEmail))
             {
-                ApartmentMemberId = Guid.NewGuid().ToString("N"),
-                ApartmentId = dto.ApartmentId,
-                Name = dto.OwnerName,
-                PhoneNumber = dto.OwnerPhoneNumber,
-                IdNumber = dto.OwnerIdNumber,
-                Gender = dto.OwnerGender,
-                DateOfBirth = dto.OwnerDateOfBirth,
-                Nationality = dto.OwnerNationality,
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
+            }
 
-                IsOwner = true,
-                FamilyRole = "Chủ Hộ",
-                Status = "Đang cư trú",
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-            await _apartmentMemberRepository.AddAsync(apartmentMember);
+            var duplicateIdNumber = normalizedMembers
+                .Where(x => !string.IsNullOrWhiteSpace(x.IdNumber))
+                .GroupBy(x => x.IdNumber)
+                .FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (!string.IsNullOrWhiteSpace(duplicateIdNumber))
+            {
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+            }
 
-            await _contractRepository.SaveChangesAsync();
+            var phones = normalizedMembers.Where(x => x.Phone != null).Select(x => x.Phone!).Distinct().ToList();
+            var emails = normalizedMembers.Where(x => x.Email != null).Select(x => x.Email!).Distinct().ToList();
+            var idNumbers = normalizedMembers.Where(x => x.IdNumber != null).Select(x => x.IdNumber!).Distinct().ToList();
 
-            return _mapper.Map<ContractDto>(contract);
+            if (idNumbers.Count > 0)
+            {
+                var memberIdDup = await _apartmentMemberRepository.FirstOrDefaultAsync(m =>
+                    m.IdNumber != null && idNumbers.Contains(m.IdNumber));
+                if (memberIdDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+                }
+            }
+
+            if (phones.Count > 0)
+            {
+                var memberPhoneDup = await _apartmentMemberRepository.FirstOrDefaultAsync(m =>
+                    m.PhoneNumber != null && phones.Contains(m.PhoneNumber));
+                if (memberPhoneDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                }
+
+                var userPhoneDup = await _userRepository.FirstOrDefaultAsync(u =>
+                    u.Phone != null && phones.Contains(u.Phone));
+                if (userPhoneDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                }
+            }
+
+            if (emails.Count > 0)
+            {
+                var emailDup = await _userRepository.FirstOrDefaultAsync(u =>
+                    u.Email != null && emails.Contains(u.Email.Trim().ToLower()));
+                if (emailDup != null)
+                {
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
+                }
+            }
+
+            var existingContract = await _contractRepository.FirstOrDefaultAsync(c => c.ContractNumber == request.ContractNumber);
+            if (existingContract != null)
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM59_CONTRACT_NUMBER_EXISTS);
+
+            var startDateOnly = request.StartDate;
+            var endDateOnly = request.EndDate;
+
+            if (startDateOnly > endDateOnly)
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM60_INVALID_CONTRACT_DATES);
+
+            foreach (var mem in request.Members.Where(m => m.IsAppAccess))
+            {
+                if (string.IsNullOrWhiteSpace(mem.PhoneNumber))
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM61_MEMBER_PHONE_REQUIRED, mem.FullName);
+
+                if (!string.IsNullOrEmpty(mem.PhoneNumber))
+                {
+                    // Regex giải thích:
+                    // ^           : Bắt đầu chuỗi
+                    // (\+84|0)    : Phải bắt đầu bằng "+84" HOẶC số "0"
+                    // \d{9,11}    : Theo sau là 9 đến 11 chữ số
+                    // $           : Kết thúc chuỗi
+                    // => Tổng độ dài chấp nhận: 10 số (0xxxxxxxxx) đến 12-13 ký tự (+84xxxxxxxxx)
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(mem.PhoneNumber, @"^(\+84|0)\d{9,11}$"))
+                    {
+                        return ApiResponse<ContractDto>.Fail(ApiResponse.SM25_INVALID_INPUT, "PhoneNumber",
+                            $"{mem.FullName}: Số điện thoại không đúng định dạng (VD: 09xx... hoặc +849xx...)");
+                    }
+                }
+            }
+
+            // 2. EXECUTION LAYER
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var emailTasks = new List<Func<System.Threading.Tasks.Task>>();
+            try
+            {
+                // A. TẠO HỢP ĐỒNG
+                var contract = new Contract
+                {
+                    ContractId = Guid.NewGuid().ToString("N"),
+                    ApartmentId = request.ApartmentId,
+                    ContractNumber = request.ContractNumber,
+                    ContractType = request.ContractType,
+                    StartDate = startDateOnly,
+                    EndDate = endDateOnly,
+                    DepositAmount = 0,
+                    Status = "Đang hiệu lực",
+                    TotalValue = 0,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                // Repo.AddAsync đã tự gọi SaveChangesAsync(), nên lệnh INSERT được bắn vào Transaction ngay tại đây
+                await _contractRepository.AddAsync(contract);
+
+                string? representativeMemberId = null;
+                string? headMemberId = null;
+
+                // B. XỬ LÝ CƯ DÂN & USER
+                var sortedMembers = request.Members.OrderByDescending(m => m.IsRepresentative).ToList();
+
+                foreach (var memDto in sortedMembers)
+                {
+                    string? userId = null;
+
+                    // B.1 Tạo User
+                    if (memDto.IsAppAccess && !string.IsNullOrEmpty(memDto.PhoneNumber))
+                    {
+                        var user = await _userRepository.FirstOrDefaultAsync(u => u.Phone == memDto.PhoneNumber);
+
+                        if (user == null)
+                        {
+                            var sysRole = await _roleRepository.FirstOrDefaultAsync(r => r.RoleName == "resident");
+                            if (sysRole == null)
+                            {
+                                await transaction.RollbackAsync();
+                                return ApiResponse<ContractDto>.Fail(ApiResponse.SM64_SYSTEM_ROLE_MISSING);
+                            }
+
+                            string defaultPassword = _configuration["Authentication:DefaultResidentPassword"] ?? "Aparta@123";
+                            user = new User
+                            {
+                                UserId = Guid.NewGuid().ToString(),
+                                RoleId = sysRole.RoleId,
+                                ApartmentId = request.ApartmentId,
+                                Phone = memDto.PhoneNumber,
+                                Email = string.IsNullOrWhiteSpace(memDto.Email) ? null : memDto.Email.Trim().ToLowerInvariant(),
+                                Name = memDto.FullName,
+                                PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword),
+                                Status = "active",
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                IsDeleted = false,
+                                IsFirstLogin = true
+                            };
+                            // Repo.AddAsync tự save
+                            await _userRepository.AddAsync(user);
+
+                            if (!string.IsNullOrWhiteSpace(memDto.Email))
+                            {
+                                var email = memDto.Email;
+                                var fullName = memDto.FullName;
+                                var phone = memDto.PhoneNumber;
+                                var emailPassword = defaultPassword;
+                                emailTasks.Add(() => SendWelcomeEmailAsync(email, fullName, phone, emailPassword));
+                            }
+                        }
+                        userId = user.UserId;
+                    }
+
+                    // B.2 Tìm Role Ngữ Cảnh
+                    var roleNameLower = memDto.RoleName.ToLower();
+                    var contextRole = await _roleRepository.FirstOrDefaultAsync(r => r.RoleName == roleNameLower);
+
+                    if (contextRole == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return ApiResponse<ContractDto>.Fail(ApiResponse.SM63_ROLE_NOT_FOUND, memDto.RoleName);
+                    }
+
+                    // B.3 Tạo Member
+                    var member = new ApartmentMember
+                    {
+                        ApartmentMemberId = Guid.NewGuid().ToString("N"),
+                        ApartmentId = request.ApartmentId,
+                        Name = memDto.FullName,
+                        PhoneNumber = memDto.PhoneNumber,
+                        IdNumber = memDto.IdentityCard,
+                        UserId = userId,
+                        RoleId = contextRole.RoleId,
+                        IsAppAccess = memDto.IsAppAccess,
+                        Status = "Đang cư trú",
+                        HeadMemberId = memDto.IsRepresentative ? null : headMemberId,
+                        IsOwner = roleNameLower == "owner",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    // Repo.AddAsync tự save -> Insert Member vào Transaction
+                    await _apartmentMemberRepository.AddAsync(member);
+
+                    if (memDto.IsRepresentative)
+                    {
+                        representativeMemberId = member.ApartmentMemberId;
+                        headMemberId = member.ApartmentMemberId;
+                    }
+                }
+
+                // C. CẬP NHẬT CONTRACT & APARTMENT
+                contract.RepresentativeMemberId = representativeMemberId;
+                // Repo.UpdateAsync tự save
+                await _contractRepository.UpdateAsync(contract);
+
+                if (request.ContractType == "Sale") apartment.Status = "Đã Bán";
+                else if (request.ContractType == "Lease" && apartment.Status == "Còn Trống") apartment.Status = "Đang Thuê";
+
+                apartment.OccupancyStatus = "Đã có người ở";
+                if (apartment.HandoverDate == null) apartment.HandoverDate = DateOnly.FromDateTime(DateTime.Now);
+
+                // Repo.UpdateAsync tự save
+                await _apartmentRepository.UpdateAsync(apartment);
+
+                // D. COMMIT
+                await transaction.CommitAsync();
+
+                foreach (var emailTask in emailTasks)
+                {
+                    _ = System.Threading.Tasks.Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await emailTask();
+                        }
+                        catch
+                        {
+                        }
+                    });
+                }
+
+                var resultDto = _mapper.Map<ContractDto>(contract);
+                return ApiResponse<ContractDto>.Success(resultDto, ApiResponse.GetMessageFromCode(ApiResponse.SM04_CREATE_SUCCESS).Replace("{objectName}", "Hợp đồng"));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return ApiResponse<ContractDto>.Fail(ApiResponse.SM40_SYSTEM_ERROR, customMessage: ex.Message);
+            }
+        }
+
+        private async System.Threading.Tasks.Task SendWelcomeEmailAsync(string toEmail, string name, string phone, string password)
+        {
+            var frontendUrl = _configuration["Environment:FrontendUrl"] ?? "http://localhost:4200";
+            var subject = "Chào mừng cư dân mới - Aparta System";
+
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                    <h2 style='color: #4F46E5;'>Chào mừng đến với Aparta!</h2>
+                    <p>Xin chào <strong>{name}</strong>,</p>
+                    <p>Tài khoản cư dân của bạn đã được tạo thành công.</p>
+                    <p>Thông tin đăng nhập:</p>
+                    <ul>
+                        <li><strong>Số điện thoại:</strong> {phone}</li>
+                        <li><strong>Mật khẩu tạm thời:</strong> {password}</li>
+                    </ul>
+                    <p>Vui lòng đăng nhập và đổi mật khẩu ngay trong lần đầu tiên.</p>
+                    <a href='{frontendUrl}/login' style='background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;'>Đăng nhập ngay</a>
+                    <hr style='margin-top: 20px; border: 0; border-top: 1px solid #eee;' />
+                    <p style='font-size: 12px; color: #666;'>Đây là email tự động, vui lòng không trả lời.</p>
+                </div>";
+
+            await _mailService.SendEmailAsync(toEmail, subject, body);
         }
 
         public async Task<bool> UpdateAsync(string id, ContractUpdateDto dto)
@@ -335,7 +535,7 @@ namespace ApartaAPI.Services
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _contractRepository.UpdateAsync(entity);
-            return await _contractRepository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> DeleteAsync(string id)
@@ -388,6 +588,7 @@ namespace ApartaAPI.Services
                     Code = originalCode,
                     Type = apartment.Type,
                     Status = "Còn Trống",
+                    OccupancyStatus = "Chưa có người ở",
                     Area = apartment.Area,
                     Floor = apartment.Floor,
                     CreatedAt = now,
@@ -476,7 +677,7 @@ namespace ApartaAPI.Services
             var ownerMembers = await _apartmentMemberRepository.FindAsync(
                 m => apartmentIds.Contains(m.ApartmentId)
                      && m.IsOwner == true
-                     && m.Status == "Đã Bán"
+                     && (m.Status == "Đang cư trú")
             );
             var ownerDict = (ownerMembers ?? Enumerable.Empty<ApartmentMember>())
                 .GroupBy(m => m.ApartmentId)
@@ -516,7 +717,10 @@ namespace ApartaAPI.Services
                     Image = c.Image,
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
-                    CreatedAt = c.CreatedAt
+                    CreatedAt = c.CreatedAt,
+                    ContractType = c.ContractType,
+                    DepositAmount = c.DepositAmount,
+                    TotalValue = c.TotalValue
                 };
             }).ToList();
 

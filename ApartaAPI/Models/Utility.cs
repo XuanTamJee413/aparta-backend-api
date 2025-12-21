@@ -18,6 +18,8 @@ public partial class Utility
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+	public TimeSpan? OpenTime { get; set; }
+	public TimeSpan? CloseTime { get; set; }
 	public string? BuildingId { get; set; }
 
 	public virtual Building Building { get; set; } = null!;

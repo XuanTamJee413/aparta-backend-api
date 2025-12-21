@@ -21,7 +21,7 @@ namespace ApartaAPI.DTOs.Visitors
         public string? Phone { get; set; }
 
         [Required(ErrorMessage = "CCCD/Hộ chiếu là bắt buộc")]
-        [RegularExpression(@"^[0-9]+$", ErrorMessage = "CCCD/Hộ chiếu chỉ được chứa số")]
+        [RegularExpression(@"^[0-9]{10,}$", ErrorMessage = "CCCD/Hộ chiếu phải chứa ít nhất 10 chữ số")]
         [StringLength(20, ErrorMessage = "CCCD/Hộ chiếu không quá 20 ký tự")]
         public string IdNumber { get; set; } = null!;
 

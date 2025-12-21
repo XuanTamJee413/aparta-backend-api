@@ -19,6 +19,7 @@ namespace ApartaAPI.Services.Interfaces
 
         // Visitor
         Task<VisitorDto> CreateVisitAsync(VisitorCreateDto dto);
+        Task<VisitorCheckResponseDto> CheckVisitorExistAsync(string idNumber);
         Task<IEnumerable<VisitorDto>> GetRecentVisitorsAsync(string apartmentId);
     }
 }

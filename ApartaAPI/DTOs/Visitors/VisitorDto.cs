@@ -2,7 +2,6 @@
 
 namespace ApartaAPI.DTOs.Visitors
 {
-    // visitor fang khong bi vong lap vs víitlog
     public class VisitorDto
     {
         public string VisitorId { get; set; } = null!;
@@ -35,5 +34,11 @@ namespace ApartaAPI.DTOs.Visitors
 
         public string? CheckinTime { get; set; }
         public string? Status { get; set; }
+    }
+    public class VisitorCheckResponseDto
+    {
+        public bool Exists { get; set; }
+        public string? FullName { get; set; }
+        public string? Phone { get; set; }
     }
 }

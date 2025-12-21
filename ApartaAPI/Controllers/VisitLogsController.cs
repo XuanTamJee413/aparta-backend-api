@@ -1,8 +1,12 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.VisitLogs;
+using ApartaAPI.DTOs.Visitors;
+using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.Controllers
 {
@@ -17,20 +21,67 @@ namespace ApartaAPI.Controllers
             _service = service;
         }
 
-        // phuong thuc da join visitor de lay visitor id, visitor name, join apartment de lay apartment code
+        // ======================================================
+        // 1. Cư dân TẠO MỚI Khách thăm
+        // POST: api/VisitLogs/fast-checkin
+        // ======================================================
+        [HttpPost("fast-checkin")]
+        public async Task<ActionResult<VisitorDto>> CreateVisit([FromBody] VisitorCreateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
+            {
+                // Gọi hàm CreateVisitAsync đã gộp trong IVisitLogService
+                var createdVisitor = await _service.CreateVisitAsync(dto);
+                return Ok(createdVisitor);
+            }
+            catch (ValidationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi máy chủ nội bộ: {ex.Message}");
+            }
+        }
+        // Check dublicate ID
+        [HttpGet("check-visitor/{idNumber}")]
+        public async Task<IActionResult> CheckVisitor(string idNumber)
+        {
+            var result = await _service.CheckVisitorExistAsync(idNumber);
+            return Ok(result);
+        }
+
+        // ======================================================
+        // 2. LẤY KHÁCH Thăm Cũ
+        // GET: api/VisitLogs/recent
+        // ======================================================
+        [HttpGet("recent")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<VisitorDto>>> GetRecentVisitors()
+        {
+            // Lấy ApartmentId từ Token của User đang đăng nhập
+            var apartmentId = User.FindFirst("apartment_id")?.Value;
+
+            if (string.IsNullOrEmpty(apartmentId))
+            {
+                return BadRequest(new { message = "Tài khoản này không gắn liền với căn hộ nào." });
+            }
+
+            var visitors = await _service.GetRecentVisitorsAsync(apartmentId);
+            return Ok(visitors);
+        }
+
+        // ======================================================
+        // 3. DÀNH CHO STAFF (Xem danh sách quản lý)
         // GET: api/VisitLogs/all
         // ======================================================
-        // 1. DÀNH CHO STAFF (Xem danh sách quản lý)
-        // ======================================================
         [HttpGet("all")]
-        [Authorize(Policy = "CanReadVisitor")] 
+        [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse<PagedList<VisitLogStaffViewDto>>>> GetVisitLogsForStaff(
             [FromQuery] VisitorQueryParameters queryParams)
         {
             var userId = User.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            // Gọi hàm chuyên cho Staff
             var pagedData = await _service.GetStaffViewLogsAsync(queryParams, userId);
 
             if (pagedData.TotalCount == 0)
@@ -41,18 +92,17 @@ namespace ApartaAPI.Controllers
         }
 
         // ======================================================
-        // 2. DÀNH CHO RESIDENT (Xem lịch sử của chính mình)
+        // 4. DÀNH CHO RESIDENT Xem lịch sử Log
         // GET: api/VisitLogs/my-history
         // ======================================================
         [HttpGet("my-history")]
-        [Authorize] // Chỉ cần đăng nhập là được (hoặc Policy Resident)
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PagedList<VisitLogStaffViewDto>>>> GetMyVisitHistory(
             [FromQuery] VisitorQueryParameters queryParams)
         {
             var userId = User.FindFirst("id")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            // Gọi hàm chuyên cho Resident
             var pagedData = await _service.GetResidentHistoryAsync(queryParams, userId);
 
             if (pagedData.TotalCount == 0)
@@ -62,17 +112,15 @@ namespace ApartaAPI.Controllers
             return Ok(ApiResponse<PagedList<VisitLogStaffViewDto>>.Success(pagedData));
         }
 
+        // ======================================================
+        // 5. CẬP NHẬT TRẠNG THÁI (Check-in/Out)
+        // ======================================================
         [HttpPut("{id}/checkin")]
         [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> CheckInVisit(string id)
         {
             var success = await _service.CheckInAsync(id);
-
-            //if (!success)
-            //{
-            //    return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm không ở trạng thái 'Pending'."));
-            //}
-
+            //if (!success) return BadRequest(ApiResponse.Fail("Thao tác thất bại hoặc sai trạng thái."));
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
 
@@ -81,18 +129,14 @@ namespace ApartaAPI.Controllers
         public async Task<ActionResult<ApiResponse>> CheckOutVisit(string id)
         {
             var success = await _service.CheckOutAsync(id);
-
-            //if (!success)
-            //{
-            //    return Ok(ApiResponse.Fail("Không tìm thấy lượt thăm hoặc lượt thăm chưa check-in."));
-            //}
-
+            //if (!success) return BadRequest(ApiResponse.Fail("Thao tác thất bại hoặc sai trạng thái."));
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
 
-        // DELETE: api/VisitLogs/{id}
+        // ======================================================
+        // 6. XÓA VÀ CẬP NHẬT THÔNG TIN
+        // ======================================================
         [HttpDelete("{id}")]
-        [Authorize(Policy = "CanReadVisitor")] 
         public async Task<ActionResult<ApiResponse>> DeleteVisitLog(string id)
         {
             var success = await _service.DeleteLogAsync(id);
@@ -100,13 +144,11 @@ namespace ApartaAPI.Controllers
             return Ok(ApiResponse.Success(ApiResponse.SM05_DELETION_SUCCESS));
         }
 
-        // PUT: api/VisitLogs/{id}/info
         [HttpPut("{id}/info")]
-        [Authorize(Policy = "CanReadVisitor")]
         public async Task<ActionResult<ApiResponse>> UpdateVisitLog(string id, [FromBody] VisitLogUpdateDto dto)
         {
             var success = await _service.UpdateLogAsync(id, dto);
-            if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
+            //if (!success) return NotFound(ApiResponse.Fail(ApiResponse.SM01_NO_RESULTS));
             return Ok(ApiResponse.Success(ApiResponse.SM03_UPDATE_SUCCESS));
         }
     }

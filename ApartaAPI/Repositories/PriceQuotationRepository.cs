@@ -15,6 +15,7 @@ namespace ApartaAPI.Repositories
         {
             return await _dbSet
                 .Include(pq => pq.Building) 
+                .Where(pq => pq.IsDeleted != true)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -22,7 +23,7 @@ namespace ApartaAPI.Repositories
         public async Task<IEnumerable<PriceQuotation>> GetByBuildingIdWithBuildingAsync(string buildingId)
         {
             return await _dbSet
-                .Where(pq => pq.BuildingId == buildingId) 
+                .Where(pq => pq.BuildingId == buildingId && pq.IsDeleted != true) 
                 .Include(pq => pq.Building) 
                 .AsNoTracking()
                 .ToListAsync();
@@ -40,6 +41,7 @@ namespace ApartaAPI.Repositories
         {
             return _dbSet
                 .Include(pq => pq.Building)
+                .Where(pq => pq.IsDeleted != true)
                 .AsQueryable();
         }
     }

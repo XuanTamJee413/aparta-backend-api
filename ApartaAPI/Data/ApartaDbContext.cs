@@ -792,8 +792,9 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
 
-            entity.HasOne(d => d.Building).WithMany(p => p.PriceQuotations)
+			entity.HasOne(d => d.Building).WithMany(p => p.PriceQuotations)
                 .HasForeignKey(d => d.BuildingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PriceQuotation_Building");
@@ -894,8 +895,15 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
+			entity.Property(e => e.Title)
+	            .HasMaxLength(255)
+	            .HasColumnName("title");
+			entity.Property(e => e.Type)
+				.HasMaxLength(100)
+				.HasColumnName("type");
 
-            entity.HasOne(d => d.OperationStaff).WithMany(p => p.ProposalOperationStaffs)
+
+			entity.HasOne(d => d.OperationStaff).WithMany(p => p.ProposalOperationStaffs)
                 .HasForeignKey(d => d.OperationStaffId)
                 .HasConstraintName("FK_Proposal_Staff");
 
@@ -1391,7 +1399,24 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("updated_at");
-        });
+
+			entity.Property(e => e.OpenTime)
+		        .HasColumnType("time")       
+		        .HasColumnName("open_time"); 
+
+			entity.Property(e => e.CloseTime)
+				.HasColumnType("time")
+				.HasColumnName("close_time");
+
+			entity.Property(e => e.BuildingId)
+					.HasMaxLength(50) 
+					.HasColumnName("building_id");
+
+			entity.HasOne(d => d.Building)      
+					  .WithMany(p => p.Utilities)   
+					  .HasForeignKey(d => d.BuildingId)
+					  .HasConstraintName("FK_UTILITY_BUILDING");
+		});
 
         modelBuilder.Entity<UtilityBooking>(entity =>
         {

@@ -21,5 +21,7 @@ namespace ApartaAPI.Repositories.Interfaces
         Task RemoveAsync(T entity);
 
         Task<bool> SaveChangesAsync();
-    }
+
+		IQueryable<T> GetQueryable();
+	}
 }

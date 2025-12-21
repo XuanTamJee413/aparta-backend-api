@@ -1,10 +1,14 @@
-﻿using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.DTOs.Buildings;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.Roles;
 using ApartaAPI.DTOs.User;
+using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ApartaAPI.Controllers
@@ -27,16 +31,32 @@ namespace ApartaAPI.Controllers
         [HttpGet("roles")]
         public async Task<ActionResult<ApiResponse<IEnumerable<RoleDto>>>> GetRoles()
         {
-            var response = await _roleService.GetAllRolesAsync();
+            var response = await _userService.GetRolesForManagerAsync();
             return Ok(response);
         }
 
+        [HttpGet("managed-buildings")]
+        public async Task<IActionResult> GetManagedBuildings()
+        {
+            // Lấy UserId từ Claims (Token JWT)
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
+
+            // Gọi thông qua Service thay vì gọi trực tiếp Context
+            var result = await _userService.GetManagedBuildingsAsync(userIdClaim);
+
+            return Ok(result);
+        }
         // 1. GET Staffs
         [HttpGet("staffs")]
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetStaffs([FromQuery] UserQueryParams queryParams)
         {
-            var response = await _userService.GetStaffAccountsAsync(queryParams);
+            // Lấy ID của Manager đang đăng nhập
+            var managerId = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(managerId)) return Unauthorized();
+
+            var response = await _userService.GetStaffAccountsAsync(queryParams, managerId);
             return Ok(response);
         }
 
@@ -45,7 +65,10 @@ namespace ApartaAPI.Controllers
         [Authorize(Policy = "ManagerAccess")]
         public async Task<ActionResult<ApiResponse<PagedList<UserAccountDto>>>> GetResidents([FromQuery] UserQueryParams queryParams)
         {
-            var response = await _userService.GetResidentAccountsAsync(queryParams);
+            var managerId = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(managerId)) return Unauthorized();
+
+            var response = await _userService.GetResidentAccountsAsync(queryParams, managerId);
             return Ok(response);
         }
 

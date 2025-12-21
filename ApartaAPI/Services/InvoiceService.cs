@@ -678,10 +678,11 @@ public class InvoiceService : IInvoiceService
                 return (false, ApiResponse.SM01_NO_RESULTS, null);
             }
 
-            // Validate PriceQuotationId if provided
+            // Validate PriceQuotationId if provided and get quotation info
+            PriceQuotation? quotation = null;
             if (!string.IsNullOrWhiteSpace(dto.PriceQuotationId))
             {
-                var quotation = await _priceQuotationRepo.FirstOrDefaultAsync(
+                quotation = await _priceQuotationRepo.FirstOrDefaultAsync(
                     pq => pq.PriceQuotationId == dto.PriceQuotationId);
                 if (quotation == null)
                 {
@@ -729,15 +730,21 @@ public class InvoiceService : IInvoiceService
             _context.Invoices.Add(invoice);
 
             // Create InvoiceItem (Child) - Only 1 item
+            // Nếu có quotation, sử dụng thông tin từ quotation; nếu không, dùng từ dto
+            var itemDescription = !string.IsNullOrWhiteSpace(dto.ItemDescription) 
+                ? dto.ItemDescription 
+                : (quotation != null ? quotation.FeeType : "Phí một lần");
+            var unitPrice = quotation != null ? quotation.UnitPrice : dto.Amount;
+            
             var invoiceItem = new InvoiceItem
             {
                 InvoiceItemId = Guid.NewGuid().ToString("N"),
                 InvoiceId = invoice.InvoiceId,
                 FeeType = "ONE_TIME",
-                Description = dto.ItemDescription,
+                Description = itemDescription,
                 Quantity = 1,
-                UnitPrice = dto.Amount,
-                Total = dto.Amount,
+                UnitPrice = unitPrice,
+                Total = dto.Amount, // Total vẫn dùng dto.Amount để đảm bảo đúng với số tiền user nhập
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = null
             };

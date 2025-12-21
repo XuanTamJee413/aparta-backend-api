@@ -2,10 +2,11 @@
 using ApartaAPI.DTOs.Utilities;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http; 
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using System.Security.Claims; // Để dùng ClaimTypes
 using System.Threading.Tasks;
+using System;
 
 namespace ApartaAPI.Controllers
 {
@@ -20,25 +21,44 @@ namespace ApartaAPI.Controllers
 			_utilityService = utilityService;
 		}
 
+		// Helper để lấy UserId
+		private string GetCurrentUserId()
+		{
+			var userId = User.FindFirstValue("id");
+
+			// 2. Nếu không thấy, tìm claim chuẩn NameIdentifier (http://schemas.../nameidentifier)
+			if (string.IsNullOrEmpty(userId))
+			{
+				userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			}
+
+			// 3. Nếu vẫn không thấy, thử tìm "sub" (Subject - chuẩn JWT)
+			if (string.IsNullOrEmpty(userId))
+			{
+				userId = User.FindFirstValue("sub");
+			}
+
+			// Nếu tất cả đều null thì mới báo lỗi
+			return userId ?? throw new UnauthorizedAccessException("User ID not found in token.");
+		}
+
 		// GET: api/Utility
 		[HttpGet]
 		[Authorize(Policy = "CanReadUtility")]
-		[ProducesResponseType(typeof(PagedList<UtilityDto>), StatusCodes.Status200OK)] 
-		public async Task<ActionResult<PagedList<UtilityDto>>> GetUtilities(
-			[FromQuery] ServiceQueryParameters parameters) 
+		public async Task<ActionResult<PagedList<UtilityDto>>> GetUtilities([FromQuery] ServiceQueryParameters parameters)
 		{
-			var utilities = await _utilityService.GetAllUtilitiesAsync(parameters);
+			var userId = GetCurrentUserId();
+			var utilities = await _utilityService.GetAllUtilitiesAsync(parameters, userId);
 			return Ok(utilities);
 		}
 
 		// GET: api/Utility/{id}
 		[HttpGet("{id}")]
-        [Authorize(Policy = "CanReadUtility")]
-        [ProducesResponseType(typeof(UtilityDto), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		[Authorize(Policy = "CanReadUtility")]
 		public async Task<ActionResult<UtilityDto>> GetUtility(string id)
 		{
-			var utilityDto = await _utilityService.GetUtilityByIdAsync(id);
+			var userId = GetCurrentUserId();
+			var utilityDto = await _utilityService.GetUtilityByIdAsync(id, userId);
 
 			if (utilityDto == null)
 			{
@@ -51,81 +71,67 @@ namespace ApartaAPI.Controllers
 		// POST: api/Utility
 		[HttpPost]
 		[Authorize(Policy = "CanCreateUtility")]
-		[ProducesResponseType(typeof(UtilityDto), StatusCodes.Status201Created)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status409Conflict)] 
 		public async Task<ActionResult<UtilityDto>> PostUtility([FromBody] UtilityCreateDto utilityCreateDto)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(ModelState);
-			}
+			if (!ModelState.IsValid) return BadRequest(ModelState);
 
 			try
 			{
-				var createdUtilityDto = await _utilityService.AddUtilityAsync(utilityCreateDto);
+				var userId = GetCurrentUserId();
+				var createdUtilityDto = await _utilityService.AddUtilityAsync(utilityCreateDto, userId);
 
-				return CreatedAtAction(
-					nameof(GetUtility),
-					new { id = createdUtilityDto.UtilityId },
-					createdUtilityDto
-				);
+				return CreatedAtAction(nameof(GetUtility), new { id = createdUtilityDto.UtilityId }, createdUtilityDto);
 			}
-			catch (ArgumentException ex) 
-			{
-				return BadRequest(new { message = ex.Message }); 
-			}
-			catch (InvalidOperationException ex) 
-			{
-				return Conflict(new { message = ex.Message }); 
-			}
+			catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+			catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+			catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); } // 403 Forbidden
 		}
 
 		// PUT: api/Utility/{id}
 		[HttpPut("{id}")]
 		[Authorize(Policy = "CanUpdateUtility")]
-		[ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status400BadRequest)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		[ProducesResponseType(StatusCodes.Status409Conflict)] 
 		public async Task<IActionResult> PutUtility(string id, [FromBody] UtilityUpdateDto utilityUpdateDto)
 		{
 			try
 			{
-				var updatedUtilityDto = await _utilityService.UpdateUtilityAsync(id, utilityUpdateDto);
+				var userId = GetCurrentUserId();
+				var updatedUtilityDto = await _utilityService.UpdateUtilityAsync(id, utilityUpdateDto, userId);
 
-				if (updatedUtilityDto == null)
-				{
-					return NotFound();
-				}
+				if (updatedUtilityDto == null) return NotFound();
 
 				return NoContent();
 			}
-			catch (ArgumentException ex) 
-			{
-				return BadRequest(new { message = ex.Message }); 
-			}
-			catch (InvalidOperationException ex) 
-			{
-				return Conflict(new { message = ex.Message });
-			}
+			catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+			catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
+			catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
 		}
 
 		// DELETE: api/Utility/{id}
 		[HttpDelete("{id}")]
-        [Authorize(Policy = "CanDeleteUtility")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		[Authorize(Policy = "CanDeleteUtility")]
 		public async Task<IActionResult> DeleteUtility(string id)
 		{
-			var result = await _utilityService.DeleteUtilityAsync(id);
-
-			if (!result)
+			try
 			{
-				return NotFound();
-			}
+				var userId = GetCurrentUserId();
+				var result = await _utilityService.DeleteUtilityAsync(id, userId);
 
-			return NoContent();
+				if (!result) return NotFound();
+
+				return NoContent();
+			}
+			catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+		}
+
+		//GET: api/Utility/resident(Dành cho Cư dân)
+
+		[HttpGet("resident")]
+		[Authorize] 
+		public async Task<ActionResult<PagedList<UtilityDto>>> GetUtilitiesForResident([FromQuery] ServiceQueryParameters parameters)
+		{
+			var userId = GetCurrentUserId();
+			var utilities = await _utilityService.GetUtilitiesForResidentAsync(parameters, userId);
+			return Ok(utilities);
 		}
 	}
 }

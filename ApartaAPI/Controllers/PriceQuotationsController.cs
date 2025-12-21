@@ -5,12 +5,14 @@ using ApartaAPI.Utils.Helper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Security.Claims;
 
 namespace ApartaAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "ManagerAccess")]
+    [Authorize] // Cho phép tất cả role đã authenticated
 
     public class PriceQuotationsController : ControllerBase
     {
@@ -78,9 +80,17 @@ namespace ApartaAPI.Controllers
         [HttpGet("list")]
         [ProducesResponseType(typeof(ApiResponse<PagedList<PriceQuotationDto>>), StatusCodes.Status200OK)]
         public async Task<ActionResult<ApiResponse<PagedList<PriceQuotationDto>>>> GetPriceQuotationsPaginated(
-            [FromQuery] PriceQuotationQueryParameters queryParams)
+                            [FromQuery] PriceQuotationQueryParameters queryParams)
         {
-            var pagedData = await _priceQuotationService.GetPriceQuotationsPaginatedAsync(queryParams);
+            // 1. Lấy UserId và Role từ Token
+            var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized(ApiResponse.Fail("Không tìm thấy thông tin người dùng."));
+
+            var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+            var isAdmin = !string.IsNullOrWhiteSpace(role) && role.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+            // 2. Gọi service với userId và isAdmin flag
+            var pagedData = await _priceQuotationService.GetPriceQuotationsPaginatedAsync(queryParams, userId, isAdmin);
 
             if (pagedData.TotalCount == 0)
             {

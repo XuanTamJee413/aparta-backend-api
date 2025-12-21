@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using ApartaAPI.DTOs.Invoices;
 using ApartaAPI.DTOs.Common;
 using ApartaAPI.Services.Interfaces;
+using System;
 using System.Security.Claims;
+using ApartaAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApartaAPI.Controllers;
 
@@ -13,11 +16,13 @@ public class InvoiceController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly ApartaDbContext _context;
 
-    public InvoiceController(IInvoiceService invoiceService, ICloudinaryService cloudinaryService)
+    public InvoiceController(IInvoiceService invoiceService, ICloudinaryService cloudinaryService, ApartaDbContext context)
     {
         _invoiceService = invoiceService;
         _cloudinaryService = cloudinaryService;
+        _context = context;
     }
 
     //lấy danh sách hóa đơn của chính mình
@@ -67,11 +72,28 @@ public class InvoiceController : ControllerBase
                 return Unauthorized(ApiResponse<List<ApartmentInvoicesDto>>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
             }
 
-            // Note: GetInvoicesGroupedByApartmentAsync doesn't support feeType yet
-            // For now, we'll filter after getting results, or update the method
+            // Kiểm tra quyền: tất cả role (trừ admin) chỉ được xem invoice của building được gán
+            var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+            var isAdmin = !string.IsNullOrWhiteSpace(role) && role.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isAdmin)
+            {
+                // Kiểm tra xem user có được gán quản lý building này không
+                var hasAccess = await _context.StaffBuildingAssignments
+                    .AnyAsync(sba => sba.UserId == userId 
+                        && sba.BuildingId == buildingId 
+                        && sba.IsActive);
+
+                if (!hasAccess)
+                {
+                    return Forbid(); // 403 - Không có quyền truy cập building này
+                }
+            }
+
+            // Lấy danh sách hóa đơn theo căn hộ
             var groupedInvoices = await _invoiceService.GetInvoicesGroupedByApartmentAsync(buildingId, userId, status, apartmentCode);
             
-            // Filter by feeType if provided
+            // Lọc theo feeType nếu có
             if (!string.IsNullOrWhiteSpace(feeType))
             {
                 foreach (var group in groupedInvoices)
@@ -143,6 +165,35 @@ public class InvoiceController : ControllerBase
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized(ApiResponse<InvoiceDto>.Fail(ApiResponse.SM29_USER_NOT_FOUND));
+            }
+
+            // Kiểm tra quyền: tất cả role (trừ admin) chỉ được tạo invoice cho apartment của building được gán
+            var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+            var isAdmin = !string.IsNullOrWhiteSpace(role) && role.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isAdmin && !string.IsNullOrEmpty(dto.ApartmentId))
+            {
+                // Lấy buildingId từ apartmentId
+                var apartment = await _context.Apartments
+                    .Where(a => a.ApartmentId == dto.ApartmentId)
+                    .Select(a => a.BuildingId)
+                    .FirstOrDefaultAsync();
+
+                if (apartment == null)
+                {
+                    return NotFound(ApiResponse<InvoiceDto>.Fail(ApiResponse.SM01_NO_RESULTS));
+                }
+
+                // Kiểm tra xem user có được gán quản lý building này không
+                var hasAccess = await _context.StaffBuildingAssignments
+                    .AnyAsync(sba => sba.UserId == userId 
+                        && sba.BuildingId == apartment 
+                        && sba.IsActive);
+
+                if (!hasAccess)
+                {
+                    return Forbid(); // 403 - Không có quyền truy cập apartment này
+                }
             }
 
             // Upload images if provided

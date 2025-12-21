@@ -14,7 +14,7 @@ namespace ApartaAPI.Services.Interfaces
 
         Task<PriceQuotationDto?> GetPriceQuotationByIdAsync(string priceQuotationId);
 
-        Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams);
+        Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams, string userId, bool isAdmin = false);
         Task<bool> UpdateAsync(string id, PriceQuotationCreateDto updateDto);
         Task<bool> DeleteAsync(string id);
     }

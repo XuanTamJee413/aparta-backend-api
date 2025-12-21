@@ -1,4 +1,5 @@
-﻿using ApartaAPI.DTOs.Common;
+﻿using ApartaAPI.Data;
+using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.PriceQuotations;
 using ApartaAPI.Models;
 using ApartaAPI.Repositories.Interfaces;
@@ -14,12 +15,16 @@ namespace ApartaAPI.Services
         private readonly IPriceQuotationRepository _priceQuotationRepo;
         private readonly IRepository<Building> _buildingRepo;
         private readonly IMapper _mapper;
+        private readonly ApartaDbContext _context;
 
-        public PriceQuotationService(IPriceQuotationRepository priceQuotationRepo, IRepository<Building> buildingRepo, IMapper mapper)
+        public PriceQuotationService(IPriceQuotationRepository priceQuotationRepo, IRepository<Building> buildingRepo,
+            IMapper mapper, ApartaDbContext context
+)
         {
             _priceQuotationRepo = priceQuotationRepo;
             _buildingRepo = buildingRepo;
             _mapper = mapper;
+            _context = context;
         }
 
         // get all nhung da join voi bang building lay building code
@@ -108,34 +113,53 @@ namespace ApartaAPI.Services
             await _priceQuotationRepo.UpdateAsync(entity);
             return await _priceQuotationRepo.SaveChangesAsync();
         }
-        public async Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams)
+        public async Task<PagedList<PriceQuotationDto>> GetPriceQuotationsPaginatedAsync(PriceQuotationQueryParameters queryParams, string userId, bool isAdmin = false)
         {
+            // 1. Lấy Query gốc
             var query = _priceQuotationRepo.GetQuotationsQueryable();
 
+            // 2. Kiểm tra role: nếu không phải admin thì filter theo building assignment
+            if (!isAdmin)
+            {
+                // Lấy danh sách ID các tòa nhà mà user này được gán từ bảng StaffBuildingAssignment
+                var managedBuildingIds = await _context.StaffBuildingAssignments
+                    .Where(sba => sba.UserId == userId && sba.IsActive)
+                    .Select(sba => sba.BuildingId)
+                    .ToListAsync();
+
+                // LỌC: Chỉ lấy Price Quotation thuộc các tòa nhà user được gán
+                if (managedBuildingIds.Any())
+                {
+                    query = query.Where(q => managedBuildingIds.Contains(q.BuildingId));
+                }
+                else
+                {
+                    // User không có building assignment nào -> trả về empty
+                    query = query.Where(q => false); // Always false để trả về empty
+                }
+            }
+            // Nếu là admin, không filter -> trả về tất cả
+
+            // 4. Nếu trên UI người dùng chọn lọc cụ thể 1 tòa nhà (trong số những tòa họ quản lý)
             if (!string.IsNullOrEmpty(queryParams.BuildingId))
             {
                 query = query.Where(q => q.BuildingId == queryParams.BuildingId);
             }
+
+            // 5. Các logic Search và Sort giữ nguyên
             if (!string.IsNullOrEmpty(queryParams.SearchTerm))
             {
                 string searchTermLower = queryParams.SearchTerm.ToLower();
-
                 query = query.Where(q => q.FeeType.ToLower().Contains(searchTermLower));
             }
 
-            if (queryParams.SortColumn?.ToLower() == "feetype")
-            {
-                query = queryParams.SortDirection?.ToLower() == "asc"
-                    ? query.OrderBy(q => q.FeeType)
-                    : query.OrderByDescending(q => q.FeeType);
-            }
-            else
-            {
-                query = query.OrderByDescending(q => q.CreatedAt);
-            }
+            // Sorting...
+            query = queryParams.SortColumn?.ToLower() == "feetype"
+                ? (queryParams.SortDirection?.ToLower() == "asc" ? query.OrderBy(q => q.FeeType) : query.OrderByDescending(q => q.FeeType))
+                : query.OrderByDescending(q => q.CreatedAt);
 
+            // Projection và Paging
             var dtoQuery = query.ProjectTo<PriceQuotationDto>(_mapper.ConfigurationProvider);
-
             var totalCount = await dtoQuery.CountAsync();
             var items = await dtoQuery
                 .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
@@ -147,11 +171,18 @@ namespace ApartaAPI.Services
         public async Task<bool> DeleteAsync(string id)
         {
             var entity = await _priceQuotationRepo.FirstOrDefaultAsync(pq => pq.PriceQuotationId == id);
-            if (entity == null)
+            if (entity == null || entity.IsDeleted == true)
                 return false;
 
-            await _priceQuotationRepo.RemoveAsync(entity);
-            return await _priceQuotationRepo.SaveChangesAsync();
+            // xóa
+            entity.IsDeleted = true;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _priceQuotationRepo.UpdateAsync(entity);
+
+            bool success = true;
+            //success = await _priceQuotationRepo.SaveChangesAsync();
+            return success;
         }
     }
 }

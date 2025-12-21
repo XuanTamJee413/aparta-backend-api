@@ -46,4 +46,6 @@ public partial class Building
     public virtual Project Project { get; set; } = null!;
 
     public virtual ICollection<StaffBuildingAssignment> StaffBuildingAssignments { get; set; } = new List<StaffBuildingAssignment>();
+
+	public virtual ICollection<Utility> Utilities { get; set; } = new List<Utility>();
 }

@@ -78,5 +78,10 @@ namespace ApartaAPI.Repositories
         {
             return await _context.SaveChangesAsync() > 0;
         }
-    }
+
+		public IQueryable<T> GetQueryable()
+		{
+			return _dbSet.AsQueryable();
+		}
+	}
 }

@@ -25,10 +25,11 @@ public partial class Task
 
     public DateTime? UpdatedAt { get; set; }
 
-	public string? AssigneeNote { get; set; }
-	public string? VerifyNote { get; set; }
+    public string? AssigneeNote { get; set; }
 
-	public virtual User OperationStaff { get; set; } = null!;
+    public string? VerifyNote { get; set; }
+
+    public virtual User OperationStaff { get; set; } = null!;
 
     public virtual ServiceBooking? ServiceBooking { get; set; }
 

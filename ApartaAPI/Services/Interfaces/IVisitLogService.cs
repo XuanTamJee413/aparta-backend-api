@@ -1,5 +1,6 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.VisitLogs;
+using ApartaAPI.DTOs.Visitors;
 using ApartaAPI.Models;
 
 namespace ApartaAPI.Services.Interfaces
@@ -15,5 +16,9 @@ namespace ApartaAPI.Services.Interfaces
         Task<bool> CheckOutAsync(string id);
         Task<bool> DeleteLogAsync(string id);
         Task<bool> UpdateLogAsync(string id, VisitLogUpdateDto dto);
+
+        // Visitor
+        Task<VisitorDto> CreateVisitAsync(VisitorCreateDto dto);
+        Task<IEnumerable<VisitorDto>> GetRecentVisitorsAsync(string apartmentId);
     }
 }

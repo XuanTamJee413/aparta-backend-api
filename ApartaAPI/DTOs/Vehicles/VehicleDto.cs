@@ -4,7 +4,8 @@ namespace ApartaAPI.DTOs.Vehicles
 {
    
     public sealed record VehicleQueryParameters(
-        string? Status,       
+        string? Status,   
+        string? Info,
         string? SearchTerm, 
         string? SortBy,       
         string? SortOrder    

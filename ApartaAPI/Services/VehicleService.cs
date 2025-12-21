@@ -23,7 +23,7 @@ namespace ApartaAPI.Services
         {
             if (query == null)
             {
-                query = new VehicleQueryParameters(null, null, null, null);
+                query = new VehicleQueryParameters(null, null, null, null,null);
             }
 
             var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
@@ -34,14 +34,18 @@ namespace ApartaAPI.Services
                 ? null
                 : query.Status.Trim().ToLowerInvariant();
 
+            var infoFilter = string.IsNullOrWhiteSpace(query.Info)
+                ? null
+                : query.Info.Trim().ToLowerInvariant();
+
             Expression<Func<Vehicle, bool>> predicate = v =>
                 (statusFilter == null || (v.Status != null && v.Status.ToLower() == statusFilter)) &&
-
                 (searchTerm == null ||
                     (v.VehicleNumber.ToLower().Contains(searchTerm)) ||
                     (v.ApartmentId.ToLower().Contains(searchTerm)) ||
                     (v.Info != null && v.Info.ToLower().Contains(searchTerm))
-                );
+                ) &&
+                (infoFilter == null || (v.Info != null && v.Info.ToLower().Contains(infoFilter))); 
 
             var entities = await _repository.FindAsync(predicate);
 
@@ -63,8 +67,14 @@ namespace ApartaAPI.Services
                         : validEntities.OrderBy(v => v.VehicleNumber);
                     break;
 
+                case "createdat": 
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(v => v.CreatedAt)
+                        : validEntities.OrderBy(v => v.CreatedAt);
+                    break;
+
                 default:
-                    sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt);
+                    sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt); 
                     break;
             }
 
@@ -72,7 +82,6 @@ namespace ApartaAPI.Services
 
             if (!dtos.Any())
             {
-
                 return ApiResponse<IEnumerable<VehicleDto>>
                     .SuccessWithCode(new List<VehicleDto>(), ApiResponse.SM01_NO_RESULTS);
             }
@@ -80,11 +89,11 @@ namespace ApartaAPI.Services
             return ApiResponse<IEnumerable<VehicleDto>>.Success(dtos);
         }
 
-        public async Task<ApiResponse<IEnumerable<VehicleDto>>> GetByUserBuildingsAsync( string userId, VehicleQueryParameters query)
+        public async Task<ApiResponse<IEnumerable<VehicleDto>>> GetByUserBuildingsAsync(string userId, VehicleQueryParameters query)
         {
             if (query == null)
             {
-                query = new VehicleQueryParameters(null, null, null, null);
+                query = new VehicleQueryParameters(null, null, null, null,null);
             }
 
             var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
@@ -94,6 +103,10 @@ namespace ApartaAPI.Services
             var statusFilter = string.IsNullOrWhiteSpace(query.Status)
                 ? null
                 : query.Status.Trim().ToLowerInvariant();
+
+            var infoFilter = string.IsNullOrWhiteSpace(query.Info)
+                ? null
+                : query.Info.Trim().ToLowerInvariant();
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -109,7 +122,8 @@ namespace ApartaAPI.Services
                     (v.VehicleNumber != null && v.VehicleNumber.ToLower().Contains(searchTerm)) ||
                     (v.ApartmentId != null && v.ApartmentId.ToLower().Contains(searchTerm)) ||
                     (v.Info != null && v.Info.ToLower().Contains(searchTerm))
-                );
+                )
+                && (infoFilter == null || (v.Info != null && v.Info.ToLower().Contains(infoFilter))); 
 
             var entities = await _repository.FindAsync(predicate);
 
@@ -131,8 +145,14 @@ namespace ApartaAPI.Services
                         : validEntities.OrderBy(v => v.VehicleNumber);
                     break;
 
+                case "createdat": 
+                    sortedEntities = isDescending
+                        ? validEntities.OrderByDescending(v => v.CreatedAt)
+                        : validEntities.OrderBy(v => v.CreatedAt);
+                    break;
+
                 default:
-                    sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt);
+                    sortedEntities = validEntities.OrderByDescending(v => v.CreatedAt); 
                     break;
             }
 
@@ -146,6 +166,7 @@ namespace ApartaAPI.Services
 
             return ApiResponse<IEnumerable<VehicleDto>>.Success(dtos);
         }
+
 
         public async Task<VehicleDto?> GetByIdAsync(string id)
         {

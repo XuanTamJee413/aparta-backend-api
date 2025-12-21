@@ -5,6 +5,12 @@ namespace ApartaAPI.DTOs.Proposals
     public class ProposalCreateDto
     {
         [Required]
+        [MaxLength(200)] // Giới hạn độ dài tiêu đề
+        public string Title { get; set; } = null!;
+
+        [Required]
+        public string Type { get; set; } = null!;
+        [Required]
         [MaxLength(2000)]
         public string Content { get; set; } = null!;
 
@@ -15,6 +21,8 @@ namespace ApartaAPI.DTOs.Proposals
     public class ProposalDto
     {
         public string ProposalId { get; set; } = null!;
+        public string Title { get; set; } = null!; // Thêm Title
+        public string Type { get; set; } = null!;
         public string ResidentId { get; set; } = null!;
         public string ResidentName { get; set; } = null!; // Join từ User
         public string? OperationStaffId { get; set; }
@@ -35,6 +43,7 @@ namespace ApartaAPI.DTOs.Proposals
     {
         public string? SearchTerm { get; set; }
         public string? Status { get; set; }
+        public string? Type { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public string? SortColumn { get; set; } // Hỗ trợ: CreatedAt, Status

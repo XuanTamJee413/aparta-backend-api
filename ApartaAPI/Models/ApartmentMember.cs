@@ -35,5 +35,25 @@ public partial class ApartmentMember
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string? UserId { get; set; }
+
+    public string? RoleId { get; set; }
+
+    public string? HeadMemberId { get; set; }
+
+    public bool IsAppAccess { get; set; }
+
+    public string? TemporaryRegistrationCode { get; set; }
+
     public virtual Apartment Apartment { get; set; } = null!;
+
+    public virtual ICollection<Contract> Contracts { get; set; } = new List<Contract>();
+
+    public virtual ApartmentMember? HeadMember { get; set; }
+
+    public virtual ICollection<ApartmentMember> InverseHeadMember { get; set; } = new List<ApartmentMember>();
+
+    public virtual Role? Role { get; set; }
+
+    public virtual User? User { get; set; }
 }

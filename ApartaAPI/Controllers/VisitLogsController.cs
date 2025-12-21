@@ -1,9 +1,11 @@
 ﻿using ApartaAPI.DTOs.Common;
 using ApartaAPI.DTOs.VisitLogs;
 using ApartaAPI.DTOs.Visitors;
+using ApartaAPI.Services;
 using ApartaAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace ApartaAPI.Controllers
@@ -20,7 +22,7 @@ namespace ApartaAPI.Controllers
         }
 
         // ======================================================
-        // 1. TẠO MỚI (Từ VisitorsController gộp sang)
+        // 1. Cư dân TẠO MỚI Khách thăm
         // POST: api/VisitLogs/fast-checkin
         // ======================================================
         [HttpPost("fast-checkin")]
@@ -40,9 +42,16 @@ namespace ApartaAPI.Controllers
                 return StatusCode(500, $"Lỗi máy chủ nội bộ: {ex.Message}");
             }
         }
+        // Check dublicate ID
+        [HttpGet("check-visitor/{idNumber}")]
+        public async Task<IActionResult> CheckVisitor(string idNumber)
+        {
+            var result = await _service.CheckVisitorExistAsync(idNumber);
+            return Ok(result);
+        }
 
         // ======================================================
-        // 2. LẤY KHÁCH CŨ (Từ VisitorsController gộp sang)
+        // 2. LẤY KHÁCH Thăm Cũ
         // GET: api/VisitLogs/recent
         // ======================================================
         [HttpGet("recent")]
@@ -83,7 +92,7 @@ namespace ApartaAPI.Controllers
         }
 
         // ======================================================
-        // 4. DÀNH CHO RESIDENT (Xem lịch sử của chính mình)
+        // 4. DÀNH CHO RESIDENT Xem lịch sử Log
         // GET: api/VisitLogs/my-history
         // ======================================================
         [HttpGet("my-history")]

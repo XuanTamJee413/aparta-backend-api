@@ -276,5 +276,23 @@ namespace ApartaAPI.Services
 
             return new PagedList<VisitLogStaffViewDto>(items, totalCount, queryParams.PageNumber, queryParams.PageSize);
         }
+        public async Task<VisitorCheckResponseDto> CheckVisitorExistAsync(string idNumber)
+        {
+            // Gọi Repo để tìm khách theo CCCD
+            var visitor = await _visitorRepository.FirstOrDefaultAsync(v => v.IdNumber == idNumber);
+
+            if (visitor != null)
+            {
+                return new VisitorCheckResponseDto
+                {
+                    Exists = true,
+                    FullName = visitor.FullName,
+                    Phone = visitor.Phone
+                };
+            }
+
+            return new VisitorCheckResponseDto { Exists = false };
+        }
     }
+
 }

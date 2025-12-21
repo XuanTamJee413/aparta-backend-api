@@ -231,6 +231,30 @@ namespace ApartaAPI.Services
             var entity = _mapper.Map<ApartmentMember>(dto);
 
             entity.ApartmentMemberId = Guid.NewGuid().ToString("N");
+
+            ApartmentMember? headMember = await _repository.FirstOrDefaultAsync(m =>
+     m.ApartmentId == dto.ApartmentId
+     && m.HeadMemberId == null
+     && (m.Status == "Đang cư trú" || m.Status == "Đã Bán")
+ );
+
+            if (dto.IsOwner == true)
+            {
+                // Tạo người đại diện mới (chủ nhà)
+                entity.IsOwner = true;
+                entity.HeadMemberId = null;
+            }
+            else
+            {
+                // Tạo thành viên phụ thuộc
+                if (headMember == null)
+                    throw new InvalidOperationException(
+                        "Chưa tồn tại người đại diện cho căn hộ này.");
+
+                entity.IsOwner = false;
+                entity.HeadMemberId = headMember.ApartmentMemberId;
+            }
+
             entity.CreatedAt ??= now;
             entity.UpdatedAt = now;
 

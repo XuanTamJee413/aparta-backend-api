@@ -14,5 +14,6 @@ public interface IInvoiceService
     Task<(bool Success, string Message)> DeleteInvoiceAsync(string invoiceId, string userId);
     Task<(bool Success, string Message)> UpdateInvoiceEndDateAsync(string invoiceId, DateOnly newEndDate, string userId);
     Task<(int SentCount, int FailedCount)> SendInvoiceEmailsToResidentsAsync(string buildingId, string billingPeriod);
+    Task<(int SentCount, int FailedCount)> SendInvoiceSummaryToManagersAsync(string buildingId, string billingPeriod);
 }
 

@@ -111,9 +111,18 @@ public class MonthlyBillingJob : BackgroundService
                     // Gửi email thông báo cho từng resident sau khi tạo invoice thành công
                     var emailResult = await invoiceService.SendInvoiceEmailsToResidentsAsync(building.BuildingId, billingPeriod);
                     _logger.LogInformation(
-                        "MonthlyBillingJob: Sent {SentCount} emails, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
+                        "MonthlyBillingJob: Sent {SentCount} emails to residents, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
                         emailResult.SentCount,
                         emailResult.FailedCount,
+                        building.BuildingId,
+                        billingPeriod);
+
+                    // Gửi email báo cáo danh sách hóa đơn cho manager đang quản lý building
+                    var managerEmailResult = await invoiceService.SendInvoiceSummaryToManagersAsync(building.BuildingId, billingPeriod);
+                    _logger.LogInformation(
+                        "MonthlyBillingJob: Sent {SentCount} summary emails to managers, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
+                        managerEmailResult.SentCount,
+                        managerEmailResult.FailedCount,
                         building.BuildingId,
                         billingPeriod);
                 }
@@ -140,7 +149,7 @@ public class MonthlyBillingJob : BackgroundService
     private static TimeSpan GetDelayUntilNextRun()
     {
 		var now = DateTime.Now;
-		var nextRun = new DateTime(now.Year, now.Month, now.Day, 22, 15 , 0); // Mốc 07:00 hôm nay
+		var nextRun = new DateTime(now.Year, now.Month, now.Day, 20, 43, 0); // Mốc 07:00 hôm nay
 
         if (now >= nextRun)
         {

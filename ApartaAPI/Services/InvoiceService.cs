@@ -1014,5 +1014,169 @@ public class InvoiceService : IInvoiceService
         }
     }
 
+    // Gửi email báo cáo danh sách hóa đơn đã tạo cho manager
+    public async Task<(int SentCount, int FailedCount)> SendInvoiceSummaryToManagersAsync(string buildingId, string billingPeriod)
+    {
+        try
+        {
+            // Lấy danh sách invoices đã tạo cho building này trong billing period
+            var invoiceIds = await _context.Invoices
+                .Join(
+                    _context.Apartments,
+                    invoice => invoice.ApartmentId,
+                    apartment => apartment.ApartmentId,
+                    (invoice, apartment) => new { Invoice = invoice, Apartment = apartment }
+                )
+                .Where(x => 
+                    x.Apartment.BuildingId == buildingId &&
+                    x.Invoice.Description != null &&
+                    x.Invoice.Description.Contains($"BillingPeriod: {billingPeriod}") &&
+                    x.Invoice.Status == "PENDING" &&
+                    x.Invoice.FeeType == "MONTHLY_BILLING")
+                .Select(x => x.Invoice.InvoiceId)
+                .ToListAsync();
+
+            if (!invoiceIds.Any())
+            {
+                _logger?.LogInformation(
+                    "SendInvoiceSummaryToManagersAsync: No invoices found for building {BuildingId} ({BillingPeriod}).",
+                    buildingId,
+                    billingPeriod);
+                return (0, 0);
+            }
+
+            // Lấy đầy đủ thông tin invoices với navigation properties
+            var invoices = await _context.Invoices
+                .Where(i => invoiceIds.Contains(i.InvoiceId))
+                .Include(i => i.Apartment)
+                    .ThenInclude(a => a.Users)
+                        .ThenInclude(u => u.Role)
+                .ToListAsync();
+
+            if (!invoices.Any())
+            {
+                _logger?.LogInformation(
+                    "SendInvoiceSummaryToManagersAsync: No invoices found for building {BuildingId} ({BillingPeriod}).",
+                    buildingId,
+                    billingPeriod);
+                return (0, 0);
+            }
+
+            // Lấy thông tin building
+            var building = await _context.Buildings
+                .FirstOrDefaultAsync(b => b.BuildingId == buildingId);
+
+            if (building == null)
+            {
+                _logger?.LogWarning(
+                    "SendInvoiceSummaryToManagersAsync: Building {BuildingId} not found.",
+                    buildingId);
+                return (0, 0);
+            }
+
+            // Lấy danh sách manager đang quản lý building này
+            var managerAssignments = await _context.StaffBuildingAssignments
+                .Where(sba => sba.BuildingId == buildingId && sba.IsActive)
+                .Include(sba => sba.User)
+                    .ThenInclude(u => u.Role)
+                .Where(sba => sba.User != null && 
+                             !sba.User.IsDeleted && 
+                             sba.User.Role.RoleName.ToLower() == "manager")
+                .ToListAsync();
+
+            if (!managerAssignments.Any())
+            {
+                _logger?.LogInformation(
+                    "SendInvoiceSummaryToManagersAsync: No active managers found for building {BuildingId}.",
+                    buildingId);
+                return (0, 0);
+            }
+
+            // Chuẩn bị danh sách invoices cho email
+            var invoiceList = invoices.Select(invoice =>
+            {
+                var resident = invoice.Apartment.Users
+                    .FirstOrDefault(u => u.Role.RoleName.ToLower() == "resident")
+                    ?? invoice.Apartment.Users.FirstOrDefault();
+
+                return new InvoiceSummaryItem
+                {
+                    ApartmentCode = invoice.Apartment.Code,
+                    ResidentName = resident?.Name,
+                    Amount = invoice.Price,
+                    DueDate = invoice.EndDate
+                };
+            }).ToList();
+
+            var totalAmount = invoices.Sum(i => i.Price);
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:4200";
+
+            int emailSentCount = 0;
+            int emailFailedCount = 0;
+
+            // Gửi email cho từng manager
+            foreach (var assignment in managerAssignments)
+            {
+                try
+                {
+                    var manager = assignment.User;
+                    if (manager == null || string.IsNullOrWhiteSpace(manager.Email))
+                    {
+                        _logger?.LogWarning(
+                            "SendInvoiceSummaryToManagersAsync: Manager {ManagerId} has no email.",
+                            manager?.UserId);
+                        emailFailedCount++;
+                        continue;
+                    }
+
+                    // Tạo nội dung email từ template
+                    var subject = $"Báo cáo hóa đơn tháng {billingPeriod} - {building.Name}";
+                    var htmlMessage = EmailTemplateHelper.GetManagerInvoiceSummaryEmailTemplate(
+                        manager.Name,
+                        building.Name,
+                        billingPeriod,
+                        invoices.Count,
+                        totalAmount,
+                        invoiceList,
+                        frontendUrl);
+
+                    // Gửi email
+                    await _mailService.SendEmailAsync(manager.Email, subject, htmlMessage);
+                    emailSentCount++;
+
+                    _logger?.LogInformation(
+                        "SendInvoiceSummaryToManagersAsync: Sent invoice summary email to manager {Email} ({ManagerId}) for building {BuildingId}.",
+                        manager.Email,
+                        manager.UserId,
+                        buildingId);
+                }
+                catch (Exception ex)
+                {
+                    emailFailedCount++;
+                    _logger?.LogError(ex,
+                        "SendInvoiceSummaryToManagersAsync: Failed to send email to manager {ManagerId} for building {BuildingId}.",
+                        assignment.UserId,
+                        buildingId);
+                }
+            }
+
+            _logger?.LogInformation(
+                "SendInvoiceSummaryToManagersAsync: Sent {SentCount} emails, {FailedCount} failed for building {BuildingId} ({BillingPeriod}).",
+                emailSentCount,
+                emailFailedCount,
+                buildingId,
+                billingPeriod);
+
+            return (emailSentCount, emailFailedCount);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex,
+                "SendInvoiceSummaryToManagersAsync: Error while sending invoice summary emails for building {BuildingId} ({BillingPeriod}).",
+                buildingId,
+                billingPeriod);
+            return (0, 0);
+        }
+    }
 }
 

@@ -53,14 +53,17 @@ namespace ApartaAPI.Services
                     .ToList();
             }
 
+            var statusFilter = string.IsNullOrWhiteSpace(query.Status)
+                ? null
+                : query.Status.Trim().ToLowerInvariant();
+
             Expression<Func<ApartmentMember, bool>> predicate = m =>
                 (!query.IsOwned.HasValue || m.IsOwner == query.IsOwned.Value) &&
 
                 (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId) &&
 
-                (string.IsNullOrWhiteSpace(query.Status) ||
-                    (!string.IsNullOrWhiteSpace(m.Status) &&
-                        string.Equals(m.Status.Trim(), query.Status.Trim(), StringComparison.OrdinalIgnoreCase))) &&
+                (statusFilter == null ||
+                    (m.Status != null && m.Status.ToLower() == statusFilter)) &&
 
                 (string.IsNullOrWhiteSpace(query.HeadMemberId) || m.HeadMemberId == query.HeadMemberId) &&
 
@@ -131,6 +134,10 @@ namespace ApartaAPI.Services
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
+            var statusFilter = string.IsNullOrWhiteSpace(query.Status)
+                ? null
+                : query.Status.Trim().ToLowerInvariant();
+
             Expression<Func<ApartmentMember, bool>> predicate = m =>
                 m.Apartment != null &&
                 m.Apartment.Building.StaffBuildingAssignments.Any(sba =>
@@ -143,9 +150,8 @@ namespace ApartaAPI.Services
 
                 && (string.IsNullOrEmpty(query.ApartmentId) || m.ApartmentId == query.ApartmentId)
 
-                && (string.IsNullOrWhiteSpace(query.Status) ||
-                    (!string.IsNullOrWhiteSpace(m.Status) &&
-                        string.Equals(m.Status.Trim(), query.Status.Trim(), StringComparison.OrdinalIgnoreCase)))
+                && (statusFilter == null ||
+                    (m.Status != null && m.Status.ToLower() == statusFilter))
 
                 && (string.IsNullOrWhiteSpace(query.HeadMemberId) || m.HeadMemberId == query.HeadMemberId)
 

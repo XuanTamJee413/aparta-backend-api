@@ -261,7 +261,7 @@ namespace ApartaAPI.Services
                     m.IdNumber != null && idNumbers.Contains(m.IdNumber));
                 if (memberIdDup != null)
                 {
-                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number");
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "ID Number " + memberIdDup.IdNumber);
                 }
             }
 
@@ -271,14 +271,14 @@ namespace ApartaAPI.Services
                     m.PhoneNumber != null && phones.Contains(m.PhoneNumber));
                 if (memberPhoneDup != null)
                 {
-                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại " + memberPhoneDup.PhoneNumber);
                 }
 
                 var userPhoneDup = await _userRepository.FirstOrDefaultAsync(u =>
                     u.Phone != null && phones.Contains(u.Phone));
                 if (userPhoneDup != null)
                 {
-                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại");
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "số điện thoại " + userPhoneDup.Phone);
                 }
             }
 
@@ -288,7 +288,7 @@ namespace ApartaAPI.Services
                     u.Email != null && emails.Contains(u.Email.Trim().ToLower()));
                 if (emailDup != null)
                 {
-                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email");
+                    return ApiResponse<ContractDto>.Fail(ApiResponse.SM16_DUPLICATE_CODE, "Email " + emailDup.Email);
                 }
             }
 

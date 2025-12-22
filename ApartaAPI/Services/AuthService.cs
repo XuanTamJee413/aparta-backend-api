@@ -59,12 +59,18 @@ namespace ApartaAPI.Services
             if (roleName == "resident")
             {
                 // 3.1 Tìm tất cả căn hộ mà user đang cư trú và có quyền truy cập app
-                var memberships = await _memberRepository.FindAsync(m => m.UserId == user.UserId
-                                                                      && m.Status == "Đang cư trú"
-                                                                      && m.IsAppAccess);
+                var memberships = await _memberRepository.FindAsync(m =>
+                    m.UserId == user.UserId
+                    && m.IsAppAccess // Điều kiện tiên quyết: Phải được cấp quyền App
+                    && (
+                        m.Status == "Đang cư trú" // Trường hợp 1: Đang ở thực tế
+                        ||
+                        (m.IsOwner == true && m.Status == "Đi vắng") // Trường hợp 2: Chủ hộ nhưng đang đi vắng/cho thuê
+                    )
+                );
 
                 if (!memberships.Any())
-                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM13_ACCOUNT_NOT_FOUND, null, "Tài khoản chưa được gán vào căn hộ nào.");
+                    return ApiResponse<LoginResponse>.Fail(ApiResponse.SM13_ACCOUNT_NOT_FOUND, null, "Tài khoản chưa được gán vào căn hộ ghi nhận hoặc không có quyền truy cập.");
 
                 // 3.2 Chọn căn hộ: Ưu tiên căn mặc định -> Hoặc căn đầu tiên
                 var selectedMemberId = memberships.FirstOrDefault(m => m.ApartmentId == user.ApartmentId)?.ApartmentMemberId
@@ -91,7 +97,7 @@ namespace ApartaAPI.Services
                     return ApiResponse<LoginResponse>.Fail(ApiResponse.SM28_PROJECT_NOT_ACTIVE, null, "Dự án này hiện đang tạm ngưng hoạt động.");
                 }
 
-                if (building == null || !building.IsActive) // Giả sử Building cũng có IsActive, nếu không có thì bỏ dòng này
+                if (building == null || !building.IsActive)
                 {
                     return ApiResponse<LoginResponse>.Fail(ApiResponse.SM26_BUILDING_NOT_ACTIVE, null, "Tòa nhà này hiện đang tạm ngưng hoạt động.");
                 }

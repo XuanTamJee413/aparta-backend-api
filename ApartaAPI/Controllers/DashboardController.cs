@@ -272,6 +272,60 @@ namespace ApartaAPI.Controllers
             }
         }
 
+        // GET: api/Dashboard/apartment-status-by-building
+        [HttpGet("apartment-status-by-building")]
+        [ProducesResponseType(typeof(ApiResponse<List<BuildingApartmentStatusDto>>), 200)]
+        public async Task<ActionResult<ApiResponse<List<BuildingApartmentStatusDto>>>> GetApartmentStatusByBuilding()
+        {
+            try
+            {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleBuildingIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<List<BuildingApartmentStatusDto>>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+                }
+
+                var buildings = await _context.Buildings
+                    .Where(b => b.IsActive && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(b.BuildingId))))
+                    .Include(b => b.Apartments)
+                    .ToListAsync();
+
+                var result = buildings.Select(b =>
+                {
+                    var total = b.Apartments.Count;
+                    var sold = b.Apartments.Count(a => a.Status == "Đã Bán");
+                    var unsold = total - sold;
+                    return new BuildingApartmentStatusDto
+                    {
+                        BuildingId = b.BuildingId,
+                        BuildingName = b.Name ?? b.BuildingCode ?? "N/A",
+                        TotalApartments = total,
+                        SoldApartments = sold,
+                        UnsoldApartments = unsold
+                    };
+                }).ToList();
+
+                return Ok(ApiResponse<List<BuildingApartmentStatusDto>>.Success(result, "Lấy thống kê căn hộ theo tòa nhà thành công."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<List<BuildingApartmentStatusDto>>.Fail($"Lỗi khi lấy thống kê: {ex.Message}"));
+            }
+        }
+
         // GET: api/Dashboard/revenue-by-project?year=2024
         [HttpGet("revenue-by-project")]
         [ProducesResponseType(typeof(ApiResponse<List<ProjectRevenueDto>>), 200)]
@@ -363,6 +417,88 @@ namespace ApartaAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResponse<List<ProjectRevenueDto>>.Fail($"Lỗi khi lấy thống kê: {ex.Message}"));
+            }
+        }
+
+        // GET: api/Dashboard/revenue-by-building?year=2024
+        [HttpGet("revenue-by-building")]
+        [ProducesResponseType(typeof(ApiResponse<List<BuildingRevenueDto>>), 200)]
+        public async Task<ActionResult<ApiResponse<List<BuildingRevenueDto>>>> GetRevenueByBuilding([FromQuery] int? year = null)
+        {
+            try
+            {
+                var userId = User.FindFirst("id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = User.FindFirst("role")?.Value ?? User.FindFirst(ClaimTypes.Role)?.Value;
+                var isManager = !string.IsNullOrWhiteSpace(role) && role.Equals("manager", StringComparison.OrdinalIgnoreCase);
+
+                List<string>? accessibleBuildingIds = null;
+                if (isManager)
+                {
+                    if (string.IsNullOrWhiteSpace(userId))
+                    {
+                        return Unauthorized(ApiResponse<List<BuildingRevenueDto>>.Fail("Không thể xác định người dùng."));
+                    }
+
+                    accessibleBuildingIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.UserId == userId && sba.IsActive)
+                        .Select(sba => sba.BuildingId)
+                        .Distinct()
+                        .ToListAsync();
+                }
+
+                if (!year.HasValue)
+                {
+                    year = DateTime.UtcNow.Year;
+                }
+
+                var buildings = await _context.Buildings
+                    .Where(b => b.IsActive && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(b.BuildingId))))
+                    .ToListAsync();
+
+                var result = new List<BuildingRevenueDto>();
+
+                foreach (var building in buildings)
+                {
+                    var buildingApartments = await _context.Apartments
+                        .Where(a => a.BuildingId == building.BuildingId)
+                        .Select(a => a.ApartmentId)
+                        .ToListAsync();
+
+                    var revenueByMonth = new List<MonthlyRevenueDto>();
+
+                    for (int month = 1; month <= 12; month++)
+                    {
+                        var monthRevenue = await _context.Invoices
+                            .Where(i => i.Status == "paid"
+                                && i.CreatedAt.HasValue
+                                && i.CreatedAt.Value.Year == year.Value
+                                && i.CreatedAt.Value.Month == month
+                                && buildingApartments.Contains(i.ApartmentId))
+                            .SumAsync(i => (decimal?)i.Price) ?? 0;
+
+                        revenueByMonth.Add(new MonthlyRevenueDto
+                        {
+                            Month = $"{month:D2}/{year}",
+                            Revenue = monthRevenue
+                        });
+                    }
+
+                    var totalRevenue = revenueByMonth.Sum(r => r.Revenue);
+
+                    result.Add(new BuildingRevenueDto
+                    {
+                        BuildingId = building.BuildingId,
+                        BuildingName = building.Name ?? building.BuildingCode ?? "N/A",
+                        RevenueByMonth = revenueByMonth,
+                        TotalRevenue = totalRevenue
+                    });
+                }
+
+                return Ok(ApiResponse<List<BuildingRevenueDto>>.Success(result, "Lấy doanh thu theo tòa nhà thành công."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<List<BuildingRevenueDto>>.Fail($"Lỗi khi lấy thống kê: {ex.Message}"));
             }
         }
 

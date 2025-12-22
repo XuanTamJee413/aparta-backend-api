@@ -40,5 +40,23 @@ namespace ApartaAPI.DTOs.Dashboard
         public List<MonthlyRevenueDto> RevenueByMonth { get; set; } = new List<MonthlyRevenueDto>();
         public decimal TotalRevenue { get; set; }
     }
+
+    // Building level
+    public class BuildingApartmentStatusDto
+    {
+        public string BuildingId { get; set; } = string.Empty;
+        public string BuildingName { get; set; } = string.Empty;
+        public int TotalApartments { get; set; }
+        public int SoldApartments { get; set; }
+        public int UnsoldApartments { get; set; }
+    }
+
+    public class BuildingRevenueDto
+    {
+        public string BuildingId { get; set; } = string.Empty;
+        public string BuildingName { get; set; } = string.Empty;
+        public List<MonthlyRevenueDto> RevenueByMonth { get; set; } = new List<MonthlyRevenueDto>();
+        public decimal TotalRevenue { get; set; }
+    }
 }
 

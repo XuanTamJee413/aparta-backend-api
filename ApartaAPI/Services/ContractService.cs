@@ -26,6 +26,35 @@ namespace ApartaAPI.Services
         private readonly IMailService _mailService;
         private readonly IConfiguration _configuration;
 
+        private static string GenerateDefaultPassword(int length = 8)
+        {
+            if (length < 3) throw new ArgumentOutOfRangeException(nameof(length), "Password length must be at least 3.");
+
+            const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lower = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            var all = upper + lower + digits;
+
+            var chars = new char[length];
+            chars[0] = upper[Random.Shared.Next(upper.Length)];
+            chars[1] = lower[Random.Shared.Next(lower.Length)];
+            chars[2] = digits[Random.Shared.Next(digits.Length)];
+
+            for (int i = 3; i < length; i++)
+            {
+                chars[i] = all[Random.Shared.Next(all.Length)];
+            }
+
+            // Fisher–Yates shuffle
+            for (int i = chars.Length - 1; i > 0; i--)
+            {
+                int j = Random.Shared.Next(i + 1);
+                (chars[i], chars[j]) = (chars[j], chars[i]);
+            }
+
+            return new string(chars);
+        }
+
         public ContractService(
             ApartaDbContext context,
             IRepository<Contract> contractRepository,
@@ -371,7 +400,7 @@ namespace ApartaAPI.Services
                                 return ApiResponse<ContractDto>.Fail(ApiResponse.SM64_SYSTEM_ROLE_MISSING);
                             }
 
-                            string defaultPassword = _configuration["Authentication:DefaultResidentPassword"] ?? "Aparta@123";
+                            string defaultPassword = GenerateDefaultPassword(8);
                             user = new User
                             {
                                 UserId = Guid.NewGuid().ToString(),

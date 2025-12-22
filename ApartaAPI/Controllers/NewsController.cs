@@ -29,8 +29,16 @@ namespace ApartaAPI.Controllers
         {
             try
             {
+                var userId = User.FindFirst("id")?.Value ??
+                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(ApiResponse<IEnumerable<NewsDto>>.Fail("User ID not found in token. Please login again."));
+                }
+
                 var query = new NewsSearchDto(searchTerm, status);
-                var response = await _newsService.GetAllNewsAsync(query);
+                var response = await _newsService.GetAllNewsAsync(query, userId);
                 return Ok(response);
             }
             catch (Exception ex)

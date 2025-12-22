@@ -20,7 +20,7 @@ namespace ApartaAPI.Services
             _context = context;
         }
 
-        public async Task<ApiResponse<IEnumerable<NewsDto>>> GetAllNewsAsync(NewsSearchDto query)
+        public async Task<ApiResponse<IEnumerable<NewsDto>>> GetAllNewsAsync(NewsSearchDto query, string currentUserId)
         {
             var searchTerm = string.IsNullOrWhiteSpace(query.SearchTerm)
                 ? null
@@ -43,7 +43,67 @@ namespace ApartaAPI.Services
                 newsQuery = newsQuery.Where(n => n.Status == query.Status);
             }
 
-            // xeeps theo thời gian
+            // Lọc theo phạm vi tòa nhà mà người xem thuộc về
+            // - Nếu là admin: xem được tất cả
+            // - Nếu là resident: chỉ xem tin do staff quản lý tòa nhà của mình tạo
+            // - Nếu là staff/manager: chỉ xem tin do staff có chung tòa nhà quản lý tạo
+            var currentUser = await _context.Users
+                .Include(u => u.Role)
+                .Include(u => u.Apartment)
+                .Include(u => u.StaffBuildingAssignmentUsers)
+                .FirstOrDefaultAsync(u => u.UserId == currentUserId);
+
+            if (currentUser == null)
+            {
+                return ApiResponse<IEnumerable<NewsDto>>.Fail("User not found");
+            }
+
+            var roleName = currentUser.Role?.RoleName?.Trim().ToLower() ?? string.Empty;
+            var isAdmin = roleName == "admin";
+
+            if (!isAdmin)
+            {
+                var viewerBuildingIds = new List<string>();
+
+                if (!string.IsNullOrEmpty(currentUser.ApartmentId) && currentUser.Apartment != null)
+                {
+                    viewerBuildingIds.Add(currentUser.Apartment.BuildingId);
+                }
+
+                var staffBuildings = currentUser.StaffBuildingAssignmentUsers
+                    .Where(a => a.IsActive)
+                    .Select(a => a.BuildingId)
+                    .ToList();
+
+                viewerBuildingIds.AddRange(staffBuildings);
+                viewerBuildingIds = viewerBuildingIds.Distinct().ToList();
+
+                if (viewerBuildingIds.Any())
+                {
+                    var allowedAuthorIds = await _context.StaffBuildingAssignments
+                        .Where(sba => sba.IsActive && viewerBuildingIds.Contains(sba.BuildingId))
+                        .Select(sba => sba.UserId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    if (allowedAuthorIds.Any())
+                    {
+                        newsQuery = newsQuery.Where(n => allowedAuthorIds.Contains(n.AuthorUserId));
+                    }
+                    else
+                    {
+                        // Không có staff nào chung tòa nhà -> không có tin tức
+                        return ApiResponse<IEnumerable<NewsDto>>.Success(new List<NewsDto>(), ApiResponse.SM01_NO_RESULTS);
+                    }
+                }
+                else
+                {
+                    // User không gắn với tòa nhà nào -> không có tin tức
+                    return ApiResponse<IEnumerable<NewsDto>>.Success(new List<NewsDto>(), ApiResponse.SM01_NO_RESULTS);
+                }
+            }
+
+            // sắp xếp theo thời gian
             var newsList = await newsQuery
                 .OrderByDescending(n => n.PublishedDate ?? n.CreatedAt)
                 .ToListAsync();

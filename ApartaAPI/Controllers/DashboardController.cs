@@ -89,9 +89,10 @@ namespace ApartaAPI.Controllers
                 // Trạng thái căn hộ: Đã Bán vs Chưa bán
                 var totalApartments = statistics.TotalApartments;
                 
-                // Đếm căn hộ có status = "Đã Bán"
+                // Đếm căn hộ có status = "Đã Bán" hoặc "Đang Thuê"
                 var soldApartments = await _context.Apartments
-                    .Where(a => a.Status == "Đã Bán" && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
+                    .Where(a => (a.Status == "Đã Bán" || a.Status == "Đang Thuê")
+                        && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
                     .CountAsync();
                 
                 var unsoldApartments = totalApartments - soldApartments;
@@ -169,7 +170,8 @@ namespace ApartaAPI.Controllers
                 // Chỉ số chưa ghi: Đếm số căn hộ "Đã Bán" chưa có meter reading cho tháng hiện tại
                 var currentBillingPeriod = DateTime.UtcNow.ToString("yyyy-MM");
                 var soldApartmentIds = await _context.Apartments
-                    .Where(a => a.Status == "Đã Bán" && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
+                    .Where(a => (a.Status == "Đã Bán" || a.Status == "Đang Thuê")
+                        && (!isManager || (accessibleBuildingIds != null && accessibleBuildingIds.Contains(a.BuildingId))))
                     .Select(a => a.ApartmentId)
                     .ToListAsync();
 
@@ -250,7 +252,7 @@ namespace ApartaAPI.Controllers
                         .ToList();
 
                     var totalApartments = allApartments.Count;
-                    var soldApartments = allApartments.Count(a => a.Status == "Đã Bán");
+                    var soldApartments = allApartments.Count(a => a.Status == "Đã Bán" || a.Status == "Đang Thuê");
                     var unsoldApartments = totalApartments - soldApartments;
 
                     // Vẫn trả về project dù totalApartments = 0 (để hiển thị chart 0/0 hoặc 100% chưa bán)
@@ -306,7 +308,7 @@ namespace ApartaAPI.Controllers
                 var result = buildings.Select(b =>
                 {
                     var total = b.Apartments.Count;
-                    var sold = b.Apartments.Count(a => a.Status == "Đã Bán");
+                    var sold = b.Apartments.Count(a => a.Status == "Đã Bán" || a.Status == "Đang Thuê");
                     var unsold = total - sold;
                     return new BuildingApartmentStatusDto
                     {

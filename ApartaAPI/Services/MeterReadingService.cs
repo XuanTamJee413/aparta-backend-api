@@ -312,16 +312,16 @@ namespace ApartaAPI.Services
                 }
 
                 // Bước 2: Tải 3 Nguồn Dữ liệu Gốc
-                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã Bán"
+                // Tải Căn hộ (Hàng) - TẤT CẢ căn hộ có building_id == buildingId VÀ Status == "Đã Bán" hoặc "Đang Thuê"
                 var apartments = await _apartmentRepository.FindAsync(a =>
                     a.BuildingId == buildingId &&
-                    a.Status == "Đã Bán");
+                    (a.Status == "Đã Bán" || a.Status == "Đang Thuê"));
 
                 if (!apartments.Any())
                 {
                     return ApiResponse<IEnumerable<MeterReadingStatusDto>>.Success(
                         new List<MeterReadingStatusDto>(),
-                        "Không có căn hộ nào có trạng thái 'Đã Bán' trong tòa nhà này."
+                        "Không có căn hộ nào có trạng thái 'Đã Bán' hoặc 'Đang Thuê' trong tòa nhà này."
                     );
                 }
 

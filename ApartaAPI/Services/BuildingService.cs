@@ -396,8 +396,29 @@ namespace ApartaAPI.Services
 
         public async Task<ApiResponse<IEnumerable<ApartmentDto>>> GetRentedApartmentsByBuildingAsync(string buildingId)
         {
-            var query = new ApartmentQueryParameters(buildingId, "Đã Bán", null, null, null);
-            return await _apartmentService.GetAllAsync(query);
+            // Căn hộ được coi là đang sử dụng nếu có trạng thái "Đã Bán" hoặc "Đang Thuê"
+            // ApartmentQueryParameters chỉ nhận một status, nên dùng service để filter thêm
+            var query = new ApartmentQueryParameters(buildingId, null, null, null, null);
+            var all = await _apartmentService.GetAllAsync(query);
+
+            if (!all.Succeeded || all.Data == null)
+            {
+                return all;
+            }
+
+            var filtered = all.Data
+                .Where(a => a.Status == "Đã Bán" || a.Status == "Đang Thuê")
+                .ToList();
+
+            if (!filtered.Any())
+            {
+                return ApiResponse<IEnumerable<ApartmentDto>>.Success(
+                    new List<ApartmentDto>(),
+                    ApiResponse.SM01_NO_RESULTS
+                );
+            }
+
+            return ApiResponse<IEnumerable<ApartmentDto>>.Success(filtered);
         }
 
         public async Task<ApiResponse<PaginatedResult<BuildingDto>>> GetByUserBuildingsAsync(string userId, BuildingQueryParameters query)

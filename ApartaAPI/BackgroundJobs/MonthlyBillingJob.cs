@@ -145,18 +145,47 @@ public class MonthlyBillingJob : BackgroundService
         }
     }
 
-    //vòng lặp để tính thời gian chờ đến lần chạy kế tiếp vào 07:00 hôm sau.
+    // Tính thời gian chờ đến lần chạy kế tiếp vào 07:00 sáng (giờ Việt Nam, UTC+7)
     private static TimeSpan GetDelayUntilNextRun()
     {
-		var now = DateTime.Now;
-		var nextRun = new DateTime(now.Year, now.Month, now.Day, 20, 43, 0); // Mốc 07:00 hôm nay
-
-        if (now >= nextRun)
+        // Lấy timezone Việt Nam (SE Asia Standard Time trên Windows, Asia/Ho_Chi_Minh trên Linux)
+        TimeZoneInfo? vnTimeZone = null;
+        try
         {
-			nextRun = nextRun.AddDays(1); 
+            vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        }
+        catch
+        {
+            try
+            {
+                vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+            }
+            catch
+            {
+                // Fallback: nếu không tìm được timezone, dùng UTC
+                vnTimeZone = null;
+            }
         }
 
-		return nextRun - now; 
+        var nowUtc = DateTime.UtcNow;
+        var nowVn = vnTimeZone != null
+            ? TimeZoneInfo.ConvertTimeFromUtc(nowUtc, vnTimeZone)
+            : nowUtc;
+
+        // Mốc chạy job: 07:00 sáng giờ Việt Nam
+        var nextRunVn = new DateTime(nowVn.Year, nowVn.Month, nowVn.Day, 19, 36, 0, DateTimeKind.Unspecified);
+
+        if (nowVn >= nextRunVn)
+        {
+            nextRunVn = nextRunVn.AddDays(1);
+        }
+
+        var nextRunUtc = vnTimeZone != null
+            ? TimeZoneInfo.ConvertTimeToUtc(nextRunVn, vnTimeZone)
+            : nextRunVn;
+
+        var delay = nextRunUtc - nowUtc;
+        return delay > TimeSpan.Zero ? delay : TimeSpan.Zero;
     }
 }
 

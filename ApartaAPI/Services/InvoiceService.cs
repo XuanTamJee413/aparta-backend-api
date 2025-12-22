@@ -351,10 +351,12 @@ public class InvoiceService : IInvoiceService
             var issueDate = DateOnly.FromDateTime(DateTime.Today);
             var dueDate = issueDate.AddDays(5);
 
-            // Lấy danh sách căn hộ đang thuê để tạo hóa đơn
+            // Lấy danh sách căn hộ đang sử dụng để tạo hóa đơn
+            // Bao gồm cả căn hộ đã bán và đang thuê
             var apartments = await _context.Apartments
                 .Include(a => a.ApartmentMembers)
-                .Where(a => a.BuildingId == request.BuildingId && a.Status == "Đã bán")
+                .Where(a => a.BuildingId == request.BuildingId 
+                    && (a.Status == "Đã bán" || a.Status == "Đang Thuê"))
                 .ToListAsync();
 
             if (!apartments.Any())

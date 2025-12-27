@@ -94,7 +94,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("apartment_id");
             entity.Property(e => e.Area).HasColumnName("area");
             entity.Property(e => e.BuildingId)
@@ -104,8 +104,8 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("code");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Floor).HasColumnName("floor");
             entity.Property(e => e.HandoverDate).HasColumnName("handover_date");
@@ -120,7 +120,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("type");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Building).WithMany(p => p.Apartments)
@@ -139,14 +139,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ApartmentMemberId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("apartment_member_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.DateOfBirth).HasColumnName("date_of_birth");
             entity.Property(e => e.FaceImageUrl).HasColumnName("face_image_url");
@@ -186,7 +186,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("temporary_registration_code");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UserId)
                 .HasMaxLength(50)
@@ -218,21 +218,21 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.AssetId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("asset_id");
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
                 .HasColumnName("building_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Info).HasColumnName("info");
             entity.Property(e => e.Quantity)
                 .HasDefaultValue(1)
                 .HasColumnName("quantity");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Building).WithMany(p => p.Assets)
@@ -249,14 +249,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("building_id");
             entity.Property(e => e.BuildingCode)
                 .HasMaxLength(50)
                 .HasColumnName("building_code");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
@@ -286,7 +286,7 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValue(1)
                 .HasColumnName("total_floors");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Project).WithMany(p => p.Buildings)
@@ -303,7 +303,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ContractId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("contract_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
@@ -317,8 +317,8 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValue("Lease")
                 .HasColumnName("contract_type");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.DepositAmount)
                 .HasDefaultValue(0m)
@@ -339,7 +339,7 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("decimal(18, 2)")
                 .HasColumnName("total_value");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.Contracts)
@@ -360,18 +360,18 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ExpenseId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("expense_id");
             entity.Property(e => e.ActualPaymentDate).HasColumnName("actual_payment_date");
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
                 .HasColumnName("building_id");
             entity.Property(e => e.CreateDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("now()")
                 .HasColumnName("create_date");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.ExpenseDescription)
                 .HasMaxLength(255)
@@ -383,7 +383,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("type_expense");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Building).WithMany(p => p.Expenses)
@@ -400,11 +400,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.FeePeriodId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("fee_period_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.EndDate).HasColumnName("end_date");
             entity.Property(e => e.Items).HasColumnName("items");
@@ -413,7 +413,7 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnName("project_id");
             entity.Property(e => e.StartDate).HasColumnName("start_date");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Project).WithMany(p => p.FeePeriods)
@@ -430,11 +430,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.InteractionId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("interaction_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.ResidentId)
                 .HasMaxLength(50)
@@ -443,7 +443,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("staff_id");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Resident).WithMany(p => p.InteractionResidents)
@@ -465,14 +465,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.InvoiceId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("invoice_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EndDate).HasColumnName("end_date");
@@ -490,7 +490,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.Invoices)
@@ -511,11 +511,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.InvoiceItemId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("invoice_item_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.FeeType)
@@ -532,7 +532,7 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("decimal(18, 2)")
                 .HasColumnName("unit_price");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Invoice).WithMany(p => p.InvoiceItems)
@@ -549,7 +549,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.MessageId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("message_id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.InteractionId)
@@ -560,8 +560,8 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("sender_id");
             entity.Property(e => e.SentAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("sent_at");
 
             entity.HasOne(d => d.Interaction).WithMany(p => p.Messages)
@@ -583,7 +583,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.MeterReadingId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("meter_reading_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
@@ -592,8 +592,8 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(7)
                 .HasColumnName("billing_period");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.FeeType)
                 .HasMaxLength(50)
@@ -609,7 +609,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("recorded_by");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.MeterReadings)
@@ -634,18 +634,18 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.NewsId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("news_id");
             entity.Property(e => e.AuthorUserId)
                 .HasMaxLength(50)
                 .HasColumnName("author_user_id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.PublishedDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("published_date");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
@@ -654,7 +654,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("title");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.AuthorUser).WithMany(p => p.News)
@@ -671,14 +671,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.PaymentId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("payment_id");
             entity.Property(e => e.Amount)
                 .HasColumnType("decimal(18, 2)")
                 .HasColumnName("amount");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.InvoiceId)
                 .HasMaxLength(50)
@@ -694,7 +694,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Invoice).WithMany(p => p.Payments)
@@ -713,11 +713,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.PermissionId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("permission_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -726,7 +726,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("permission_group_id");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.PermissionGroup).WithMany(p => p.Permissions)
@@ -745,17 +745,17 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.PermissionGroupId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("permission_group_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
         });
 
@@ -767,7 +767,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.PriceQuotationId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("price_quotation_id");
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
@@ -776,8 +776,8 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("calculation_method");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.FeeType)
                 .HasMaxLength(50)
@@ -790,7 +790,7 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("decimal(18, 2)")
                 .HasColumnName("unit_price");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 			entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
 
@@ -810,7 +810,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ProjectId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("project_id");
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
@@ -831,8 +831,8 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("city");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.District)
                 .HasMaxLength(100)
@@ -856,7 +856,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("project_code");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.Ward)
                 .HasMaxLength(100)
@@ -875,12 +875,12 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ProposalId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("proposal_id");
             entity.Property(e => e.Content).HasColumnName("content");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.OperationStaffId)
                 .HasMaxLength(50)
@@ -893,7 +893,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 			entity.Property(e => e.Title)
 	            .HasMaxLength(255)
@@ -921,14 +921,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ReceiptId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("receipt_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Discount)
@@ -953,7 +953,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("type");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.Receipts)
@@ -972,11 +972,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.RoleId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("role_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
@@ -986,7 +986,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("role_name");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasMany(d => d.Permissions).WithMany(p => p.Roles)
@@ -1021,11 +1021,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ServiceId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("service_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -1037,7 +1037,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
         });
 
@@ -1049,14 +1049,14 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.ServiceBookingId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("service_booking_id");
             entity.Property(e => e.BookingDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("booking_date");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.PaymentAmount)
                 .HasColumnType("decimal(18, 2)")
@@ -1077,7 +1077,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Resident).WithMany(p => p.ServiceBookings)
@@ -1099,21 +1099,21 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.AssignmentId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("assignment_id");
             entity.Property(e => e.AssignedBy)
                 .HasMaxLength(50)
                 .HasColumnName("assigned_by");
             entity.Property(e => e.AssignmentEndDate).HasColumnName("assignment_end_date");
             entity.Property(e => e.AssignmentStartDate)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("now()")
                 .HasColumnName("assignment_start_date");
             entity.Property(e => e.BuildingId)
                 .HasMaxLength(50)
                 .HasColumnName("building_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
@@ -1125,7 +1125,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("scope_of_work");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UserId)
                 .HasMaxLength(50)
@@ -1156,7 +1156,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.SubscriptionId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("subscription_id");
             entity.Property(e => e.Amount)
                 .HasColumnType("decimal(18, 2)")
@@ -1165,18 +1165,18 @@ public partial class ApartaDbContext : DbContext
                 .HasColumnType("decimal(18, 2)")
                 .HasColumnName("amount_paid");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Discount)
                 .HasDefaultValue(0.0)
                 .HasColumnName("discount");
             entity.Property(e => e.ExpiredAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("expired_at");
             entity.Property(e => e.NumMonths).HasColumnName("num_months");
             entity.Property(e => e.PaymentDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("payment_date");
             entity.Property(e => e.PaymentMethod)
                 .HasMaxLength(50)
@@ -1195,7 +1195,7 @@ public partial class ApartaDbContext : DbContext
                 .HasDefaultValue(0.0)
                 .HasColumnName("tax");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Project).WithMany(p => p.Subscriptions)
@@ -1212,18 +1212,18 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.TaskId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("task_id");
             entity.Property(e => e.AssigneeNote)
                 .HasMaxLength(255)
                 .HasColumnName("assignee_note");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EndDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("end_date");
             entity.Property(e => e.OperationStaffId)
                 .HasMaxLength(50)
@@ -1232,7 +1232,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("service_booking_id");
             entity.Property(e => e.StartDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("start_date");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
@@ -1241,7 +1241,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("type");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.VerifyNote)
                 .HasMaxLength(255)
@@ -1265,11 +1265,11 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.TaskAssignmentId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("task_assignment_id");
             entity.Property(e => e.AssignedDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("assigned_date");
             entity.Property(e => e.AssigneeUserId)
                 .HasMaxLength(50)
@@ -1278,14 +1278,14 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("assigner_user_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.TaskId)
                 .HasMaxLength(50)
                 .HasColumnName("task_id");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.AssigneeUser).WithMany(p => p.TaskAssignmentAssigneeUsers)
@@ -1318,15 +1318,15 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.UserId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("user_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
@@ -1334,7 +1334,7 @@ public partial class ApartaDbContext : DbContext
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             entity.Property(e => e.IsFirstLogin).HasColumnName("is_first_login");
             entity.Property(e => e.LastLoginAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_login_at");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
@@ -1357,7 +1357,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Apartment).WithMany(p => p.Users)
@@ -1378,12 +1378,12 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.UtilityId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("utility_id");
             entity.Property(e => e.CloseTime).HasColumnName("close_time");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Location)
                 .HasMaxLength(255)
@@ -1397,7 +1397,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
 			entity.Property(e => e.OpenTime)
@@ -1426,18 +1426,18 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.UtilityBookingId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("utility_booking_id");
             entity.Property(e => e.BookedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("booked_at");
             entity.Property(e => e.BookingDate)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("booking_date");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.ResidentId)
                 .HasMaxLength(50)
@@ -1452,7 +1452,7 @@ public partial class ApartaDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UtilityId)
                 .HasMaxLength(50)
@@ -1479,21 +1479,21 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.VehicleId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("vehicle_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Info).HasColumnName("info");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.VehicleNumber)
                 .HasMaxLength(50)
@@ -1513,16 +1513,16 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.VisitLogId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("visit_log_id");
             entity.Property(e => e.ApartmentId)
                 .HasMaxLength(50)
                 .HasColumnName("apartment_id");
             entity.Property(e => e.CheckinTime)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("checkin_time");
             entity.Property(e => e.CheckoutTime)
-                .HasColumnType("datetime")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("checkout_time");
             entity.Property(e => e.Purpose)
                 .HasMaxLength(255)
@@ -1555,7 +1555,7 @@ public partial class ApartaDbContext : DbContext
 
             entity.Property(e => e.VisitorId)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("(newid())")
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("visitor_id");
             entity.Property(e => e.FullName)
                 .HasMaxLength(255)

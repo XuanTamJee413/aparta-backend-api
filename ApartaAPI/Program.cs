@@ -54,7 +54,7 @@ namespace ApartaAPI
 				});
 
 			builder.Services.AddDbContext<ApartaDbContext>(options =>
-				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+				options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 			// AutoMapper
 			builder.Services.AddAutoMapper(typeof(Program).Assembly);

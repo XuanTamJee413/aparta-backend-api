@@ -207,8 +207,8 @@ namespace ApartaAPI
 			app.UseCors(myAllowSpecificOrigins);
 
             app.UseAuthentication();
-
-			app.UseAuthorization();
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            app.UseAuthorization();
 
             app.MapHub<ChatHub>("/chathub").RequireCors(myAllowSpecificOrigins);
 

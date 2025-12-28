@@ -38,7 +38,8 @@ namespace ApartaAPI
 				options.AddPolicy(name: myAllowSpecificOrigins,
 					policy =>
 					{
-						policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+						policy.WithOrigins("http://localhost:4200", "https://localhost:4200"
+							, "https://aparta-frontend-angular.vercel.app")
 							  .AllowAnyHeader()
 							  .AllowAnyMethod()
 							  .AllowCredentials();
